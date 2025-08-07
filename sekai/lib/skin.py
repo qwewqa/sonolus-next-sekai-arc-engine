@@ -1,0 +1,131 @@
+from sonolus.script.sprite import StandardSprite, skin, sprite, Skin, Sprite
+
+
+@skin
+class Skin:
+    cover: StandardSprite.STAGE_COVER
+
+    lane: StandardSprite.LANE
+    judgment_line: StandardSprite.JUDGMENT_LINE
+    stage_left_border: StandardSprite.STAGE_LEFT_BORDER
+    stage_right_border: StandardSprite.STAGE_RIGHT_BORDER
+
+    sekai_stage: Sprite = sprite("Sekai Stage")
+
+    sim_line: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
+
+    normal_note_left: Sprite = sprite("Sekai Note Cyan Left")
+    normal_note_middle: Sprite = sprite("Sekai Note Cyan Middle")
+    normal_note_right: Sprite = sprite("Sekai Note Cyan Right")
+    normal_note_fallback: StandardSprite.NOTE_HEAD_CYAN
+
+    slide_note_left: Sprite = sprite("Sekai Note Green Left")
+    slide_note_middle: Sprite = sprite("Sekai Note Green Middle")
+    slide_note_right: Sprite = sprite("Sekai Note Green Right")
+    slide_note_fallback: StandardSprite.NOTE_HEAD_GREEN
+    slide_note_end_fallback: StandardSprite.NOTE_TAIL_GREEN
+
+    flick_note_left: Sprite = sprite("Sekai Note Red Left")
+    flick_note_middle: Sprite = sprite("Sekai Note Red Middle")
+    flick_note_right: Sprite = sprite("Sekai Note Red Right")
+    flick_note_fallback: StandardSprite.NOTE_HEAD_RED
+    flick_note_end_fallback: StandardSprite.NOTE_TAIL_RED
+
+    critical_note_left: Sprite = sprite("Sekai Note Yellow Left")
+    critical_note_middle: Sprite = sprite("Sekai Note Yellow Middle")
+    critical_note_right: Sprite = sprite("Sekai Note Yellow Right")
+    critical_note_fallback: StandardSprite.NOTE_HEAD_YELLOW
+    critical_note_end_fallback: StandardSprite.NOTE_TAIL_YELLOW
+
+    normal_slide_tick_note: Sprite = sprite("Sekai Diamond Green")
+    normal_slide_tick_note_fallback: StandardSprite.NOTE_TICK_GREEN
+
+    critical_slide_tick_note: Sprite = sprite("Sekai Diamond Yellow")
+    critical_slide_tick_note_fallback: StandardSprite.NOTE_TICK_YELLOW
+
+    normal_slide_connector_normal: Sprite = sprite("Sekai Slide Connection Green")
+    normal_slide_connector_active: Sprite = sprite("Sekai Slide Connection Green Active")
+    normal_slide_connector_fallback: StandardSprite.NOTE_CONNECTION_GREEN_SEAMLESS
+
+    critical_slide_connector_normal: Sprite = sprite("Sekai Slide Connection Yellow")
+    critical_slide_connector_active: Sprite = sprite("Sekai Slide Connection Yellow Active")
+    critical_slide_connector_fallback: StandardSprite.NOTE_CONNECTION_YELLOW_SEAMLESS
+
+    normal_slot_glow: Sprite = sprite("Sekai Slot Glow Cyan")
+    slide_slot_glow: Sprite = sprite("Sekai Slot Glow Green")
+    flick_slot_glow: Sprite = sprite("Sekai Slot Glow Red")
+    critical_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow")
+
+    normal_slot: Sprite = sprite("Sekai Slot Cyan")
+    slide_slot: Sprite = sprite("Sekai Slot Green")
+    flick_slot: Sprite = sprite("Sekai Slot Red")
+    critical_slot: Sprite = sprite("Sekai Slot Yellow")
+
+    flick_arrow_up1: Sprite = sprite("Sekai Flick Arrow Red Up 1")
+    flick_arrow_up2: Sprite = sprite("Sekai Flick Arrow Red Up 2")
+    flick_arrow_up3: Sprite = sprite("Sekai Flick Arrow Red Up 3")
+    flick_arrow_up4: Sprite = sprite("Sekai Flick Arrow Red Up 4")
+    flick_arrow_up5: Sprite = sprite("Sekai Flick Arrow Red Up 5")
+    flick_arrow_up6: Sprite = sprite("Sekai Flick Arrow Red Up 6")
+    flick_arrow_left1: Sprite = sprite("Sekai Flick Arrow Red Left 1")
+    flick_arrow_left2: Sprite = sprite("Sekai Flick Arrow Red Left 2")
+    flick_arrow_left3: Sprite = sprite("Sekai Flick Arrow Red Left 3")
+    flick_arrow_left4: Sprite = sprite("Sekai Flick Arrow Red Left 4")
+    flick_arrow_left5: Sprite = sprite("Sekai Flick Arrow Red Left 5")
+    flick_arrow_left6: Sprite = sprite("Sekai Flick Arrow Red Left 6")
+    flick_arrow_fallback: StandardSprite.DIRECTIONAL_MARKER_RED
+
+    critical_arrow_up1: Sprite = sprite("Sekai Flick Arrow Yellow Up 1")
+    critical_arrow_up2: Sprite = sprite("Sekai Flick Arrow Yellow Up 2")
+    critical_arrow_up3: Sprite = sprite("Sekai Flick Arrow Yellow Up 3")
+    critical_arrow_up4: Sprite = sprite("Sekai Flick Arrow Yellow Up 4")
+    critical_arrow_up5: Sprite = sprite("Sekai Flick Arrow Yellow Up 5")
+    critical_arrow_up6: Sprite = sprite("Sekai Flick Arrow Yellow Up 6")
+    critical_arrow_left1: Sprite = sprite("Sekai Flick Arrow Yellow Left 1")
+    critical_arrow_left2: Sprite = sprite("Sekai Flick Arrow Yellow Left 2")
+    critical_arrow_left3: Sprite = sprite("Sekai Flick Arrow Yellow Left 3")
+    critical_arrow_left4: Sprite = sprite("Sekai Flick Arrow Yellow Left 4")
+    critical_arrow_left5: Sprite = sprite("Sekai Flick Arrow Yellow Left 5")
+    critical_arrow_left6: Sprite = sprite("Sekai Flick Arrow Yellow Left 6")
+    critical_arrow_fallback: StandardSprite.DIRECTIONAL_MARKER_YELLOW
+
+
+    normal_trace_note_left: Sprite = sprite("Sekai Trace Note Green Left")
+    normal_trace_note_middle: Sprite = sprite("Sekai Trace Note Green Middle")
+    normal_trace_note_right: Sprite = sprite("Sekai Trace Note Green Right")
+    normal_trace_note_secondary_fallback: StandardSprite.NOTE_HEAD_GREEN
+
+    critical_trace_note_left: Sprite = sprite("Sekai Trace Note Yellow Left")
+    critical_trace_note_middle: Sprite = sprite("Sekai Trace Note Yellow Middle")
+    critical_trace_note_right: Sprite = sprite("Sekai Trace Note Yellow Right")
+    critical_trace_note_fallback: StandardSprite.NOTE_HEAD_YELLOW
+
+    trace_flick_note_left: Sprite = sprite("Sekai Trace Note Red Left")
+    trace_flick_note_middle: Sprite = sprite("Sekai Trace Note Red Middle")
+    trace_flick_note_right: Sprite = sprite("Sekai Trace Note Red Right")
+    trace_flick_tick_note: Sprite = sprite("Sekai Trace Diamond Red")
+    trace_flick_tick_note_fallback: StandardSprite.NOTE_TICK_RED
+
+    guide_green: Sprite = sprite("Sekai+ Guide Green")
+    guide_green_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_GREEN
+    guide_yellow: Sprite = sprite("Sekai+ Guide Yellow")
+    guide_yellow_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_YELLOW
+    guide_red: Sprite = sprite("Sekai+ Guide Red")
+    guide_red_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_RED
+    guide_purple: Sprite = sprite("Sekai+ Guide Purple")
+    guide_purple_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_PURPLE
+    guide_cyan: Sprite = sprite("Sekai+ Guide Cyan")
+    guide_cyan_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_CYAN
+    guide_blue: Sprite = sprite("Sekai+ Guide Blue")
+    guide_blue_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_BLUE
+    guide_neutral: Sprite = sprite("Sekai+ Guide Neutral")
+    guide_neutral_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
+    guide_black: Sprite = sprite("Sekai+ Guide Black")
+    guide_black_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
+
+    damage_note_left: Sprite = sprite("Sekai Trace Note Purple Left")
+    damage_note_middle: Sprite = sprite("Sekai Trace Note Purple Middle")
+    damage_note_right: Sprite = sprite("Sekai Trace Note Purple Right")
+    damage_note_fallback: StandardSprite.NOTE_HEAD_PURPLE
+
+    background_dim: Sprite = sprite("Sekai+ Black Background")
