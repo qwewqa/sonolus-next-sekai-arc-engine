@@ -1,9 +1,9 @@
 from sonolus.script.engine import Engine, EngineData
 from sonolus.script.project import Project
 
+from sekai.level import load_levels
 from sekai.lib.options import Options
 from sekai.lib.ui import ui_config
-from sekai.level import load_levels
 from sekai.play.mode import play_mode
 from sekai.preview.mode import preview_mode
 from sekai.tutorial.mode import tutorial_mode

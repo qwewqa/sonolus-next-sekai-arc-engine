@@ -1,4 +1,7 @@
-from sonolus.script.sprite import StandardSprite, skin, sprite, Skin, Sprite
+from sonolus.script.array import Array, Dim
+from sonolus.script.interval import clamp
+from sonolus.script.record import Record
+from sonolus.script.sprite import Sprite, StandardSprite, skin, sprite
 
 
 @skin
@@ -89,7 +92,6 @@ class Skin:
     critical_arrow_left6: Sprite = sprite("Sekai Flick Arrow Yellow Left 6")
     critical_arrow_fallback: StandardSprite.DIRECTIONAL_MARKER_YELLOW
 
-
     normal_trace_note_left: Sprite = sprite("Sekai Trace Note Green Left")
     normal_trace_note_middle: Sprite = sprite("Sekai Trace Note Green Middle")
     normal_trace_note_right: Sprite = sprite("Sekai Trace Note Green Right")
@@ -129,3 +131,168 @@ class Skin:
     damage_note_fallback: StandardSprite.NOTE_HEAD_PURPLE
 
     background_dim: Sprite = sprite("Sekai+ Black Background")
+
+
+class BodySprites(Record):
+    left: Sprite
+    middle: Sprite
+    right: Sprite
+    fallback: Sprite
+
+    @property
+    def custom_available(self):
+        return self.left.is_available
+
+
+class ArrowSprites(Record):
+    up: Array[Sprite, Dim[6]]
+    left: Array[Sprite, Dim[6]]
+    fallback: Sprite
+
+    def _get_index_from_size(self, size: float) -> int:
+        return int(clamp(round(size * 2), 1, 6)) - 1
+
+    def get_sprite(self, size: float, direction: int) -> Sprite:
+        result = +Sprite
+        index = self._get_index_from_size(size)
+        if direction == 0:
+            result @= self.up[index]
+        else:
+            result @= self.left[index]
+        return result
+
+    @property
+    def custom_available(self):
+        return self.up[0].is_available
+
+
+class TickSprites(Record):
+    normal: Sprite
+    fallback: Sprite
+
+    @property
+    def custom_available(self):
+        return self.normal.is_available
+
+
+class ConnectorSprites(Record):
+    normal: Sprite
+    active: Sprite
+    fallback: Sprite
+
+
+normal_note_body_sprites = BodySprites(
+    left=Skin.normal_note_left,
+    middle=Skin.normal_note_middle,
+    right=Skin.normal_note_right,
+    fallback=Skin.normal_note_fallback,
+)
+slide_note_body_sprites = BodySprites(
+    left=Skin.slide_note_left,
+    middle=Skin.slide_note_middle,
+    right=Skin.slide_note_right,
+    fallback=Skin.slide_note_fallback,
+)
+flick_note_body_sprites = BodySprites(
+    left=Skin.flick_note_left,
+    middle=Skin.flick_note_middle,
+    right=Skin.flick_note_right,
+    fallback=Skin.flick_note_fallback,
+)
+critical_note_body_sprites = BodySprites(
+    left=Skin.critical_note_left,
+    middle=Skin.critical_note_middle,
+    right=Skin.critical_note_right,
+    fallback=Skin.critical_note_fallback,
+)
+
+normal_trace_note_body_sprites = BodySprites(
+    left=Skin.normal_trace_note_left,
+    middle=Skin.normal_trace_note_middle,
+    right=Skin.normal_trace_note_right,
+    fallback=Skin.normal_trace_note_secondary_fallback,
+)
+critical_trace_note_body_sprites = BodySprites(
+    left=Skin.critical_trace_note_left,
+    middle=Skin.critical_trace_note_middle,
+    right=Skin.critical_trace_note_right,
+    fallback=Skin.critical_trace_note_fallback,
+)
+trace_flick_note_body_sprites = BodySprites(
+    left=Skin.trace_flick_note_left,
+    middle=Skin.trace_flick_note_middle,
+    right=Skin.trace_flick_note_right,
+    fallback=Skin.trace_flick_tick_note_fallback,
+)
+trace_slide_note_body_sprites = normal_trace_note_body_sprites
+
+damage_note_body_sprites = BodySprites(
+    left=Skin.damage_note_left,
+    middle=Skin.damage_note_middle,
+    right=Skin.damage_note_right,
+    fallback=Skin.damage_note_fallback,
+)
+
+normal_arrow_sprites = ArrowSprites(
+    up=Array(
+        Skin.flick_arrow_up1,
+        Skin.flick_arrow_up2,
+        Skin.flick_arrow_up3,
+        Skin.flick_arrow_up4,
+        Skin.flick_arrow_up5,
+        Skin.flick_arrow_up6,
+    ),
+    left=Array(
+        Skin.flick_arrow_left1,
+        Skin.flick_arrow_left2,
+        Skin.flick_arrow_left3,
+        Skin.flick_arrow_left4,
+        Skin.flick_arrow_left5,
+        Skin.flick_arrow_left6,
+    ),
+    fallback=Skin.flick_arrow_fallback,
+)
+critical_arrow_sprites = ArrowSprites(
+    up=Array(
+        Skin.critical_arrow_up1,
+        Skin.critical_arrow_up2,
+        Skin.critical_arrow_up3,
+        Skin.critical_arrow_up4,
+        Skin.critical_arrow_up5,
+        Skin.critical_arrow_up6,
+    ),
+    left=Array(
+        Skin.critical_arrow_left1,
+        Skin.critical_arrow_left2,
+        Skin.critical_arrow_left3,
+        Skin.critical_arrow_left4,
+        Skin.critical_arrow_left5,
+        Skin.critical_arrow_left6,
+    ),
+    fallback=Skin.critical_arrow_fallback,
+)
+
+normal_tick_sprites = TickSprites(
+    normal=Skin.normal_slide_tick_note,
+    fallback=Skin.normal_slide_tick_note_fallback,
+)
+slide_tick_sprites = normal_tick_sprites
+critical_tick_sprites = TickSprites(
+    normal=Skin.critical_slide_tick_note,
+    fallback=Skin.critical_slide_tick_note_fallback,
+)
+flick_tick_sprites = TickSprites(
+    normal=Skin.trace_flick_tick_note,
+    fallback=Skin.trace_flick_tick_note_fallback,
+)
+
+normal_slide_connector_sprites = ConnectorSprites(
+    normal=Skin.normal_slide_connector_normal,
+    active=Skin.normal_slide_connector_active,
+    fallback=Skin.normal_slide_connector_fallback,
+)
+critical_slide_connector_sprites = ConnectorSprites(
+    normal=Skin.critical_slide_connector_normal,
+    active=Skin.critical_slide_connector_active,
+    fallback=Skin.critical_slide_connector_fallback,
+)

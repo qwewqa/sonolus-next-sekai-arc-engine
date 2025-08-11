@@ -1,4 +1,4 @@
-from sonolus.script.effect import StandardEffect, effects, effect, Effect
+from sonolus.script.effect import Effect, StandardEffect, effect, effects
 
 
 @effects
@@ -23,3 +23,6 @@ class Effects:
 
     normal_trace: Effect = effect("Sekai Normal Trace")
     critical_trace: Effect = effect("Sekai Critical Trace")
+
+
+SFX_DISTANCE = 0.02

@@ -1,6 +1,7 @@
 from sonolus.script.options import options, slider_option, toggle_option
 from sonolus.script.text import StandardText
 
+
 @options
 class Options:
     speed: float = slider_option(
@@ -156,4 +157,12 @@ class Options:
         min=1,
         max=50,
         step=1,
+    )
+    note_margin: float = slider_option(
+        name="Note Margin",
+        scope="Sekai+",
+        default=0.1,
+        min=0.0,
+        max=0.2,
+        step=0.01,
     )

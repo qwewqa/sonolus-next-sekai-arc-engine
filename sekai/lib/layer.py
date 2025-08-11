@@ -17,3 +17,7 @@ LAYER_NOTE_ARROW = 103
 LAYER_SLOT_GLOW_EFFECT = 200
 
 LAYER_COVER = 1000
+
+
+def get_z(layer: int, time: float = 0.0, lane: float = 0.0) -> float:
+    return layer * 10 - time / 1000 - lane / 100000

@@ -3,6 +3,7 @@ from sonolus.script.text import StandardText
 
 from sekai.lib.skin import Skin
 
+
 @buckets
 class Buckets:
     normal_tap_note: Bucket = bucket(
@@ -165,7 +166,7 @@ class Buckets:
         ],
         unit=StandardText.MILLISECOND_UNIT,
     )
-    
+
     critical_slide_end_note: Bucket = bucket(
         sprites=[
             bucket_sprite(

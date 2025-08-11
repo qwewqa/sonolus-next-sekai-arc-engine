@@ -1,13 +1,17 @@
+from sonolus.script.runtime import HorizontalAlign, runtime_ui, screen
 from sonolus.script.ui import (
-    UiConfig, 
-    UiMetric, 
-    UiVisibility, 
-    UiAnimation, 
-    UiAnimationTween, 
     EaseType,
-    UiJudgmentErrorStyle,
+    UiAnimation,
+    UiAnimationTween,
+    UiConfig,
     UiJudgmentErrorPlacement,
+    UiJudgmentErrorStyle,
+    UiMetric,
+    UiVisibility,
 )
+from sonolus.script.vec import Vec2
+
+from sekai.lib.options import Options
 
 ui_config = UiConfig(
     scope="Sekai",
@@ -53,3 +57,108 @@ ui_config = UiConfig(
     judgment_error_placement=UiJudgmentErrorPlacement.TOP,
     judgment_error_min=20,
 )
+
+
+def init_ui():
+    ui = runtime_ui()
+
+    gap = 0.05
+    box = screen().shrink(Vec2(gap, gap))
+    show_ui = not Options.hide_ui
+
+    ui.menu.update(
+        anchor=box.tr,
+        pivot=Vec2(1, 1),
+        dimensions=Vec2(0.15, 0.15) * ui.menu_config.scale,
+        alpha=ui.menu_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=True,
+    )
+    ui.primary_metric_bar.update(
+        anchor=box.tl,
+        pivot=Vec2(0, 1),
+        dimensions=Vec2(0.75, 0.15) * ui.primary_metric_config.scale,
+        alpha=ui.primary_metric_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.LEFT,
+        background=True,
+    )
+    ui.primary_metric_value.update(
+        anchor=box.tl + Vec2(0.715, -0.035) * ui.primary_metric_config.scale,
+        pivot=Vec2(1, 1),
+        dimensions=Vec2(0, 0.08) * ui.primary_metric_config.scale,
+        alpha=ui.primary_metric_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.RIGHT,
+        background=False,
+    )
+    ui.secondary_metric_bar.update(
+        anchor=box.tr - Vec2(gap, 0) - Vec2(0.15, 0) * ui.menu_config.scale,
+        pivot=Vec2(1, 1),
+        dimensions=Vec2(0.55, 0.15) * ui.secondary_metric_config.scale,
+        alpha=ui.secondary_metric_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.LEFT,
+        background=True,
+    )
+    ui.secondary_metric_value.update(
+        anchor=box.tr
+        - Vec2(gap, 0)
+        - Vec2(0.15, 0) * ui.menu_config.scale
+        - Vec2(0.035, 0.035) * ui.secondary_metric_config.scale,
+        pivot=Vec2(1, 1),
+        dimensions=Vec2(0, 0.08) * ui.secondary_metric_config.scale,
+        alpha=ui.secondary_metric_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.RIGHT,
+        background=False,
+    )
+    ui.combo_value.update(
+        anchor=Vec2(screen().w * 0.355, screen().h * 0.0875),
+        pivot=Vec2(0.5, 0.5),
+        dimensions=Vec2(0, screen().h * 0.14) * ui.combo_config.scale,
+        alpha=ui.combo_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=False,
+    )
+    ui.combo_text.update(
+        anchor=Vec2(screen().w * 0.355, screen().h * 0.0875),
+        pivot=Vec2(0.5, -2.25),
+        dimensions=Vec2(0, screen().h * 0.14 * 0.25) * ui.combo_config.scale,
+        alpha=ui.combo_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=False,
+    )
+    ui.judgment.update(
+        anchor=Vec2(0, screen().h * -0.115),
+        pivot=Vec2(0.5, 0.5),
+        dimensions=Vec2(0, screen().h * 0.0475) * ui.judgment_config.scale,
+        alpha=ui.judgment_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=False,
+    )
+    ui.progress.update(
+        anchor=box.bl,
+        pivot=Vec2(0, 0),
+        dimensions=Vec2(box.w, 0.15 * ui.progress_config.scale),
+        alpha=ui.progress_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=True,
+    )
+    ui.previous.update(
+        anchor=Vec2(box.l, box.center.y),
+        pivot=Vec2(0, 0.5),
+        dimensions=Vec2(0.15, 0.15) * ui.navigation_config.scale,
+        alpha=ui.navigation_config.alpha,
+        background=True,
+    )
+    ui.next.update(
+        anchor=Vec2(box.r, box.center.y),
+        pivot=Vec2(1, 0.5),
+        dimensions=Vec2(0.15, 0.15) * ui.navigation_config.scale,
+        alpha=ui.navigation_config.alpha,
+        background=True,
+    )
+    ui.instruction.update(
+        anchor=Vec2(0, 0),
+        pivot=Vec2(0.5, 0.5),
+        dimensions=Vec2(1.2, 0.15) * ui.instruction_config.scale,
+        alpha=ui.instruction_config.alpha,
+        background=True,
+    )
