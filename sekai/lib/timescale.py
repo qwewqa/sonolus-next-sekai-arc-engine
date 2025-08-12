@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import Protocol
+from typing import Protocol, cast
 
-from sonolus.script.archetype import get_archetype_by_name
+from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.interval import remap
 from sonolus.script.timing import beat_to_time
 
@@ -14,14 +14,14 @@ TIMESCALE_GROUP_NAME = "TimeScaleGroup"
 class TimescaleChangeLike(Protocol):
     beat: float
     timescale: float
-    next_index: int
+    next: EntityRef
 
     @classmethod
     def at(cls, index: int) -> TimescaleChangeLike: ...
 
 
 class TimescaleGroupLike(Protocol):
-    first_index: int
+    first: EntityRef
     current_scaled_time: float
 
     @classmethod
@@ -29,39 +29,43 @@ class TimescaleGroupLike(Protocol):
 
 
 def timescale_change_archetype() -> type[TimescaleChangeLike]:
-    return get_archetype_by_name(TIMESCALE_CHANGE_NAME)  # type: ignore
+    return cast(type[TimescaleChangeLike], get_archetype_by_name(TIMESCALE_CHANGE_NAME))
 
 
 def timescale_group_archetype() -> type[TimescaleGroupLike]:
-    return get_archetype_by_name(TIMESCALE_GROUP_NAME)  # type: ignore
+    return cast(type[TimescaleGroupLike], get_archetype_by_name(TIMESCALE_GROUP_NAME))
 
 
 def iter_timescale_changes(group_index: int) -> Iterator[TimescaleChangeLike]:
-    index = timescale_group_archetype().at(group_index).first_index
+    index = timescale_group_archetype().at(group_index).first.index
     while True:
         if index <= 0:
             return
         change = timescale_change_archetype().at(index)
         yield change
-        index = change.next_index
+        index = change.next.index
 
 
-def extended_scaled_time(group_index: int):
-    return timescale_group_archetype().at(group_index).current_scaled_time
+def extended_scaled_time(group: int | EntityRef):
+    if isinstance(group, EntityRef):
+        group = group.index
+    return timescale_group_archetype().at(group).current_scaled_time
 
 
 def extended_time_to_scaled_time(
-    group_index: int,
+    group: int | EntityRef,
     time: float,
 ) -> float:
-    if group_index == 0:
+    if isinstance(group, EntityRef):
+        group = group.index
+    if group == 0:
         return time
     if time < 0:
         return time
     last_timescale = 1.0
     last_time = 0.0
     last_scaled_time = 0.0
-    for change in iter_timescale_changes(group_index):
+    for change in iter_timescale_changes(group):
         next_timescale = change.timescale
         next_time = beat_to_time(change.beat)
         next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale
@@ -76,10 +80,12 @@ def extended_time_to_scaled_time(
 
 
 def extended_scaled_time_to_first_time(
-    group_index: int,
+    group: int | EntityRef,
     scaled_time: float,
 ) -> float:
-    if group_index == 0:
+    if isinstance(group, EntityRef):
+        group = group.index
+    if group == 0:
         return scaled_time
     if scaled_time < 0:
         # Since timescale is initialized to 1.0 at time 0, the first time we reach a negative scaled time
@@ -88,7 +94,7 @@ def extended_scaled_time_to_first_time(
     last_timescale = 1.0
     last_time = 0.0
     last_scaled_time = 0.0
-    for change in iter_timescale_changes(group_index):
+    for change in iter_timescale_changes(group):
         next_timescale = change.timescale
         next_time = beat_to_time(change.beat)
         next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale

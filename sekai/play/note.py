@@ -1,5 +1,6 @@
-from sonolus.script.archetype import PlayArchetype, StandardImport, entity_data, imported
-from sonolus.script.debug import debug_log
+from typing import cast
+
+from sonolus.script.archetype import EntityRef, PlayArchetype, StandardImport, entity_data, imported
 from sonolus.script.interval import Interval
 from sonolus.script.runtime import time
 from sonolus.script.timing import beat_to_time
@@ -8,6 +9,7 @@ from sekai.lib.layout import approach_to, preempt_time
 from sekai.lib.note import NoteKind, draw_note
 from sekai.lib.options import Options
 from sekai.lib.timescale import extended_scaled_time, extended_scaled_time_to_first_time, extended_time_to_scaled_time
+from sekai.play.timescale import TimescaleGroup
 
 
 class BaseNote(PlayArchetype):
@@ -15,9 +17,9 @@ class BaseNote(PlayArchetype):
     lane: float = imported()
     size: float = imported()
     direction: int = imported()
-    slide_ref_index: int = imported(name="slide")
-    attach_ref_index: int = imported(name="attach")
-    timescale_group_index: int = imported(name="timeScaleGroup")
+    slide_ref: int = imported(name="slide")
+    attach_ref: int = imported(name="attach")
+    timescale_group_ref: EntityRef[TimescaleGroup] = imported(name="timeScaleGroup")
 
     target_time: float = entity_data()
     spawn_time: float = entity_data()
@@ -34,14 +36,11 @@ class BaseNote(PlayArchetype):
             self.direction *= -1
 
         self.target_time = beat_to_time(self.beat)
-        self.visual_interval.end = extended_time_to_scaled_time(self.timescale_group_index, self.target_time)
+        self.visual_interval.end = extended_time_to_scaled_time(self.timescale_group_ref, self.target_time)
         self.visual_interval.start = self.visual_interval.end - preempt_time()
 
         # TODO: handle input interval and take min
-        self.spawn_time = extended_scaled_time_to_first_time(self.timescale_group_index, self.visual_interval.start)
-        if self.index == 2665:
-            debug_log(self.spawn_time)
-            debug_log(self.visual_interval.end)
+        self.spawn_time = extended_scaled_time_to_first_time(self.timescale_group_ref, self.visual_interval.start)
 
     def spawn_order(self) -> float:
         if self.kind == NoteKind.IGNORED_SLIDE_TICK:
@@ -58,11 +57,11 @@ class BaseNote(PlayArchetype):
 
     @property
     def kind(self) -> NoteKind:
-        return self.key  # type: ignore
+        return cast(NoteKind, self.key)
 
     @property
     def progress(self) -> float:
-        return approach_to(self.visual_interval.end, extended_scaled_time(self.timescale_group_index))
+        return approach_to(self.visual_interval.end, extended_scaled_time(self.timescale_group_ref))
 
 
 NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.TAP)
