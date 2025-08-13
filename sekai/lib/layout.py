@@ -1,7 +1,8 @@
 from math import log, pi
 
+from sonolus.script.easing import ease_in_sine
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp
+from sonolus.script.interval import clamp, lerp, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
 from sonolus.script.transform import Transform2d
@@ -24,13 +25,12 @@ NOTE_SLIM_EDGE_W = 0.125
 TARGET_ASPECT_RATIO = 16 / 9
 
 # Value between 0 and 1 where smaller values mean a 'harsher' approach with more acceleration.
-APPROACH_START = 1.06**-45
+APPROACH_SCALE = 1.06**-45
 
 # Value above 1 where we cut off drawing sprites. Doesn't really matter as long as it's high enough,
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
-APPROACH_CUTOFF = 2.5
-
-PROGRESS_CUTOFF = 1 - log(APPROACH_CUTOFF, APPROACH_START)
+DEFAULT_APPROACH_CUTOFF = 2.5
+DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 
 @level_data
@@ -39,6 +39,8 @@ class Layout:
     w_scale: float
     h_scale: float
     scaled_note_h: float
+    progress_start: float
+    progress_cutoff: float
 
 
 def init_layout():
@@ -62,9 +64,19 @@ def init_layout():
     Layout.scaled_note_h = NOTE_H * Layout.h_scale
     Layout.transform = Transform2d.new().scale(Vec2(Layout.w_scale, Layout.h_scale)).translate(Vec2(0, t))
 
+    if Options.stage_cover:
+        Layout.progress_start = Options.stage_cover
+    else:
+        Layout.progress_start = 0.0
+
+    if Options.hidden:
+        Layout.progress_cutoff = 1 - Options.hidden
+    else:
+        Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
+
 
 def approach(progress: float) -> float:
-    return APPROACH_START ** (1 - progress)
+    return APPROACH_SCALE ** (1 - progress)
 
 
 def progress_to(to_time: float, now: float) -> float:
@@ -78,15 +90,11 @@ def preempt_time() -> float:
 def get_alpha(target_time: float, now: float | None = None) -> float:
     if is_tutorial():
         return 1.0
-    if Options.hidden > 0:
-        # Fade based on real time.
-        # We don't want to use scaled time because it doesn't interact well with gimmicks like
-        # negative timescale.
+    if Options.fade_out:
         if now is None:
             now = time()
         progress = progress_to(target_time, now)
-        change_progress = 1 - Options.hidden
-        return remap_clamped(change_progress - 0.05, change_progress + 0.05, 1, 0, progress)
+        return 1.0 - ease_in_sine(progress * 1.4)
     return 1.0
 
 
@@ -136,12 +144,24 @@ def layout_lane(lane: float, size: float) -> Quad:
     return layout_lane_by_edges(lane - size, lane + size)
 
 
-def layout_stage_cover() -> Rect:
-    return Rect(
-        l=screen().l,
-        r=screen().r,
-        t=screen().t,
-        b=lerp(transform_vec(Vec2(0, LANE_T)).y, screen().b, Options.stage_cover),
+def layout_stage_cover() -> Quad:
+    b = approach(Options.stage_cover)
+    return perspective_rect(
+        l=-6,
+        r=6,
+        t=LANE_T,
+        b=b,
+    )
+
+
+def layout_hidden_cover() -> Quad:
+    b = 1 - NOTE_H
+    t = min(b, max(approach(1 - Options.hidden), approach(Options.stage_cover)))
+    return perspective_rect(
+        l=-6,
+        r=6,
+        t=t,
+        b=b,
     )
 
 
@@ -328,18 +348,6 @@ def layout_sim_line(
     if l_lane > r_lane:
         l_lane, r_lane = r_lane, l_lane
         l_travel, r_travel = r_travel, l_travel
-    if l_travel < APPROACH_START:
-        l_lane = remap(l_travel, r_travel, l_lane, r_lane, APPROACH_START)
-        l_travel = APPROACH_START
-    elif l_travel > APPROACH_CUTOFF:
-        l_lane = remap(l_travel, r_travel, l_lane, r_lane, APPROACH_CUTOFF)
-        l_travel = APPROACH_CUTOFF
-    if r_travel < APPROACH_START:
-        r_lane = remap(r_travel, l_travel, r_lane, l_lane, APPROACH_START)
-        r_travel = APPROACH_START
-    elif r_travel > APPROACH_CUTOFF:
-        r_lane = remap(r_travel, l_travel, r_lane, l_lane, APPROACH_CUTOFF)
-        r_travel = APPROACH_CUTOFF
     return Quad(
         bl=perspective_vec(l_lane, l_travel - NOTE_H, l_travel),
         br=perspective_vec(r_lane, r_travel - NOTE_H, r_travel),

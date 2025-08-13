@@ -6,7 +6,7 @@ from sonolus.script.runtime import time
 
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
-    PROGRESS_CUTOFF,
+    Layout,
     approach,
     get_alpha,
     layout_flick_arrow,
@@ -90,7 +90,7 @@ class Direction(IntEnum):
 
 
 def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: int, target_time: float):
-    if not 0 <= progress <= PROGRESS_CUTOFF:
+    if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
     match kind:
@@ -133,36 +133,36 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
         case NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
             draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE:
-            draw_regular_note_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
             draw_tick(normal_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
             draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE_FLICK:
-            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
             draw_tick(flick_tick_sprites, lane, travel, target_time)
             draw_note_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.CRITICAL_TRACE_FLICK:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
             draw_tick(critical_tick_sprites, lane, travel, target_time)
             draw_note_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.UNMARKED_TRACE_FLICK:
-            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
             # No tick or arrow for unmarked trace flicks
         case NoteKind.TRACE_SLIDE:
-            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
             draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE_SLIDE:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
             draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE_SLIDE_END:
-            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
             draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE_SLIDE_END:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
             draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.DAMAGE:
-            draw_regular_note_body(damage_note_body_sprites, lane, size, travel, target_time)
+            draw_slim_note_body(damage_note_body_sprites, lane, size, travel, target_time)
         case _:
             assert_never(kind)
 

@@ -9,7 +9,7 @@ from sonolus.script.runtime import time
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layer import LAYER_NOTE_CONNECTOR, LAYER_NOTE_CONNECTOR_CRITICAL, LAYER_NOTE_GUIDE, get_z
 from sekai.lib.layout import (
-    PROGRESS_CUTOFF,
+    Layout,
     approach,
     get_alpha,
     layout_slide_connector_segment,
@@ -30,7 +30,7 @@ from sekai.lib.skin import (
     yellow_guide_sprites,
 )
 
-CONNECTOR_QUALITY_SCALE = 2.5
+CONNECTOR_QUALITY_SCALE = 1.5
 
 
 class SlideConnectorKind(IntEnum):
@@ -129,9 +129,9 @@ def draw_connector(
     progress_b: float,
     target_time_b: float,
 ):
-    if progress_a < 0 and progress_b < 0:
+    if progress_a < Layout.progress_start and progress_b < Layout.progress_start:
         return
-    if progress_a > PROGRESS_CUTOFF and progress_b > PROGRESS_CUTOFF:
+    if progress_a > Layout.progress_cutoff and progress_b > Layout.progress_cutoff:
         return
     if progress_a == progress_b:
         return
@@ -140,8 +140,8 @@ def draw_connector(
 
     sprites = get_connector_sprites(kind)
 
-    start_progress = clamp(progress_a, 0, PROGRESS_CUTOFF) if time() < target_time_a else 1
-    end_progress = clamp(progress_b, 0, PROGRESS_CUTOFF)
+    start_progress = clamp(progress_a if time() < target_time_a else 1, Layout.progress_start, Layout.progress_cutoff)
+    end_progress = clamp(progress_b, Layout.progress_start, Layout.progress_cutoff)
     start_frac = unlerp(progress_a, progress_b, start_progress)
     end_frac = unlerp(progress_a, progress_b, end_progress)
 
@@ -156,7 +156,7 @@ def draw_connector(
 
     last_travel = start_travel
     last_lane = start_lane
-    last_size = lerp(size_a, size_b, ease(ease_type, start_frac))
+    last_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, start_frac)))
     last_target_time = lerp(target_time_a, target_time_b, start_frac)
 
     z = get_z(
@@ -170,7 +170,7 @@ def draw_connector(
         next_progress = lerp(progress_a, progress_b, next_frac)
         next_travel = approach(next_progress)
         next_lane = lerp(lane_a, lane_b, ease(ease_type, next_frac))
-        next_size = lerp(size_a, size_b, ease(ease_type, next_frac))
+        next_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, next_frac)))  # Lightweight rendering needs >0 size.
         next_target_time = lerp(target_time_a, target_time_b, next_frac)
 
         base_a = get_alpha((last_target_time + next_target_time) / 2) * Options.connector_alpha
@@ -188,7 +188,7 @@ def draw_connector(
             if Options.connector_animation and visual_state == SlideVisualState.ACTIVE:
                 active_a = ease_out_cubic((sin(time() * 2 * pi) + 1) / 2)
                 sprites.active.draw(layout, z=z, a=base_a * active_a)
-                sprites.normal.draw(layout, z=z + 1e-3, a=base_a * (1 - active_a))
+                sprites.normal.draw(layout, z=z + 1, a=base_a * (1 - active_a))
             else:
                 sprites.normal.draw(layout, z=z, a=base_a * (1 if visual_state != SlideVisualState.INACTIVE else 0.5))
         else:
@@ -216,9 +216,9 @@ def draw_guide(
     overall_progress_b: float,
     target_time_b: float,
 ):
-    if progress_a < 0 and progress_b < 0:
+    if progress_a < Layout.progress_start and progress_b < Layout.progress_start:
         return
-    if progress_a > PROGRESS_CUTOFF and progress_b > PROGRESS_CUTOFF:
+    if progress_a > Layout.progress_cutoff and progress_b > Layout.progress_cutoff:
         return
     if progress_a == progress_b:
         return
@@ -227,8 +227,8 @@ def draw_guide(
 
     sprites = get_guide_sprites(color)
 
-    start_progress = clamp(progress_a, 0, PROGRESS_CUTOFF) if time() < target_time_a else 1
-    end_progress = clamp(progress_b, 0, PROGRESS_CUTOFF)
+    start_progress = clamp(progress_a if time() < target_time_a else 1, Layout.progress_start, Layout.progress_cutoff)
+    end_progress = clamp(progress_b, Layout.progress_start, Layout.progress_cutoff)
     start_frac = unlerp(progress_a, progress_b, start_progress)
     end_frac = unlerp(progress_a, progress_b, end_progress)
 

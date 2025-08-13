@@ -2,6 +2,7 @@ from sekai.lib.layer import LAYER_BACKGROUND_COVER, LAYER_COVER, LAYER_JUDGMENT_
 from sekai.lib.layout import (
     layout_background_dim,
     layout_fallback_judge_line,
+    layout_hidden_cover,
     layout_lane,
     layout_lane_by_edges,
     layout_sekai_stage,
@@ -44,10 +45,12 @@ def draw_fallback_stage():
 
 
 def draw_stage_cover():
-    if Options.stage_cover <= 0:
-        return
-    layout = layout_stage_cover()
-    Skin.cover.draw(layout, z=get_z(LAYER_COVER))
+    if Options.stage_cover > 0:
+        layout = layout_stage_cover()
+        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
+    if Options.hidden > 0:
+        layout = layout_hidden_cover()
+        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
 
 
 def draw_background_dim():

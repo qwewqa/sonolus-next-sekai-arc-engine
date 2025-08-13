@@ -1,13 +1,11 @@
 from sonolus.script.array import Array, Dim
 from sonolus.script.interval import clamp
 from sonolus.script.record import Record
-from sonolus.script.sprite import RenderMode, Sprite, StandardSprite, skin, sprite
+from sonolus.script.sprite import Sprite, StandardSprite, skin, sprite
 
 
 @skin
 class Skin:
-    render_mode = RenderMode.STANDARD
-
     cover: StandardSprite.STAGE_COVER
 
     lane: StandardSprite.LANE
