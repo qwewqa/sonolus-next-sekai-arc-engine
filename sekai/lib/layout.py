@@ -1,13 +1,12 @@
-from math import pi
+from math import log, pi
 
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, lerp, remap, unlerp
+from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
 from sonolus.script.transform import Transform2d
 from sonolus.script.vec import Vec2
 
-from sekai.lib.ease import EaseType, ease
 from sekai.lib.options import Options
 
 LANE_T = 47 / 850
@@ -29,9 +28,9 @@ APPROACH_START = 1.06**-45
 
 # Value above 1 where we cut off drawing sprites. Doesn't really matter as long as it's high enough,
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
-APPROACH_CUTOFF = 2
+APPROACH_CUTOFF = 2.5
 
-CONNECTOR_QUALITY_MULTIPLIER = 2
+PROGRESS_CUTOFF = 1 - log(APPROACH_CUTOFF, APPROACH_START)
 
 
 @level_data
@@ -64,12 +63,12 @@ def init_layout():
     Layout.transform = Transform2d.new().scale(Vec2(Layout.w_scale, Layout.h_scale)).translate(Vec2(0, t))
 
 
-def approach(from_time: float, to_time: float, now: float) -> float:
-    return APPROACH_START ** remap(from_time, to_time, 1, 0, now)
+def approach(progress: float) -> float:
+    return APPROACH_START ** (1 - progress)
 
 
-def approach_to(to_time: float, now: float) -> float:
-    return approach(to_time - preempt_time(), to_time, now)
+def progress_to(to_time: float, now: float) -> float:
+    return unlerp(to_time - preempt_time(), to_time, now)
 
 
 def preempt_time() -> float:
@@ -85,9 +84,9 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
         # negative timescale.
         if now is None:
             now = time()
-        change_point = approach(0, 1, 1 - Options.hidden)
-        progress = approach_to(target_time, now)
-        return remap(change_point - 0.05, change_point + 0.05, 1, 0, progress)
+        progress = progress_to(target_time, now)
+        change_progress = 1 - Options.hidden
+        return remap_clamped(change_progress - 0.05, change_progress + 0.05, 1, 0, progress)
     return 1.0
 
 
@@ -99,25 +98,25 @@ def transform_quad(q: QuadLike) -> Quad:
     return Layout.transform.transform_quad(q)
 
 
-def vec_at(lane: float, progress: float) -> Vec2:
-    return transform_vec(Vec2(lane * progress, progress))
+def transformed_vec_at(lane: float, travel: float) -> Vec2:
+    return transform_vec(Vec2(lane * travel, travel))
 
 
 def touch_x_to_lane(x: float) -> float:
     return x / Layout.w_scale
 
 
-def perspective_vec(x: float, y: float, progress: float = 1.0) -> Vec2:
-    return transform_vec(Vec2(x * y * progress, y * progress))
+def perspective_vec(x: float, y: float, travel: float = 1.0) -> Vec2:
+    return transform_vec(Vec2(x * y * travel, y * travel))
 
 
-def perspective_rect(l: float, r: float, t: float, b: float, progress: float = 1.0) -> Quad:
+def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0) -> Quad:
     return transform_quad(
         Quad(
-            bl=Vec2(l * b * progress, b * progress),
-            br=Vec2(r * b * progress, b * progress),
-            tl=Vec2(l * t * progress, t * progress),
-            tr=Vec2(r * t * progress, t * progress),
+            bl=Vec2(l * b * travel, b * travel),
+            br=Vec2(r * b * travel, b * travel),
+            tl=Vec2(l * t * travel, t * travel),
+            tr=Vec2(r * t * travel, t * travel),
         )
     )
 
@@ -154,12 +153,12 @@ def layout_fallback_judge_line() -> Quad:
     return perspective_rect(l=-6, r=6, t=1 - NOTE_H, b=1 + NOTE_H)
 
 
-def layout_note_body_by_edges(l: float, r: float, h: float, progress: float):
-    return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, progress=progress)
+def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
+    return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel)
 
 
 def layout_note_body_slices_by_edges(
-    l: float, r: float, h: float, edge_w: float, progress: float
+    l: float, r: float, h: float, edge_w: float, travel: float
 ) -> tuple[Quad, Quad, Quad]:
     m = (l + r) / 2
     if r < l:
@@ -168,63 +167,63 @@ def layout_note_body_slices_by_edges(
     ml = min(l + edge_w, m)
     mr = max(r - edge_w, m)
     return (
-        layout_note_body_by_edges(l=l, r=ml, h=h, progress=progress),
-        layout_note_body_by_edges(l=ml, r=mr, h=h, progress=progress),
-        layout_note_body_by_edges(l=mr, r=r, h=h, progress=progress),
+        layout_note_body_by_edges(l=l, r=ml, h=h, travel=travel),
+        layout_note_body_by_edges(l=ml, r=mr, h=h, travel=travel),
+        layout_note_body_by_edges(l=mr, r=r, h=h, travel=travel),
     )
 
 
-def layout_regular_note_body(lane: float, size: float, progress: float) -> tuple[Quad, Quad, Quad]:
+def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=NOTE_H,
         edge_w=NOTE_EDGE_W,
-        progress=progress,
+        travel=travel,
     )
 
 
-def layout_regular_note_body_fallback(lane: float, size: float, progress: float) -> Quad:
+def layout_regular_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
     return layout_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=NOTE_H,
-        progress=progress,
+        travel=travel,
     )
 
 
-def layout_slim_note_body(lane: float, size: float, progress: float) -> tuple[Quad, Quad, Quad]:
+def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=NOTE_H,  # Height is handled by the sprite rather than being changed here
         edge_w=NOTE_SLIM_EDGE_W,
-        progress=progress,
+        travel=travel,
     )
 
 
-def layout_slim_note_body_fallback(lane: float, size: float, progress: float) -> Quad:
+def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
     return layout_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=NOTE_H / 2,  # For fallback, we need to halve the height manually engine-side
-        progress=progress,
+        travel=travel,
     )
 
 
-def layout_tick(lane: float, progress: float) -> Rect:
-    center = transform_vec(Vec2(lane, 1) * progress)
-    return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * progress)
+def layout_tick(lane: float, travel: float) -> Rect:
+    center = transform_vec(Vec2(lane, 1) * travel)
+    return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * travel)
 
 
-def layout_flick_arrow(lane: float, size: float, direction: int, progress: float, animation_progress: float):
+def layout_flick_arrow(lane: float, size: float, direction: int, travel: float, animation_progress: float):
     w = clamp(size, 0, 3) * (1 if -direction >= 0 else -1) / 2
-    base_bl = transform_vec(Vec2(lane - w, 1) * progress)
-    base_br = transform_vec(Vec2(lane + w, 1) * progress)
+    base_bl = transform_vec(Vec2(lane - w, 1) * travel)
+    base_br = transform_vec(Vec2(lane + w, 1) * travel)
     up = (base_br - base_bl).rotate(pi / 2 if -direction >= 0 else -pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
-    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * progress
+    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * travel
     return Quad(
         bl=base_bl,
         br=base_br,
@@ -233,15 +232,15 @@ def layout_flick_arrow(lane: float, size: float, direction: int, progress: float
     ).translate(offset)
 
 
-def layout_flick_arrow_fallback(lane: float, size: float, direction: int, progress: float, animation_progress: float):
+def layout_flick_arrow_fallback(lane: float, size: float, direction: int, travel: float, animation_progress: float):
     w = clamp(size / 2, 1, 2)
-    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * progress
+    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * travel
     return (
         Rect(l=-1, r=1, t=1, b=-1)
         .as_quad()
         .rotate(-pi / 6 * direction)
-        .scale(Vec2(w, w) * Layout.w_scale * progress)
-        .translate(transform_vec(Vec2(lane, 1) * progress))
+        .scale(Vec2(w, w) * Layout.w_scale * travel)
+        .translate(transform_vec(Vec2(lane, 1) * travel))
         .translate(offset)
     )
 
@@ -301,65 +300,51 @@ def layout_circular_effect(lane: float, w: float, h: float):
 def layout_slide_connector_segment(
     start_lane: float,
     start_size: float,
-    start_progress: float,
+    start_travel: float,
     end_lane: float,
     end_size: float,
-    end_progress: float,
+    end_travel: float,
 ) -> Quad:
-    if start_progress < end_progress:
+    if start_travel < end_travel:
         start_lane, end_lane = end_lane, start_lane
         start_size, end_size = end_size, start_size
-        start_progress, end_progress = end_progress, start_progress
+        start_travel, end_travel = end_travel, start_travel
     return transform_quad(
         Quad(
-            bl=vec_at(start_lane - start_size, start_progress),
-            br=vec_at(start_lane + start_size, start_progress),
-            tl=vec_at(end_lane - end_size, end_progress),
-            tr=vec_at(end_lane + end_size, end_progress),
+            bl=Vec2(start_lane - start_size, 1) * start_travel,
+            br=Vec2(start_lane + start_size, 1) * start_travel,
+            tl=Vec2(end_lane - end_size, 1) * end_travel,
+            tr=Vec2(end_lane + end_size, 1) * end_travel,
         )
     )
 
 
-def slide_interpolate(
-    start_lane: float,
-    start_size: float,
-    start_progress: float,
-    end_lane: float,
-    end_size: float,
-    end_progress: float,
-    ease_type: EaseType,
-    progress: float,
-) -> tuple[float, float, float]:
-    eased = ease(ease_type, unlerp(start_progress, end_progress, progress))
-    return lerp(start_lane, end_lane, eased), lerp(start_size, end_size, eased), progress
-
-
 def layout_sim_line(
     l_lane: float,
-    l_progress: float,
+    l_travel: float,
     r_lane: float,
-    r_progress: float,
+    r_travel: float,
 ) -> Quad:
     if l_lane > r_lane:
         l_lane, r_lane = r_lane, l_lane
-        l_progress, r_progress = r_progress, l_progress
-    if l_progress < APPROACH_START:
-        l_lane = remap(l_progress, r_progress, l_lane, r_lane, APPROACH_START)
-        l_progress = APPROACH_START
-    elif l_progress > APPROACH_CUTOFF:
-        l_lane = remap(l_progress, r_progress, l_lane, r_lane, APPROACH_CUTOFF)
-        l_progress = APPROACH_CUTOFF
-    if r_progress < APPROACH_START:
-        r_lane = remap(r_progress, l_progress, r_lane, l_lane, APPROACH_START)
-        r_progress = APPROACH_START
-    elif r_progress > APPROACH_CUTOFF:
-        r_lane = remap(r_progress, l_progress, r_lane, l_lane, APPROACH_CUTOFF)
-        r_progress = APPROACH_CUTOFF
+        l_travel, r_travel = r_travel, l_travel
+    if l_travel < APPROACH_START:
+        l_lane = remap(l_travel, r_travel, l_lane, r_lane, APPROACH_START)
+        l_travel = APPROACH_START
+    elif l_travel > APPROACH_CUTOFF:
+        l_lane = remap(l_travel, r_travel, l_lane, r_lane, APPROACH_CUTOFF)
+        l_travel = APPROACH_CUTOFF
+    if r_travel < APPROACH_START:
+        r_lane = remap(r_travel, l_travel, r_lane, l_lane, APPROACH_START)
+        r_travel = APPROACH_START
+    elif r_travel > APPROACH_CUTOFF:
+        r_lane = remap(r_travel, l_travel, r_lane, l_lane, APPROACH_CUTOFF)
+        r_travel = APPROACH_CUTOFF
     return Quad(
-        bl=perspective_vec(l_lane, l_progress - NOTE_H, l_progress),
-        br=perspective_vec(r_lane, r_progress - NOTE_H, r_progress),
-        tl=perspective_vec(l_lane, l_progress + NOTE_H, l_progress),
-        tr=perspective_vec(r_lane, r_progress + NOTE_H, r_progress),
+        bl=perspective_vec(l_lane, l_travel - NOTE_H, l_travel),
+        br=perspective_vec(r_lane, r_travel - NOTE_H, r_travel),
+        tl=perspective_vec(l_lane, l_travel + NOTE_H, l_travel),
+        tr=perspective_vec(r_lane, r_travel + NOTE_H, r_travel),
     )
 
 

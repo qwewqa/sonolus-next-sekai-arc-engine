@@ -1,11 +1,13 @@
 from sonolus.script.array import Array, Dim
 from sonolus.script.interval import clamp
 from sonolus.script.record import Record
-from sonolus.script.sprite import Sprite, StandardSprite, skin, sprite
+from sonolus.script.sprite import RenderMode, Sprite, StandardSprite, skin, sprite
 
 
 @skin
 class Skin:
+    render_mode = RenderMode.STANDARD
+
     cover: StandardSprite.STAGE_COVER
 
     lane: StandardSprite.LANE
@@ -180,6 +182,19 @@ class ConnectorSprites(Record):
     active: Sprite
     fallback: Sprite
 
+    @property
+    def custom_available(self):
+        return self.normal.is_available
+
+
+class GuideSprites(Record):
+    normal: Sprite
+    fallback: Sprite
+
+    @property
+    def custom_available(self):
+        return self.normal.is_available
+
 
 normal_note_body_sprites = BodySprites(
     left=Skin.normal_note_left,
@@ -295,4 +310,37 @@ critical_slide_connector_sprites = ConnectorSprites(
     normal=Skin.critical_slide_connector_normal,
     active=Skin.critical_slide_connector_active,
     fallback=Skin.critical_slide_connector_fallback,
+)
+
+neutral_guide_sprites = GuideSprites(
+    normal=Skin.guide_neutral,
+    fallback=Skin.guide_neutral_fallback,
+)
+red_guide_sprites = GuideSprites(
+    normal=Skin.guide_red,
+    fallback=Skin.guide_red_fallback,
+)
+green_guide_sprites = GuideSprites(
+    normal=Skin.guide_green,
+    fallback=Skin.guide_green_fallback,
+)
+blue_guide_sprites = GuideSprites(
+    normal=Skin.guide_blue,
+    fallback=Skin.guide_blue_fallback,
+)
+yellow_guide_sprites = GuideSprites(
+    normal=Skin.guide_yellow,
+    fallback=Skin.guide_yellow_fallback,
+)
+purple_guide_sprites = GuideSprites(
+    normal=Skin.guide_purple,
+    fallback=Skin.guide_purple_fallback,
+)
+cyan_guide_sprites = GuideSprites(
+    normal=Skin.guide_cyan,
+    fallback=Skin.guide_cyan_fallback,
+)
+black_guide_sprites = GuideSprites(
+    normal=Skin.guide_black,
+    fallback=Skin.guide_black_fallback,
 )

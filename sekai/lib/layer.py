@@ -6,7 +6,8 @@ LAYER_SLOT_EFFECT = 50
 
 LAYER_SIM_LINE = 90
 
-LAYER_NOTE_CONNECTOR = 97
+LAYER_NOTE_CONNECTOR = 96
+LAYER_NOTE_CONNECTOR_CRITICAL = 97
 LAYER_NOTE_GUIDE = 98
 LAYER_NOTE_SLIDE = 99
 LAYER_NOTE_SLIM_BODY = 100
@@ -19,5 +20,5 @@ LAYER_SLOT_GLOW_EFFECT = 200
 LAYER_COVER = 1000
 
 
-def get_z(layer: int, time: float = 0.0, lane: float = 0.0) -> float:
-    return layer * 10 - time / 1000 - lane / 100000
+def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0) -> float:
+    return layer * 10 - time / 1000 - lane / 100000 + etc / 1000

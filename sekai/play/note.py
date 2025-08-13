@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import cast
 
 from sonolus.script.archetype import EntityRef, PlayArchetype, StandardImport, entity_data, imported
@@ -5,10 +7,11 @@ from sonolus.script.interval import Interval
 from sonolus.script.runtime import time
 from sonolus.script.timing import beat_to_time
 
-from sekai.lib.layout import approach_to, preempt_time
+from sekai.lib.layout import preempt_time, progress_to
 from sekai.lib.note import NoteKind, draw_note
 from sekai.lib.options import Options
 from sekai.lib.timescale import extended_scaled_time, extended_scaled_time_to_first_time, extended_time_to_scaled_time
+from sekai.play import connector
 from sekai.play.timescale import TimescaleGroup
 
 
@@ -17,8 +20,8 @@ class BaseNote(PlayArchetype):
     lane: float = imported()
     size: float = imported()
     direction: int = imported()
-    slide_ref: int = imported(name="slide")
-    attach_ref: int = imported(name="attach")
+    slide_ref: EntityRef[connector.BaseSlideConnector] = imported(name="slide")
+    attach_ref: EntityRef[connector.BaseSlideConnector] = imported(name="attach")
     timescale_group_ref: EntityRef[TimescaleGroup] = imported(name="timeScaleGroup")
 
     target_time: float = entity_data()
@@ -61,7 +64,7 @@ class BaseNote(PlayArchetype):
 
     @property
     def progress(self) -> float:
-        return approach_to(self.visual_interval.end, extended_scaled_time(self.timescale_group_ref))
+        return progress_to(self.visual_interval.end, extended_scaled_time(self.timescale_group_ref))
 
 
 NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.TAP)

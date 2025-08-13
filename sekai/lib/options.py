@@ -142,7 +142,7 @@ class Options:
         scope="Sekai+",
         default=True,
     )
-    slide_quality: float = slider_option(
+    slide_quality: int = slider_option(
         name="Slide Quality",
         scope="Sekai+",
         default=10,
@@ -150,7 +150,7 @@ class Options:
         max=50,
         step=1,
     )
-    guide_quality: float = slider_option(
+    guide_quality: int = slider_option(
         name="Guide Quality",
         scope="Sekai+",
         default=10,

@@ -6,8 +6,8 @@ from sonolus.script.runtime import time
 
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
-    APPROACH_CUTOFF,
-    APPROACH_START,
+    PROGRESS_CUTOFF,
+    approach,
     get_alpha,
     layout_flick_arrow,
     layout_flick_arrow_fallback,
@@ -90,127 +90,126 @@ class Direction(IntEnum):
 
 
 def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: int, target_time: float):
-    if not APPROACH_START <= progress <= APPROACH_CUTOFF:
+    if not 0 <= progress <= PROGRESS_CUTOFF:
         return
+    travel = approach(progress)
     match kind:
         case NoteKind.TAP:
-            draw_regular_note_body(normal_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(normal_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.CRITICAL_TAP:
-            draw_regular_note_body(critical_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(critical_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.FLICK:
-            draw_regular_note_body(flick_note_body_sprites, lane, size, progress, target_time)
-            draw_note_arrow(normal_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(flick_note_body_sprites, lane, size, travel, target_time)
+            draw_note_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.CRITICAL_FLICK:
-            draw_regular_note_body(critical_note_body_sprites, lane, size, progress, target_time)
-            draw_note_arrow(critical_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(critical_note_body_sprites, lane, size, travel, target_time)
+            draw_note_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.SLIDE_START:
-            draw_regular_note_body(slide_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(slide_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.CRITICAL_SLIDE_START:
-            draw_regular_note_body(critical_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(critical_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.HIDDEN_SLIDE_START:
             pass
         case NoteKind.SLIDE_END:
-            draw_regular_note_body(slide_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(slide_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.CRITICAL_SLIDE_END:
-            draw_regular_note_body(critical_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(critical_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.SLIDE_END_FLICK:
-            draw_regular_note_body(flick_note_body_sprites, lane, size, progress, target_time)
-            draw_note_arrow(normal_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(flick_note_body_sprites, lane, size, travel, target_time)
+            draw_note_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.CRITICAL_SLIDE_END_FLICK:
-            draw_regular_note_body(critical_note_body_sprites, lane, size, progress, target_time)
-            draw_note_arrow(critical_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(critical_note_body_sprites, lane, size, travel, target_time)
+            draw_note_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.SLIDE_TICK:
-            draw_tick(slide_tick_sprites, lane, progress, target_time)
+            draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_SLIDE_TICK:
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.HIDDEN_SLIDE_TICK:
             pass
         case NoteKind.IGNORED_SLIDE_TICK:
             pass
         case NoteKind.ATTACHED_SLIDE_TICK:
-            draw_tick(slide_tick_sprites, lane, progress, target_time)
+            draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE:
-            draw_regular_note_body(normal_trace_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(normal_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(normal_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE_FLICK:
-            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(flick_tick_sprites, lane, progress, target_time)
-            draw_note_arrow(normal_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(flick_tick_sprites, lane, travel, target_time)
+            draw_note_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.CRITICAL_TRACE_FLICK:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
-            draw_note_arrow(critical_arrow_sprites, lane, size, progress, target_time, direction)
+            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
+            draw_note_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
         case NoteKind.UNMARKED_TRACE_FLICK:
-            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
             # No tick or arrow for unmarked trace flicks
         case NoteKind.TRACE_SLIDE:
-            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(slide_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE_SLIDE:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.TRACE_SLIDE_END:
-            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(slide_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_TRACE_SLIDE_END:
-            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, progress, target_time)
-            draw_tick(critical_tick_sprites, lane, progress, target_time)
+            draw_regular_note_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
+            draw_tick(critical_tick_sprites, lane, travel, target_time)
         case NoteKind.DAMAGE:
-            draw_regular_note_body(damage_note_body_sprites, lane, size, progress, target_time)
+            draw_regular_note_body(damage_note_body_sprites, lane, size, travel, target_time)
         case _:
             assert_never(kind)
 
 
-def draw_regular_note_body(sprites: BodySprites, lane: float, size: float, progress: float, target_time: float):
+def draw_regular_note_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
     z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
-        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, progress)
+        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
         sprites.middle.draw(middle_layout, z=z, a=a)
         sprites.right.draw(right_layout, z=z, a=a)
     else:
-        layout = layout_regular_note_body_fallback(lane, size, progress)
+        layout = layout_regular_note_body_fallback(lane, size, travel)
         sprites.fallback.draw(layout, z=z, a=a)
 
 
-def draw_slim_note_body(sprites: BodySprites, lane: float, size: float, progress: float, target_time: float):
+def draw_slim_note_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
     z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
-        left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, progress)
+        left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
         sprites.middle.draw(middle_layout, z=z, a=a)
         sprites.right.draw(right_layout, z=z, a=a)
     else:
-        layout = layout_slim_note_body_fallback(lane, size, progress)
+        layout = layout_slim_note_body_fallback(lane, size, travel)
         sprites.fallback.draw(layout, z=z, a=a)
 
 
-def draw_tick(sprites: TickSprites, lane: float, progress: float, target_time: float):
+def draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: float):
     a = get_alpha(target_time)
     z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
-    layout = layout_tick(lane, progress)
+    layout = layout_tick(lane, travel)
     if sprites.custom_available:
         sprites.normal.draw(layout, z=z, a=a)
     else:
         sprites.fallback.draw(layout, z=z, a=a)
 
 
-def draw_note_arrow(
-    sprites: ArrowSprites, lane: float, size: float, progress: float, target_time: float, direction: int
-):
+def draw_note_arrow(sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: int):
     animation_progress = (time() / FLICK_ARROW_PERIOD) % 1 if Options.marker_animation else 0
     a = get_alpha(target_time) * (1 - ease_in_cubic(animation_progress))
     z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
     if sprites.custom_available:
-        layout = layout_flick_arrow(lane, size, direction, progress, animation_progress)
+        layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
         sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
     else:
-        layout = layout_flick_arrow_fallback(lane, size, direction, progress, animation_progress)
+        layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
         sprites.fallback.draw(layout, z=z, a=a)
