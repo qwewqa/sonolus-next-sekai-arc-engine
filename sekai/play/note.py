@@ -56,6 +56,9 @@ class BaseNote(PlayArchetype):
         return time() >= self.spawn_time
 
     def update_parallel(self):
+        if time() >= self.target_time:
+            self.despawn = True
+            return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     @property

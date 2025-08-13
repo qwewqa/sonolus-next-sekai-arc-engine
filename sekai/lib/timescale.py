@@ -5,6 +5,7 @@ from typing import Protocol, cast
 
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.interval import remap
+from sonolus.script.record import Record
 from sonolus.script.timing import beat_to_time
 
 TIMESCALE_CHANGE_NAME = "TimeScaleChange"
@@ -19,6 +20,9 @@ class TimescaleChangeLike(Protocol):
     @classmethod
     def at(cls, index: int) -> TimescaleChangeLike: ...
 
+    @property
+    def index(self) -> int: ...
+
 
 class TimescaleGroupLike(Protocol):
     first: EntityRef
@@ -26,6 +30,38 @@ class TimescaleGroupLike(Protocol):
 
     @classmethod
     def at(cls, index: int) -> TimescaleGroupLike: ...
+
+
+class CachedTimescaleGroupState(Record):
+    last_timescale: float
+    last_time: float
+    last_scaled_time: float
+    first_change_index: int
+    next_change_index: int
+
+    def init(self, next_index: int):
+        self.last_timescale = 1.0
+        self.last_time = 0.0
+        self.last_scaled_time = 0.0
+        self.first_change_index = next_index
+        self.next_change_index = next_index
+
+    def get(self, time: float) -> float:
+        if time < self.last_time:
+            self.init(self.first_change_index)
+        for change in iter_timescale_changes(self.next_change_index):
+            next_timescale = change.timescale
+            next_time = beat_to_time(change.beat)
+            next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
+            if time <= next_time:
+                if (next_time - self.last_time) < 1e-6:
+                    return self.last_scaled_time
+                return remap(self.last_time, next_time, self.last_scaled_time, next_scaled_time, time)
+            self.last_timescale = next_timescale
+            self.last_time = next_time
+            self.last_scaled_time = next_scaled_time
+            self.next_change_index = change.next.index
+        return self.last_scaled_time + (time - self.last_time) * self.last_timescale
 
 
 def timescale_change_archetype() -> type[TimescaleChangeLike]:
@@ -36,8 +72,7 @@ def timescale_group_archetype() -> type[TimescaleGroupLike]:
     return cast(type[TimescaleGroupLike], get_archetype_by_name(TIMESCALE_GROUP_NAME))
 
 
-def iter_timescale_changes(group_index: int) -> Iterator[TimescaleChangeLike]:
-    index = timescale_group_archetype().at(group_index).first.index
+def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:
     while True:
         if index <= 0:
             return
@@ -65,7 +100,8 @@ def extended_time_to_scaled_time(
     last_timescale = 1.0
     last_time = 0.0
     last_scaled_time = 0.0
-    for change in iter_timescale_changes(group):
+    first_index = timescale_group_archetype().at(group).first.index
+    for change in iter_timescale_changes(first_index):
         next_timescale = change.timescale
         next_time = beat_to_time(change.beat)
         next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale
@@ -94,7 +130,8 @@ def extended_scaled_time_to_first_time(
     last_timescale = 1.0
     last_time = 0.0
     last_scaled_time = 0.0
-    for change in iter_timescale_changes(group):
+    first_index = timescale_group_archetype().at(group).first.index
+    for change in iter_timescale_changes(first_index):
         next_timescale = change.timescale
         next_time = beat_to_time(change.beat)
         next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale

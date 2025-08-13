@@ -4,7 +4,7 @@ from typing import assert_never
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.runtime import time
 
-from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_TICK, get_z
+from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
     PROGRESS_CUTOFF,
     approach,
@@ -182,7 +182,7 @@ def draw_regular_note_body(sprites: BodySprites, lane: float, size: float, trave
 
 def draw_slim_note_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
