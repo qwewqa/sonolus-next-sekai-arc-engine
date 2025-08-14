@@ -10,7 +10,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib.layout import preempt_time, progress_to
 from sekai.lib.note import NoteKind, draw_note
 from sekai.lib.options import Options
-from sekai.lib.timescale import extended_scaled_time, extended_scaled_time_to_first_time, extended_time_to_scaled_time
+from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import connector
 from sekai.play.timescale import TimescaleGroup
 
@@ -24,34 +24,50 @@ class BaseNote(PlayArchetype):
     attach_ref: EntityRef[connector.BaseSlideConnector] = imported(name="attach")
     timescale_group_ref: EntityRef[TimescaleGroup] = imported(name="timeScaleGroup")
 
+    data_init_done: bool = entity_data()
     target_time: float = entity_data()
     spawn_time: float = entity_data()
-    visual_interval: Interval = entity_data()
+    start_scaled_time: float = entity_data()
+    target_scaled_time: float = entity_data()
     input_interval: Interval = entity_data()
 
     @classmethod
     def global_preprocess(cls):
         pass
 
-    def preprocess(self):
+    def init_data(self):
+        if self.data_init_done:
+            return
+
+        self.data_init_done = True
+
         if Options.mirror:
             self.lane *= -1
             self.direction *= -1
 
         self.target_time = beat_to_time(self.beat)
-        self.visual_interval.end = extended_time_to_scaled_time(self.timescale_group_ref, self.target_time)
-        self.visual_interval.start = self.visual_interval.end - preempt_time()
+        self.target_scaled_time = group_time_to_scaled_time(self.timescale_group_ref, self.target_time)
+        self.start_scaled_time = self.target_scaled_time - preempt_time()
 
         # TODO: handle input interval and take min
-        self.spawn_time = extended_scaled_time_to_first_time(self.timescale_group_ref, self.visual_interval.start)
+        self.spawn_time = group_scaled_time_to_first_time(self.timescale_group_ref, self.start_scaled_time)
+
+    def preprocess(self):
+        self.init_data()
+
+        match self.kind:
+            case NoteKind.INVISIBLE_SLIDE_TICK | NoteKind.ATTACHED_SLIDE_TICK | NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
+                lane, size = self.attach_ref.get().get_attached(self.target_time)
+                self.lane = lane
+                self.size = size
 
     def spawn_order(self) -> float:
-        if self.kind == NoteKind.IGNORED_SLIDE_TICK:
+        if self.kind == NoteKind.SLIDE_ANCHOR:
             return 1e8
         return self.spawn_time
 
     def should_spawn(self) -> bool:
-        if self.kind == NoteKind.IGNORED_SLIDE_TICK:
+        if self.kind == NoteKind.SLIDE_ANCHOR:
             return False
         return time() >= self.spawn_time
 
@@ -67,7 +83,7 @@ class BaseNote(PlayArchetype):
 
     @property
     def progress(self) -> float:
-        return progress_to(self.visual_interval.end, extended_scaled_time(self.timescale_group_ref))
+        return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group_ref))
 
 
 NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.TAP)
@@ -100,10 +116,10 @@ NormalSlideEndFlickNote = BaseNote.derive("NormalSlideEndFlickNote", is_scored=T
 CriticalSlideEndFlickNote = BaseNote.derive(
     "CriticalSlideEndFlickNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_END_FLICK
 )
-IgnoredSlideTickNote = BaseNote.derive("IgnoredSlideTickNote", is_scored=False, key=NoteKind.IGNORED_SLIDE_TICK)
+InvisibleSlideTickNote = BaseNote.derive("IgnoredSlideTickNote", is_scored=True, key=NoteKind.INVISIBLE_SLIDE_TICK)
 NormalSlideTickNote = BaseNote.derive("NormalSlideTickNote", is_scored=True, key=NoteKind.SLIDE_TICK)
 CriticalSlideTickNote = BaseNote.derive("CriticalSlideTickNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_TICK)
-HiddenSlideTickNote = BaseNote.derive("HiddenSlideTickNote", is_scored=True, key=NoteKind.HIDDEN_SLIDE_TICK)
+SideAnchor = BaseNote.derive("HiddenSlideTickNote", is_scored=False, key=NoteKind.SLIDE_ANCHOR)
 NormalAttachedSlideTickNote = BaseNote.derive(
     "NormalAttachedSlideTickNote", is_scored=True, key=NoteKind.ATTACHED_SLIDE_TICK
 )
@@ -135,10 +151,10 @@ ALL_NOTE_ARCHETYPES = (
     CriticalTraceSlideEndNote,
     NormalSlideEndFlickNote,
     CriticalSlideEndFlickNote,
-    IgnoredSlideTickNote,
+    InvisibleSlideTickNote,
     NormalSlideTickNote,
     CriticalSlideTickNote,
-    HiddenSlideTickNote,
+    SideAnchor,
     NormalAttachedSlideTickNote,
     CriticalAttachedSlideTickNote,
     DamageNote,

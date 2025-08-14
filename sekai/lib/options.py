@@ -172,3 +172,9 @@ class Options:
         advanced=True,
         default=False,
     )
+    disable_timescale: bool = toggle_option(
+        name="Disable Timescale",
+        standard=True,
+        advanced=True,
+        default=False,
+    )

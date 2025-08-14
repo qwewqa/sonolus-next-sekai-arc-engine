@@ -30,7 +30,7 @@ from sekai.lib.skin import (
     yellow_guide_sprites,
 )
 
-CONNECTOR_QUALITY_SCALE = 1.5
+CONNECTOR_QUALITY_SCALE = 3.0
 
 
 class SlideConnectorKind(IntEnum):
@@ -149,14 +149,24 @@ def draw_connector(
     end_travel = approach(end_progress)
     start_lane = lerp(lane_a, lane_b, ease(ease_type, start_frac))
     end_lane = lerp(lane_a, lane_b, ease(ease_type, end_frac))
+    start_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, start_frac)))  # Lightweight rendering needs >0 size.
+    end_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, end_frac)))
     start_screen_center = transformed_vec_at(start_lane, start_travel)
     end_screen_center = transformed_vec_at(end_lane, end_travel)
     dist = (end_screen_center - start_screen_center).magnitude  # Lower bound since with easing it can be longer.
-    segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
+    if not Options.fade_out and (
+        (start_lane == end_lane and start_size == end_size) or abs(start_frac - end_frac) < 1e-2
+    ):
+        # Only one segment is needed if the connector is linear or nearly linear, as is the case when start_frac and
+        # end_frac are very close or the start and end lanes and sizes are the same.
+        # Note that a linear ease is not enough because it may appear curved due to the approach function.
+        segment_count = 1
+    else:
+        segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
 
     last_travel = start_travel
     last_lane = start_lane
-    last_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, start_frac)))
+    last_size = start_size
     last_target_time = lerp(target_time_a, target_time_b, start_frac)
 
     z = get_z(
@@ -170,7 +180,7 @@ def draw_connector(
         next_progress = lerp(progress_a, progress_b, next_frac)
         next_travel = approach(next_progress)
         next_lane = lerp(lane_a, lane_b, ease(ease_type, next_frac))
-        next_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, next_frac)))  # Lightweight rendering needs >0 size.
+        next_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, next_frac)))
         next_target_time = lerp(target_time_a, target_time_b, next_frac)
 
         base_a = get_alpha((last_target_time + next_target_time) / 2) * Options.connector_alpha
@@ -236,15 +246,26 @@ def draw_guide(
     end_travel = approach(end_progress)
     start_lane = lerp(lane_a, lane_b, ease(ease_type, start_frac))
     end_lane = lerp(lane_a, lane_b, ease(ease_type, end_frac))
+    start_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, start_frac)))  # Lightweight rendering needs >0 size.
+    end_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, end_frac)))
+    start_overall_progress = lerp(overall_progress_a, overall_progress_b, start_frac)
+    end_overall_progress = lerp(overall_progress_a, overall_progress_b, end_frac)
     start_screen_center = transformed_vec_at(start_lane, start_travel)
     end_screen_center = transformed_vec_at(end_lane, end_travel)
     dist = (end_screen_center - start_screen_center).magnitude  # Lower bound since with easing it can be longer.
-    segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
+    if (
+        not Options.fade_out
+        and (fade_type == GuideFadeType.NONE or abs(start_overall_progress - end_overall_progress) < 1e-2)
+    ) and ((start_lane == end_lane and start_size == end_size) or abs(start_frac - end_frac) < 1e-2):
+        # Same logic as connectors, but we can't do this if we're fading out and the alpha is changing.
+        segment_count = 1
+    else:
+        segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
 
     last_overall_progress = lerp(overall_progress_a, overall_progress_b, start_frac)
     last_travel = start_travel
     last_lane = start_lane
-    last_size = lerp(size_a, size_b, ease(ease_type, start_frac))
+    last_size = start_size
     last_target_time = lerp(target_time_a, target_time_b, start_frac)
 
     z = get_z(
@@ -260,7 +281,7 @@ def draw_guide(
         next_overall_progress = lerp(overall_progress_a, overall_progress_b, next_frac)
         next_travel = approach(next_progress)
         next_lane = lerp(lane_a, lane_b, ease(ease_type, next_frac))
-        next_size = lerp(size_a, size_b, ease(ease_type, next_frac))
+        next_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, next_frac)))
         next_target_time = lerp(target_time_a, target_time_b, next_frac)
 
         a = get_alpha((last_target_time + next_target_time) / 2) * get_guide_alpha(
@@ -286,3 +307,27 @@ def draw_guide(
         last_lane = next_lane
         last_size = next_size
         last_target_time = next_target_time
+
+
+def get_attached(
+    ease_type: EaseType,
+    lane_a: float,
+    size_a: float,
+    progress_a: float,
+    lane_b: float,
+    size_b: float,
+    progress_b: float,
+) -> tuple[float, float]:
+    if (progress_a > 1 and progress_b > 1) or (progress_a < 1 and progress_b < 1):
+        # This is an ill-behaved connector where it's entirely above or below the judgment line when the
+        # attached tick is supposed to be at the judgment line.
+        # Charts should not do this, but we'll still do this to handle it gracefully.
+        frac = 0.5
+    elif abs(progress_a - progress_b) < 1e-6:
+        frac = 0.5
+    else:
+        frac = unlerp(progress_a, progress_b, 1)
+    eased_frac = ease(ease_type, frac)
+    lane = lerp(lane_a, lane_b, eased_frac)
+    size = lerp(size_a, size_b, eased_frac)
+    return lane, size

@@ -61,8 +61,8 @@ class NoteKind(IntEnum):
 
     SLIDE_TICK = 12
     CRITICAL_SLIDE_TICK = 13
-    HIDDEN_SLIDE_TICK = 14
-    IGNORED_SLIDE_TICK = 15
+    SLIDE_ANCHOR = 14
+    INVISIBLE_SLIDE_TICK = 15
 
     ATTACHED_SLIDE_TICK = 16
     CRITICAL_ATTACHED_SLIDE_TICK = 17
@@ -124,9 +124,9 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
             draw_tick(slide_tick_sprites, lane, travel, target_time)
         case NoteKind.CRITICAL_SLIDE_TICK:
             draw_tick(critical_tick_sprites, lane, travel, target_time)
-        case NoteKind.HIDDEN_SLIDE_TICK:
+        case NoteKind.SLIDE_ANCHOR:
             pass
-        case NoteKind.IGNORED_SLIDE_TICK:
+        case NoteKind.INVISIBLE_SLIDE_TICK:
             pass
         case NoteKind.ATTACHED_SLIDE_TICK:
             draw_tick(slide_tick_sprites, lane, travel, target_time)

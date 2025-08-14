@@ -3,10 +3,13 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Protocol, cast
 
+from sonolus.script import runtime
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.interval import remap
 from sonolus.script.record import Record
 from sonolus.script.timing import beat_to_time
+
+from sekai.lib.options import Options
 
 TIMESCALE_CHANGE_NAME = "TimeScaleChange"
 TIMESCALE_GROUP_NAME = "TimeScaleGroup"
@@ -47,6 +50,8 @@ class CachedTimescaleGroupState(Record):
         self.next_change_index = next_index
 
     def get(self, time: float) -> float:
+        if time < 0 or Options.disable_timescale:
+            return time
         if time < self.last_time:
             self.init(self.first_change_index)
         for change in iter_timescale_changes(self.next_change_index):
@@ -81,19 +86,21 @@ def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:
         index = change.next.index
 
 
-def extended_scaled_time(group: int | EntityRef):
+def group_scaled_time(group: int | EntityRef):
     if isinstance(group, EntityRef):
         group = group.index
+    if group == 0 or Options.disable_timescale:
+        return runtime.time()
     return timescale_group_archetype().at(group).current_scaled_time
 
 
-def extended_time_to_scaled_time(
+def group_time_to_scaled_time(
     group: int | EntityRef,
     time: float,
 ) -> float:
     if isinstance(group, EntityRef):
         group = group.index
-    if group == 0:
+    if group == 0 or Options.disable_timescale:
         return time
     if time < 0:
         return time
@@ -115,13 +122,13 @@ def extended_time_to_scaled_time(
     return last_scaled_time + (time - last_time) * last_timescale
 
 
-def extended_scaled_time_to_first_time(
+def group_scaled_time_to_first_time(
     group: int | EntityRef,
     scaled_time: float,
 ) -> float:
     if isinstance(group, EntityRef):
         group = group.index
-    if group == 0:
+    if group == 0 or Options.disable_timescale:
         return scaled_time
     if scaled_time < 0:
         # Since timescale is initialized to 1.0 at time 0, the first time we reach a negative scaled time

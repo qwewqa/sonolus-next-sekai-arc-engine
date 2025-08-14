@@ -14,11 +14,12 @@ from sekai.lib.connector import (
     SlideVisualState,
     draw_connector,
     draw_guide,
+    get_attached,
 )
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import preempt_time, progress_to
 from sekai.lib.options import Options
-from sekai.lib.timescale import extended_scaled_time, extended_scaled_time_to_first_time, extended_time_to_scaled_time
+from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import note
 from sekai.play.timescale import TimescaleGroup
 
@@ -62,6 +63,23 @@ class BaseSlideConnector(PlayArchetype):
             size_b=self.tail.size,
             progress_b=self.tail.progress,
             target_time_b=self.tail.target_time,
+        )
+
+    def get_attached(self, target_time: float) -> tuple[float, float]:
+        self.head.init_data()
+        self.tail.init_data()
+        return get_attached(
+            ease_type=self.ease,
+            lane_a=self.head.lane,
+            size_a=self.head.size,
+            progress_a=progress_to(
+                self.head.target_scaled_time, group_time_to_scaled_time(self.head.timescale_group_ref, target_time)
+            ),
+            lane_b=self.tail.lane,
+            size_b=self.tail.size,
+            progress_b=progress_to(
+                self.tail.target_scaled_time, group_time_to_scaled_time(self.tail.timescale_group_ref, target_time)
+            ),
         )
 
     @property
@@ -128,20 +146,20 @@ class Guide(PlayArchetype):
 
     def preprocess(self):
         self.start_time = beat_to_time(self.start_beat)
-        self.start_scaled_time = extended_time_to_scaled_time(self.start_timescale_group, self.start_time)
+        self.start_scaled_time = group_time_to_scaled_time(self.start_timescale_group, self.start_time)
 
         self.head_time = beat_to_time(self.head_beat)
-        self.head_scaled_time = extended_time_to_scaled_time(self.head_timescale_group, self.head_time)
+        self.head_scaled_time = group_time_to_scaled_time(self.head_timescale_group, self.head_time)
 
         self.tail_time = beat_to_time(self.tail_beat)
-        self.tail_scaled_time = extended_time_to_scaled_time(self.tail_timescale_group, self.tail_time)
+        self.tail_scaled_time = group_time_to_scaled_time(self.tail_timescale_group, self.tail_time)
 
         self.end_time = beat_to_time(self.end_beat)
-        self.end_scaled_time = extended_time_to_scaled_time(self.end_timescale_group, self.end_time)
+        self.end_scaled_time = group_time_to_scaled_time(self.end_timescale_group, self.end_time)
 
         self.spawn_time = min(
-            extended_scaled_time_to_first_time(self.head_timescale_group, self.head_scaled_time - preempt_time()),
-            extended_scaled_time_to_first_time(self.tail_timescale_group, self.tail_scaled_time - preempt_time()),
+            group_scaled_time_to_first_time(self.head_timescale_group, self.head_scaled_time - preempt_time()),
+            group_scaled_time_to_first_time(self.tail_timescale_group, self.tail_scaled_time - preempt_time()),
         )
 
     def spawn_order(self) -> float:
@@ -162,12 +180,12 @@ class Guide(PlayArchetype):
             quality=Options.guide_quality,
             lane_a=self.head_lane,
             size_a=self.head_size,
-            progress_a=progress_to(self.head_scaled_time, extended_scaled_time(self.head_timescale_group)),
+            progress_a=progress_to(self.head_scaled_time, group_scaled_time(self.head_timescale_group)),
             overall_progress_a=unlerp_clamped(self.start_scaled_time, self.end_scaled_time, self.head_scaled_time),
             target_time_a=self.head_time,
             lane_b=self.tail_lane,
             size_b=self.tail_size,
-            progress_b=progress_to(self.tail_scaled_time, extended_scaled_time(self.tail_timescale_group)),
+            progress_b=progress_to(self.tail_scaled_time, group_scaled_time(self.tail_timescale_group)),
             overall_progress_b=unlerp_clamped(self.start_scaled_time, self.end_scaled_time, self.tail_scaled_time),
             target_time_b=self.tail_time,
         )
