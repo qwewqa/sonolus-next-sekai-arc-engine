@@ -153,16 +153,23 @@ def draw_connector(
     end_size = max(1e-3, lerp(size_a, size_b, ease(ease_type, end_frac)))
     start_screen_center = transformed_vec_at(start_lane, start_travel)
     end_screen_center = transformed_vec_at(end_lane, end_travel)
-    dist = (end_screen_center - start_screen_center).magnitude  # Lower bound since with easing it can be longer.
-    if not Options.fade_out and (
-        (start_lane == end_lane and start_size == end_size) or abs(start_frac - end_frac) < 1e-2
-    ):
-        # Only one segment is needed if the connector is linear or nearly linear, as is the case when start_frac and
-        # end_frac are very close or the start and end lanes and sizes are the same.
-        # Note that a linear ease is not enough because it may appear curved due to the approach function.
-        segment_count = 1
+    x_change = (
+        max(
+            abs((start_lane - start_size) - (end_lane - end_size)),
+            abs((start_lane + start_size) - (end_lane + end_size)),
+        )
+        * max(start_travel, end_travel)
+        * Layout.w_scale
+    )
+    y_change = abs(start_screen_center.y - end_screen_center.y)
+    if Options.fade_out:
+        change_scale = max(x_change, y_change)
     else:
-        segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
+        change_scale = min(x_change, y_change)
+        if ease_type == EaseType.LINEAR:
+            # Linear still curves due to the approach curve, but less, so we need fewer segments.
+            change_scale /= 3
+    segment_count = min(max(1, ceil(quality * change_scale * CONNECTOR_QUALITY_SCALE)), quality)
 
     last_travel = start_travel
     last_lane = start_lane
@@ -252,15 +259,28 @@ def draw_guide(
     end_overall_progress = lerp(overall_progress_a, overall_progress_b, end_frac)
     start_screen_center = transformed_vec_at(start_lane, start_travel)
     end_screen_center = transformed_vec_at(end_lane, end_travel)
-    dist = (end_screen_center - start_screen_center).magnitude  # Lower bound since with easing it can be longer.
-    if (
-        not Options.fade_out
-        and (fade_type == GuideFadeType.NONE or abs(start_overall_progress - end_overall_progress) < 1e-2)
-    ) and ((start_lane == end_lane and start_size == end_size) or abs(start_frac - end_frac) < 1e-2):
-        # Same logic as connectors, but we can't do this if we're fading out and the alpha is changing.
-        segment_count = 1
+    x_change = (
+        max(
+            abs((start_lane - start_size) - (end_lane - end_size)),
+            abs((start_lane + start_size) - (end_lane + end_size)),
+        )
+        * max(start_travel, end_travel)
+        * Layout.w_scale
+    )
+    y_change = abs(start_screen_center.y - end_screen_center.y)
+    if Options.fade_out:
+        change_scale = max(x_change, y_change)
+    elif fade_type != GuideFadeType.NONE:
+        change_scale = max(
+            x_change,
+            min(y_change, abs(start_overall_progress - end_overall_progress)),
+        )
     else:
-        segment_count = min(ceil(quality * dist * CONNECTOR_QUALITY_SCALE), quality)
+        change_scale = min(x_change, y_change)
+        if ease_type == EaseType.LINEAR:
+            # Linear still curves due to the approach curve, but less, so we need fewer segments.
+            change_scale /= 3
+    segment_count = min(max(1, ceil(quality * change_scale * CONNECTOR_QUALITY_SCALE)), quality)
 
     last_overall_progress = lerp(overall_progress_a, overall_progress_b, start_frac)
     last_travel = start_travel
