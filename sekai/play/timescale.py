@@ -5,7 +5,6 @@ from sonolus.script.archetype import (
     PlayArchetype,
     StandardImport,
     callback,
-    entity_memory,
     imported,
     shared_memory,
 )
@@ -14,7 +13,8 @@ from sonolus.script.runtime import time
 from sekai.lib.timescale import (
     TIMESCALE_CHANGE_NAME,
     TIMESCALE_GROUP_NAME,
-    CachedTimescaleGroupState,
+    CachedScaledTimeToFirstTime,
+    CachedTimeToScaledTime,
 )
 
 
@@ -39,7 +39,8 @@ class TimescaleGroup(PlayArchetype):
 
     current_scaled_time: float = shared_memory()
 
-    state: CachedTimescaleGroupState = entity_memory()
+    time_to_scaled_time: CachedTimeToScaledTime = shared_memory()
+    scaled_time_to_first_time: CachedScaledTimeToFirstTime = shared_memory()
 
     def spawn_order(self) -> float:
         return -1e8
@@ -47,9 +48,11 @@ class TimescaleGroup(PlayArchetype):
     def should_spawn(self) -> bool:
         return True
 
+    @callback(order=-1)
     def preprocess(self):
-        self.state.init(self.first.index)
+        self.time_to_scaled_time.init(self.first.index)
+        self.scaled_time_to_first_time.init(self.first.index)
 
     @callback(order=-1)
     def update_sequential(self):
-        self.current_scaled_time = self.state.get(time())
+        self.current_scaled_time = self.time_to_scaled_time.get(time())

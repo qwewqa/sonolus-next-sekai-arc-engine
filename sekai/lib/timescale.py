@@ -29,13 +29,15 @@ class TimescaleChangeLike(Protocol):
 
 class TimescaleGroupLike(Protocol):
     first: EntityRef
+    time_to_scaled_time: CachedTimeToScaledTime
+    scaled_time_to_first_time: CachedScaledTimeToFirstTime
     current_scaled_time: float
 
     @classmethod
     def at(cls, index: int) -> TimescaleGroupLike: ...
 
 
-class CachedTimescaleGroupState(Record):
+class CachedTimeToScaledTime(Record):
     last_timescale: float
     last_time: float
     last_scaled_time: float
@@ -69,6 +71,42 @@ class CachedTimescaleGroupState(Record):
         return self.last_scaled_time + (time - self.last_time) * self.last_timescale
 
 
+class CachedScaledTimeToFirstTime(Record):
+    last_timescale: float
+    last_time: float
+    last_scaled_time: float
+    first_change_index: int
+    next_change_index: int
+
+    def init(self, next_index: int):
+        self.last_timescale = 1.0
+        self.last_time = 0.0
+        self.last_scaled_time = 0.0
+        self.first_change_index = next_index
+        self.next_change_index = next_index
+
+    def get(self, scaled_time: float) -> float:
+        if scaled_time < 0 or Options.disable_timescale:
+            return scaled_time
+        if scaled_time < self.last_scaled_time:
+            self.init(self.first_change_index)
+        for change in iter_timescale_changes(self.next_change_index):
+            next_timescale = change.timescale
+            next_time = beat_to_time(change.beat)
+            next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
+            if (scaled_time <= next_scaled_time and self.last_timescale > 0) or (
+                scaled_time >= next_scaled_time and self.last_timescale < 0
+            ):
+                if (next_scaled_time - self.last_scaled_time) < 1e-6:
+                    return self.last_time
+                return remap(self.last_scaled_time, next_scaled_time, self.last_time, next_time, scaled_time)
+            self.last_timescale = next_timescale
+            self.last_time = next_time
+            self.last_scaled_time = next_scaled_time
+            self.next_change_index = change.next.index
+        return self.last_time + (scaled_time - self.last_scaled_time) / self.last_timescale
+
+
 def timescale_change_archetype() -> type[TimescaleChangeLike]:
     return cast(type[TimescaleChangeLike], get_archetype_by_name(TIMESCALE_CHANGE_NAME))
 
@@ -100,26 +138,7 @@ def group_time_to_scaled_time(
 ) -> float:
     if isinstance(group, EntityRef):
         group = group.index
-    if group == 0 or Options.disable_timescale:
-        return time
-    if time < 0:
-        return time
-    last_timescale = 1.0
-    last_time = 0.0
-    last_scaled_time = 0.0
-    first_index = timescale_group_archetype().at(group).first.index
-    for change in iter_timescale_changes(first_index):
-        next_timescale = change.timescale
-        next_time = beat_to_time(change.beat)
-        next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale
-        if time <= next_time:
-            if (next_time - last_time) < 1e-6:
-                return last_scaled_time
-            return remap(last_time, next_time, last_scaled_time, next_scaled_time, time)
-        last_timescale = next_timescale
-        last_time = next_time
-        last_scaled_time = next_scaled_time
-    return last_scaled_time + (time - last_time) * last_timescale
+    return timescale_group_archetype().at(group).time_to_scaled_time.get(time)
 
 
 def group_scaled_time_to_first_time(
@@ -128,29 +147,4 @@ def group_scaled_time_to_first_time(
 ) -> float:
     if isinstance(group, EntityRef):
         group = group.index
-    if group == 0 or Options.disable_timescale:
-        return scaled_time
-    if scaled_time < 0:
-        # Since timescale is initialized to 1.0 at time 0, the first time we reach a negative scaled time
-        # is equal to the scaled time itself.
-        return scaled_time
-    last_timescale = 1.0
-    last_time = 0.0
-    last_scaled_time = 0.0
-    first_index = timescale_group_archetype().at(group).first.index
-    for change in iter_timescale_changes(first_index):
-        next_timescale = change.timescale
-        next_time = beat_to_time(change.beat)
-        next_scaled_time = last_scaled_time + (next_time - last_time) * last_timescale
-        if (scaled_time <= next_scaled_time and last_timescale > 0) or (
-            scaled_time >= next_scaled_time and last_timescale < 0
-        ):
-            if (next_scaled_time - last_scaled_time) < 1e-6:
-                return last_time
-            return remap(last_scaled_time, next_scaled_time, last_time, next_time, scaled_time)
-        last_timescale = next_timescale
-        last_time = next_time
-        last_scaled_time = next_scaled_time
-    # Assumes we won't run into a case where a scaled time is unreachable.
-    # E.g. if timescale starts positive and ends negative, there may be some values that are unreachable.
-    return last_time + (scaled_time - last_scaled_time) / last_timescale
+    return timescale_group_archetype().at(group).scaled_time_to_first_time.get(scaled_time)
