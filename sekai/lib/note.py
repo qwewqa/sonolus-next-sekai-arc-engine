@@ -138,10 +138,9 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
             _draw_slim_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
         case (
-            NoteKind.NORM_HEAD_TAP
-            | NoteKind.NORM_RELEASE
-            | NoteKind.NORM_HEAD_RELEASE
+            NoteKind.NORM_RELEASE
             | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_RELEASE
             | NoteKind.NORM_TAIL_TAP
             | NoteKind.NORM_TAIL_RELEASE
         ):
@@ -224,25 +223,6 @@ def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, tar
 
 def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: float):
     match kind:
-        # case NoteKind.NORM_TICK | NoteKind.NORM_TICK | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-        #     _draw_tick(slide_tick_sprites, lane, travel, target_time)
-        # case (
-        #     NoteKind.CRIT_TICK
-        #     | NoteKind.CRIT_TICK
-        #     | NoteKind.CRIT_TRACE
-        #     | NoteKind.CRIT_HEAD_TRACE
-        #     | NoteKind.CRIT_TAIL_TRACE
-        #     | NoteKind.CRIT_TRACE_FLICK
-        # ):
-        #     _draw_tick(critical_tick_sprites, lane, travel, target_time)
-        # case NoteKind.NORM_TRACE:
-        #     _draw_tick(normal_tick_sprites, lane, travel, target_time)
-        # case NoteKind.NORM_TRACE_FLICK:
-        #     _draw_tick(flick_tick_sprites, lane, travel, target_time)
-        # case (
-        #     pass
-        # case _:
-        #     assert_never(kind)
         case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE | NoteKind.NORM_TICK:
             _draw_tick(normal_tick_sprites, lane, travel, target_time)
         case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE | NoteKind.CRIT_TICK:

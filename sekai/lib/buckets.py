@@ -256,6 +256,23 @@ class Buckets:
     )
 
     # Tail buckets
+    normal_tail_release: Bucket = bucket(
+        sprites=create_bucket_sprites(
+            connector_right=Skin.normal_slide_connector_active,
+            body=Skin.slide_note_end_fallback,
+            body_x=2,
+        ),
+        unit=StandardText.MILLISECOND_UNIT,
+    )
+    critical_tail_release: Bucket = bucket(
+        sprites=create_bucket_sprites(
+            connector_right=Skin.critical_slide_connector_active,
+            body=Skin.critical_note_end_fallback,
+            body_x=2,
+        ),
+        unit=StandardText.MILLISECOND_UNIT,
+    )
+
     normal_tail_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
             connector_right=Skin.normal_slide_connector_active,
@@ -315,23 +332,6 @@ class Buckets:
             body_x=2,
             tick=Skin.critical_slide_tick_note,
             arrow=Skin.critical_arrow_fallback,
-        ),
-        unit=StandardText.MILLISECOND_UNIT,
-    )
-
-    normal_tail_release: Bucket = bucket(
-        sprites=create_bucket_sprites(
-            connector_right=Skin.normal_slide_connector_active,
-            body=Skin.slide_note_end_fallback,
-            body_x=2,
-        ),
-        unit=StandardText.MILLISECOND_UNIT,
-    )
-    critical_tail_release: Bucket = bucket(
-        sprites=create_bucket_sprites(
-            connector_right=Skin.critical_slide_connector_active,
-            body=Skin.critical_note_end_fallback,
-            body_x=2,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
