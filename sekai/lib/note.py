@@ -127,6 +127,11 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
     draw_note_tick(kind, lane, travel, target_time)
 
 
+def draw_slide_note_head(kind: NoteKind, lane: float, size: float):
+    draw_note_body(kind, lane, size, 1.0, time())
+    draw_note_tick(kind, lane, 1.0, time())
+
+
 def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
     match kind:
         case NoteKind.NORM_TAP:
@@ -157,10 +162,15 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
             | NoteKind.CRIT_TAIL_RELEASE
         ):
             _draw_regular_body(critical_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
+        case (
+            NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
             _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
-            _draw_slim_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
             _draw_slim_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.DAMAGE:
