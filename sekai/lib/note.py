@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, auto
 from typing import assert_never
 
 from sonolus.script.bucket import Bucket, JudgmentWindow
@@ -12,8 +12,6 @@ from sekai.lib.buckets import (
     SLIDE_END_FLICK_CRITICAL_WINDOW,
     SLIDE_END_FLICK_NORMAL_WINDOW,
     SLIDE_END_NORMAL_WINDOW,
-    SLIDE_START_CRITICAL_WINDOW,
-    SLIDE_START_NORMAL_WINDOW,
     TAP_CRITICAL_WINDOW,
     TAP_NORMAL_WINDOW,
     TRACE_CRITICAL_WINDOW,
@@ -52,7 +50,6 @@ from sekai.lib.skin import (
     normal_tick_sprites,
     normal_trace_note_body_sprites,
     slide_note_body_sprites,
-    slide_tick_sprites,
     trace_flick_note_body_sprites,
     trace_slide_note_body_sprites,
 )
@@ -61,44 +58,58 @@ FLICK_ARROW_PERIOD = 0.5
 
 
 class NoteKind(IntEnum):
-    TAP = 1
-    CRITICAL_TAP = 2
+    NORM_TAP = auto()
+    CRIT_TAP = auto()
 
-    FLICK = 3
-    CRITICAL_FLICK = 4
+    NORM_FLICK = auto()
+    CRIT_FLICK = auto()
 
-    SLIDE_START = 5
-    CRITICAL_SLIDE_START = 6
-    SLIDE_START_ANCHOR = 7
+    NORM_TRACE = auto()
+    CRIT_TRACE = auto()
 
-    SLIDE_END = 8
-    CRITICAL_SLIDE_END = 9
+    NORM_TRACE_FLICK = auto()
+    CRIT_TRACE_FLICK = auto()
 
-    SLIDE_END_FLICK = 10
-    CRITICAL_SLIDE_END_FLICK = 11
+    NORM_RELEASE = auto()
+    CRIT_RELEASE = auto()
 
-    SLIDE_TICK = 12
-    CRITICAL_SLIDE_TICK = 13
-    SLIDE_ANCHOR = 14
-    INVISIBLE_SLIDE_TICK = 15
+    NORM_HEAD_TAP = auto()
+    CRIT_HEAD_TAP = auto()
 
-    ATTACHED_SLIDE_TICK = 16
-    CRITICAL_ATTACHED_SLIDE_TICK = 17
+    NORM_HEAD_FLICK = auto()
+    CRIT_HEAD_FLICK = auto()
 
-    TRACE = 18
-    CRITICAL_TRACE = 19
+    NORM_HEAD_TRACE = auto()
+    CRIT_HEAD_TRACE = auto()
 
-    TRACE_FLICK = 20
-    CRITICAL_TRACE_FLICK = 21
-    UNMARKED_TRACE_FLICK = 22
+    NORM_HEAD_TRACE_FLICK = auto()
+    CRIT_HEAD_TRACE_FLICK = auto()
 
-    TRACE_SLIDE = 23
-    CRITICAL_TRACE_SLIDE = 24
+    NORM_HEAD_RELEASE = auto()
+    CRIT_HEAD_RELEASE = auto()
 
-    TRACE_SLIDE_END = 25
-    CRITICAL_TRACE_SLIDE_END = 26
+    NORM_TAIL_TAP = auto()
+    CRIT_TAIL_TAP = auto()
 
-    DAMAGE = 27
+    NORM_TAIL_FLICK = auto()
+    CRIT_TAIL_FLICK = auto()
+
+    NORM_TAIL_TRACE = auto()
+    CRIT_TAIL_TRACE = auto()
+
+    NORM_TAIL_TRACE_FLICK = auto()
+    CRIT_TAIL_TRACE_FLICK = auto()
+
+    NORM_TAIL_RELEASE = auto()
+    CRIT_TAIL_RELEASE = auto()
+
+    NORM_TICK = auto()
+    CRIT_TICK = auto()
+    HIDE_TICK = auto()
+
+    JOINT = auto()
+
+    DAMAGE = auto()
 
 
 class Direction(IntEnum):
@@ -118,44 +129,44 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
 
 def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
     match kind:
-        case NoteKind.TAP:
+        case NoteKind.NORM_TAP:
             _draw_regular_body(normal_note_body_sprites, lane, size, travel, target_time)
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
+            _draw_regular_body(flick_note_body_sprites, lane, size, travel, target_time)
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+            _draw_slim_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
+        case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
+            _draw_slim_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
         case (
-            NoteKind.CRITICAL_TAP
-            | NoteKind.CRITICAL_FLICK
-            | NoteKind.CRITICAL_SLIDE_START
-            | NoteKind.CRITICAL_SLIDE_END
-            | NoteKind.CRITICAL_SLIDE_END_FLICK
+            NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            _draw_regular_body(slide_note_body_sprites, lane, size, travel, target_time)
+        case (
+            NoteKind.CRIT_TAP
+            | NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_RELEASE
         ):
             _draw_regular_body(critical_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.FLICK | NoteKind.SLIDE_END_FLICK:
-            _draw_regular_body(flick_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.SLIDE_START | NoteKind.SLIDE_END:
-            _draw_regular_body(slide_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.TRACE:
-            _draw_slim_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
-        case (
-            NoteKind.CRITICAL_TRACE
-            | NoteKind.CRITICAL_TRACE_FLICK
-            | NoteKind.CRITICAL_TRACE_SLIDE
-            | NoteKind.CRITICAL_TRACE_SLIDE_END
-        ):
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
             _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.TRACE_FLICK | NoteKind.UNMARKED_TRACE_FLICK:
+        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
             _draw_slim_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.TRACE_SLIDE | NoteKind.TRACE_SLIDE_END:
+        case NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
             _draw_slim_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.DAMAGE:
             _draw_slim_body(damage_note_body_sprites, lane, size, travel, target_time)
-        case (
-            NoteKind.SLIDE_START_ANCHOR
-            | NoteKind.SLIDE_TICK
-            | NoteKind.CRITICAL_SLIDE_TICK
-            | NoteKind.SLIDE_ANCHOR
-            | NoteKind.INVISIBLE_SLIDE_TICK
-            | NoteKind.ATTACHED_SLIDE_TICK
-            | NoteKind.CRITICAL_ATTACHED_SLIDE_TICK
-        ):
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT:
             pass
         case _:
             assert_never(kind)
@@ -163,31 +174,47 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
 
 def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: int):
     match kind:
-        case NoteKind.FLICK | NoteKind.SLIDE_END_FLICK | NoteKind.TRACE_FLICK:
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
             _draw_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
-        case NoteKind.CRITICAL_FLICK | NoteKind.CRITICAL_SLIDE_END_FLICK | NoteKind.CRITICAL_TRACE_FLICK:
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
             _draw_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
         case (
-            NoteKind.TAP
-            | NoteKind.CRITICAL_TAP
-            | NoteKind.SLIDE_START
-            | NoteKind.CRITICAL_SLIDE_START
-            | NoteKind.SLIDE_START_ANCHOR
-            | NoteKind.SLIDE_END
-            | NoteKind.CRITICAL_SLIDE_END
-            | NoteKind.SLIDE_TICK
-            | NoteKind.CRITICAL_SLIDE_TICK
-            | NoteKind.SLIDE_ANCHOR
-            | NoteKind.INVISIBLE_SLIDE_TICK
-            | NoteKind.ATTACHED_SLIDE_TICK
-            | NoteKind.CRITICAL_ATTACHED_SLIDE_TICK
-            | NoteKind.TRACE
-            | NoteKind.CRITICAL_TRACE
-            | NoteKind.UNMARKED_TRACE_FLICK
-            | NoteKind.TRACE_SLIDE
-            | NoteKind.CRITICAL_TRACE_SLIDE
-            | NoteKind.TRACE_SLIDE_END
-            | NoteKind.CRITICAL_TRACE_SLIDE_END
+            NoteKind.NORM_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.JOINT
             | NoteKind.DAMAGE
         ):
             pass
@@ -197,36 +224,54 @@ def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, tar
 
 def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: float):
     match kind:
-        case NoteKind.SLIDE_TICK | NoteKind.ATTACHED_SLIDE_TICK | NoteKind.TRACE_SLIDE | NoteKind.TRACE_SLIDE_END:
-            _draw_tick(slide_tick_sprites, lane, travel, target_time)
-        case (
-            NoteKind.CRITICAL_SLIDE_TICK
-            | NoteKind.CRITICAL_ATTACHED_SLIDE_TICK
-            | NoteKind.CRITICAL_TRACE
-            | NoteKind.CRITICAL_TRACE_SLIDE
-            | NoteKind.CRITICAL_TRACE_SLIDE_END
-            | NoteKind.CRITICAL_TRACE_FLICK
-        ):
-            _draw_tick(critical_tick_sprites, lane, travel, target_time)
-        case NoteKind.TRACE:
+        # case NoteKind.NORM_TICK | NoteKind.NORM_TICK | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+        #     _draw_tick(slide_tick_sprites, lane, travel, target_time)
+        # case (
+        #     NoteKind.CRIT_TICK
+        #     | NoteKind.CRIT_TICK
+        #     | NoteKind.CRIT_TRACE
+        #     | NoteKind.CRIT_HEAD_TRACE
+        #     | NoteKind.CRIT_TAIL_TRACE
+        #     | NoteKind.CRIT_TRACE_FLICK
+        # ):
+        #     _draw_tick(critical_tick_sprites, lane, travel, target_time)
+        # case NoteKind.NORM_TRACE:
+        #     _draw_tick(normal_tick_sprites, lane, travel, target_time)
+        # case NoteKind.NORM_TRACE_FLICK:
+        #     _draw_tick(flick_tick_sprites, lane, travel, target_time)
+        # case (
+        #     pass
+        # case _:
+        #     assert_never(kind)
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE | NoteKind.NORM_TICK:
             _draw_tick(normal_tick_sprites, lane, travel, target_time)
-        case NoteKind.TRACE_FLICK:
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE | NoteKind.CRIT_TICK:
+            _draw_tick(critical_tick_sprites, lane, travel, target_time)
+        case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
             _draw_tick(flick_tick_sprites, lane, travel, target_time)
+        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
+            _draw_tick(critical_tick_sprites, lane, travel, target_time)
         case (
-            NoteKind.TAP
-            | NoteKind.CRITICAL_TAP
-            | NoteKind.FLICK
-            | NoteKind.CRITICAL_FLICK
-            | NoteKind.SLIDE_START
-            | NoteKind.CRITICAL_SLIDE_START
-            | NoteKind.SLIDE_START_ANCHOR
-            | NoteKind.SLIDE_END
-            | NoteKind.CRITICAL_SLIDE_END
-            | NoteKind.SLIDE_END_FLICK
-            | NoteKind.CRITICAL_SLIDE_END_FLICK
-            | NoteKind.SLIDE_ANCHOR
-            | NoteKind.INVISIBLE_SLIDE_TICK
-            | NoteKind.UNMARKED_TRACE_FLICK
+            NoteKind.NORM_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.NORM_FLICK
+            | NoteKind.CRIT_FLICK
+            | NoteKind.NORM_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.HIDE_TICK
+            | NoteKind.JOINT
             | NoteKind.DAMAGE
         ):
             pass
@@ -285,59 +330,31 @@ def _draw_arrow(sprites: ArrowSprites, lane: float, size: float, travel: float, 
 def get_note_window(kind: NoteKind) -> JudgmentWindow:
     result = +JudgmentWindow
     match kind:
-        case NoteKind.TAP:
+        case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
             result @= TAP_NORMAL_WINDOW
-        case NoteKind.CRITICAL_TAP:
+        case NoteKind.CRIT_TAP | NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_TAIL_TAP:
             result @= TAP_CRITICAL_WINDOW
-        case NoteKind.FLICK:
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
             result @= FLICK_NORMAL_WINDOW
-        case NoteKind.CRITICAL_FLICK:
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
             result @= FLICK_CRITICAL_WINDOW
-        case NoteKind.SLIDE_START:
-            result @= SLIDE_START_NORMAL_WINDOW
-        case NoteKind.CRITICAL_SLIDE_START:
-            result @= SLIDE_START_CRITICAL_WINDOW
-        case NoteKind.SLIDE_START_ANCHOR:
-            pass
-        case NoteKind.SLIDE_END:
-            result @= SLIDE_END_NORMAL_WINDOW
-        case NoteKind.CRITICAL_SLIDE_END:
-            result @= SLIDE_END_CRITICAL_WINDOW
-        case NoteKind.SLIDE_END_FLICK:
-            result @= SLIDE_END_FLICK_NORMAL_WINDOW
-        case NoteKind.CRITICAL_SLIDE_END_FLICK:
-            result @= SLIDE_END_FLICK_CRITICAL_WINDOW
-        case NoteKind.SLIDE_TICK:
-            pass
-        case NoteKind.CRITICAL_SLIDE_TICK:
-            pass
-        case NoteKind.SLIDE_ANCHOR:
-            pass
-        case NoteKind.INVISIBLE_SLIDE_TICK:
-            pass
-        case NoteKind.ATTACHED_SLIDE_TICK:
-            pass
-        case NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
-            pass
-        case NoteKind.TRACE:
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
             result @= TRACE_NORMAL_WINDOW
-        case NoteKind.CRITICAL_TRACE:
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
             result @= TRACE_CRITICAL_WINDOW
-        case NoteKind.TRACE_FLICK:
+        case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_NORMAL_WINDOW
-        case NoteKind.CRITICAL_TRACE_FLICK:
+        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
-        case NoteKind.UNMARKED_TRACE_FLICK:
-            result @= TRACE_FLICK_NORMAL_WINDOW
-        case NoteKind.TRACE_SLIDE:
-            result @= TRACE_NORMAL_WINDOW
-        case NoteKind.CRITICAL_TRACE_SLIDE:
-            result @= TRACE_CRITICAL_WINDOW
-        case NoteKind.TRACE_SLIDE_END:
-            result @= TRACE_NORMAL_WINDOW
-        case NoteKind.CRITICAL_TRACE_SLIDE_END:
-            result @= TRACE_CRITICAL_WINDOW
-        case NoteKind.DAMAGE:
+        case NoteKind.NORM_RELEASE | NoteKind.NORM_HEAD_RELEASE | NoteKind.NORM_TAIL_RELEASE:
+            result @= SLIDE_END_NORMAL_WINDOW
+        case NoteKind.CRIT_RELEASE | NoteKind.CRIT_HEAD_RELEASE | NoteKind.CRIT_TAIL_RELEASE:
+            result @= SLIDE_END_CRITICAL_WINDOW
+        case NoteKind.NORM_TAIL_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
+            result @= SLIDE_END_FLICK_NORMAL_WINDOW
+        case NoteKind.CRIT_TAIL_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
+            result @= SLIDE_END_FLICK_CRITICAL_WINDOW
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT | NoteKind.DAMAGE:
             pass
         case _:
             assert_never(kind)
@@ -347,59 +364,67 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
 def get_note_bucket(kind: NoteKind) -> Bucket:
     result = +Bucket(-1)
     match kind:
-        case NoteKind.TAP:
-            result @= Buckets.normal_tap_note
-        case NoteKind.CRITICAL_TAP:
-            result @= Buckets.critical_tap_note
-        case NoteKind.FLICK:
-            result @= Buckets.normal_flick_note
-        case NoteKind.CRITICAL_FLICK:
-            result @= Buckets.critical_flick_note
-        case NoteKind.SLIDE_START:
-            result @= Buckets.normal_slide_start_note
-        case NoteKind.CRITICAL_SLIDE_START:
-            result @= Buckets.critical_slide_start_note
-        case NoteKind.SLIDE_START_ANCHOR:
-            pass
-        case NoteKind.SLIDE_END:
-            result @= Buckets.normal_slide_end_note
-        case NoteKind.CRITICAL_SLIDE_END:
-            result @= Buckets.critical_slide_end_note
-        case NoteKind.SLIDE_END_FLICK:
-            result @= Buckets.normal_slide_end_flick_note
-        case NoteKind.CRITICAL_SLIDE_END_FLICK:
-            result @= Buckets.critical_slide_end_flick_note
-        case NoteKind.SLIDE_TICK:
-            pass
-        case NoteKind.CRITICAL_SLIDE_TICK:
-            pass
-        case NoteKind.SLIDE_ANCHOR:
-            pass
-        case NoteKind.INVISIBLE_SLIDE_TICK:
-            pass
-        case NoteKind.ATTACHED_SLIDE_TICK:
-            pass
-        case NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
-            pass
-        case NoteKind.TRACE:
-            result @= Buckets.normal_trace_note
-        case NoteKind.CRITICAL_TRACE:
-            result @= Buckets.critical_trace_note
-        case NoteKind.TRACE_FLICK:
-            result @= Buckets.normal_trace_flick_note
-        case NoteKind.CRITICAL_TRACE_FLICK:
-            result @= Buckets.critical_trace_flick_note
-        case NoteKind.UNMARKED_TRACE_FLICK:
-            result @= Buckets.normal_trace_flick_note
-        case NoteKind.TRACE_SLIDE:
-            result @= Buckets.normal_slide_trace_note
-        case NoteKind.CRITICAL_TRACE_SLIDE:
-            result @= Buckets.critical_slide_trace_note
-        case NoteKind.TRACE_SLIDE_END:
-            result @= Buckets.normal_slide_end_trace_note
-        case NoteKind.CRITICAL_TRACE_SLIDE_END:
-            result @= Buckets.critical_slide_end_trace_note
-        case NoteKind.DAMAGE:
+        case NoteKind.NORM_TAP:
+            result @= Buckets.normal_tap
+        case NoteKind.CRIT_TAP:
+            result @= Buckets.critical_tap
+        case NoteKind.NORM_FLICK:
+            result @= Buckets.normal_flick
+        case NoteKind.CRIT_FLICK:
+            result @= Buckets.critical_flick
+        case NoteKind.NORM_TRACE:
+            result @= Buckets.normal_trace
+        case NoteKind.CRIT_TRACE:
+            result @= Buckets.critical_trace
+        case NoteKind.NORM_TRACE_FLICK:
+            result @= Buckets.normal_trace_flick
+        case NoteKind.CRIT_TRACE_FLICK:
+            result @= Buckets.critical_trace_flick
+        case NoteKind.NORM_HEAD_TAP:
+            result @= Buckets.normal_head_tap
+        case NoteKind.CRIT_HEAD_TAP:
+            result @= Buckets.critical_head_tap
+        case NoteKind.NORM_HEAD_FLICK:
+            result @= Buckets.normal_head_flick
+        case NoteKind.CRIT_HEAD_FLICK:
+            result @= Buckets.critical_head_flick
+        case NoteKind.NORM_HEAD_TRACE:
+            result @= Buckets.normal_head_trace
+        case NoteKind.CRIT_HEAD_TRACE:
+            result @= Buckets.critical_head_trace
+        case NoteKind.NORM_HEAD_TRACE_FLICK:
+            result @= Buckets.normal_head_trace_flick
+        case NoteKind.CRIT_HEAD_TRACE_FLICK:
+            result @= Buckets.critical_head_trace_flick
+        case NoteKind.NORM_TAIL_FLICK:
+            result @= Buckets.normal_tail_flick
+        case NoteKind.CRIT_TAIL_FLICK:
+            result @= Buckets.critical_tail_flick
+        case NoteKind.NORM_TAIL_TRACE:
+            result @= Buckets.normal_tail_trace
+        case NoteKind.CRIT_TAIL_TRACE:
+            result @= Buckets.critical_tail_trace
+        case NoteKind.NORM_TAIL_TRACE_FLICK:
+            result @= Buckets.normal_tail_trace_flick
+        case NoteKind.CRIT_TAIL_TRACE_FLICK:
+            result @= Buckets.critical_tail_trace_flick
+        case NoteKind.NORM_TAIL_RELEASE:
+            result @= Buckets.normal_tail_release
+        case NoteKind.CRIT_TAIL_RELEASE:
+            result @= Buckets.critical_tail_release
+        case (
+            NoteKind.NORM_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.JOINT
+            | NoteKind.DAMAGE
+        ):
             pass
         case _:
             assert_never(kind)

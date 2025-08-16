@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import cast
 
 from sonolus.script.archetype import EntityRef, PlayArchetype, StandardImport, entity_data, imported
+from sonolus.script.array import Dim
 from sonolus.script.bucket import JudgmentWindow
+from sonolus.script.containers import VarArray
+from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval
 from sonolus.script.runtime import input_offset, time
 from sonolus.script.timing import beat_to_time
@@ -60,26 +63,25 @@ class BaseNote(PlayArchetype):
             self.input_interval = Interval(0, 1) + self.target_time + input_offset()
 
         self.start_time = group_scaled_time_to_first_time(self.timescale_group_ref, self.start_scaled_time)
-        self.spawn_time = min(self.spawn_time, self.input_interval.start)
+        self.spawn_time = min(self.start_time, self.input_interval.start)
 
     def preprocess(self):
         self.init_data()
 
         self.result.bucket = get_note_bucket(self.kind)
 
-        match self.kind:
-            case NoteKind.INVISIBLE_SLIDE_TICK | NoteKind.ATTACHED_SLIDE_TICK | NoteKind.CRITICAL_ATTACHED_SLIDE_TICK:
-                lane, size = self.attach_ref.get().get_attached(self.target_time)
-                self.lane = lane
-                self.size = size
+        if self.attach_ref.index > 0:
+            lane, size = self.attach_ref.get().get_attached(self.target_time)
+            self.lane = lane
+            self.size = size
 
     def spawn_order(self) -> float:
-        if self.kind == NoteKind.SLIDE_ANCHOR:
+        if self.kind == NoteKind.JOINT:
             return 1e8
         return self.spawn_time
 
     def should_spawn(self) -> bool:
-        if self.kind == NoteKind.SLIDE_ANCHOR:
+        if self.kind == NoteKind.JOINT:
             return False
         return time() >= self.spawn_time
 
@@ -101,46 +103,43 @@ class BaseNote(PlayArchetype):
         return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group_ref))
 
 
-NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.TAP)
-CriticalTapNote = BaseNote.derive("CriticalTapNote", is_scored=True, key=NoteKind.CRITICAL_TAP)
-NormalFlickNote = BaseNote.derive("NormalFlickNote", is_scored=True, key=NoteKind.FLICK)
-CriticalFlickNote = BaseNote.derive("CriticalFlickNote", is_scored=True, key=NoteKind.CRITICAL_FLICK)
-NormalTraceNote = BaseNote.derive("NormalTraceNote", is_scored=True, key=NoteKind.TRACE)
-CriticalTraceNote = BaseNote.derive("CriticalTraceNote", is_scored=True, key=NoteKind.CRITICAL_TRACE)
-NormalTraceFlickNote = BaseNote.derive("NormalTraceFlickNote", is_scored=True, key=NoteKind.TRACE_FLICK)
-CriticalTraceFlickNote = BaseNote.derive("CriticalTraceFlickNote", is_scored=True, key=NoteKind.CRITICAL_TRACE_FLICK)
+@level_memory
+class NoteMemory:
+    active_tappable_notes: VarArray[EntityRef[BaseNote], Dim[32]]
+
+
+NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.NORM_TAP)
+CriticalTapNote = BaseNote.derive("CriticalTapNote", is_scored=True, key=NoteKind.CRIT_TAP)
+NormalFlickNote = BaseNote.derive("NormalFlickNote", is_scored=True, key=NoteKind.NORM_FLICK)
+CriticalFlickNote = BaseNote.derive("CriticalFlickNote", is_scored=True, key=NoteKind.CRIT_FLICK)
+NormalTraceNote = BaseNote.derive("NormalTraceNote", is_scored=True, key=NoteKind.NORM_TRACE)
+CriticalTraceNote = BaseNote.derive("CriticalTraceNote", is_scored=True, key=NoteKind.CRIT_TRACE)
+NormalTraceFlickNote = BaseNote.derive("NormalTraceFlickNote", is_scored=True, key=NoteKind.NORM_TRACE_FLICK)
+CriticalTraceFlickNote = BaseNote.derive("CriticalTraceFlickNote", is_scored=True, key=NoteKind.CRIT_TRACE_FLICK)
 NonDirectionalTraceFlickNote = BaseNote.derive(
-    "NonDirectionalTraceFlickNote", is_scored=True, key=NoteKind.UNMARKED_TRACE_FLICK
+    "NonDirectionalTraceFlickNote", is_scored=True, key=NoteKind.NORM_TRACE_FLICK
 )
-NormalSlideTraceNote = BaseNote.derive("NormalSlideTraceNote", is_scored=True, key=NoteKind.TRACE_SLIDE)
-CriticalSlideTraceNote = BaseNote.derive("CriticalSlideTraceNote", is_scored=True, key=NoteKind.CRITICAL_TRACE_SLIDE)
-NormalSlideStartNote = BaseNote.derive("NormalSlideStartNote", is_scored=True, key=NoteKind.SLIDE_START)
-CriticalSlideStartNote = BaseNote.derive("CriticalSlideStartNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_START)
-SlideStartAnchor = BaseNote.derive("HiddenSlideStartNote", is_scored=False, key=NoteKind.SLIDE_START_ANCHOR)
-NormalTraceSlideStartNote = BaseNote.derive("NormalTraceSlideStartNote", is_scored=True, key=NoteKind.TRACE_SLIDE)
+NormalSlideTraceNote = BaseNote.derive("NormalSlideTraceNote", is_scored=True, key=NoteKind.NORM_TRACE)
+CriticalSlideTraceNote = BaseNote.derive("CriticalSlideTraceNote", is_scored=True, key=NoteKind.CRIT_TRACE)
+NormalSlideStartNote = BaseNote.derive("NormalSlideStartNote", is_scored=True, key=NoteKind.NORM_HEAD_TAP)
+CriticalSlideStartNote = BaseNote.derive("CriticalSlideStartNote", is_scored=True, key=NoteKind.CRIT_HEAD_TAP)
+SlideStartAnchor = BaseNote.derive("HiddenSlideStartNote", is_scored=False, key=NoteKind.JOINT)
+NormalTraceSlideStartNote = BaseNote.derive("NormalTraceSlideStartNote", is_scored=True, key=NoteKind.NORM_HEAD_TRACE)
 CriticalTraceSlideStartNote = BaseNote.derive(
-    "CriticalTraceSlideStartNote", is_scored=True, key=NoteKind.CRITICAL_TRACE_SLIDE
+    "CriticalTraceSlideStartNote", is_scored=True, key=NoteKind.CRIT_HEAD_TRACE
 )
-NormalSlideEndNote = BaseNote.derive("NormalSlideEndNote", is_scored=True, key=NoteKind.SLIDE_END)
-CriticalSlideEndNote = BaseNote.derive("CriticalSlideEndNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_END)
-NormalTraceSlideEndNote = BaseNote.derive("NormalTraceSlideEndNote", is_scored=True, key=NoteKind.TRACE_SLIDE_END)
-CriticalTraceSlideEndNote = BaseNote.derive(
-    "CriticalTraceSlideEndNote", is_scored=True, key=NoteKind.CRITICAL_TRACE_SLIDE_END
-)
-NormalSlideEndFlickNote = BaseNote.derive("NormalSlideEndFlickNote", is_scored=True, key=NoteKind.SLIDE_END_FLICK)
-CriticalSlideEndFlickNote = BaseNote.derive(
-    "CriticalSlideEndFlickNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_END_FLICK
-)
-InvisibleSlideTickNote = BaseNote.derive("IgnoredSlideTickNote", is_scored=True, key=NoteKind.INVISIBLE_SLIDE_TICK)
-NormalSlideTickNote = BaseNote.derive("NormalSlideTickNote", is_scored=True, key=NoteKind.SLIDE_TICK)
-CriticalSlideTickNote = BaseNote.derive("CriticalSlideTickNote", is_scored=True, key=NoteKind.CRITICAL_SLIDE_TICK)
-SlideAnchor = BaseNote.derive("HiddenSlideTickNote", is_scored=False, key=NoteKind.SLIDE_ANCHOR)
-NormalAttachedSlideTickNote = BaseNote.derive(
-    "NormalAttachedSlideTickNote", is_scored=True, key=NoteKind.ATTACHED_SLIDE_TICK
-)
-CriticalAttachedSlideTickNote = BaseNote.derive(
-    "CriticalAttachedSlideTickNote", is_scored=True, key=NoteKind.CRITICAL_ATTACHED_SLIDE_TICK
-)
+NormalSlideEndNote = BaseNote.derive("NormalSlideEndNote", is_scored=True, key=NoteKind.NORM_TAIL_RELEASE)
+CriticalSlideEndNote = BaseNote.derive("CriticalSlideEndNote", is_scored=True, key=NoteKind.CRIT_TAIL_RELEASE)
+NormalTraceSlideEndNote = BaseNote.derive("NormalTraceSlideEndNote", is_scored=True, key=NoteKind.NORM_TAIL_TRACE)
+CriticalTraceSlideEndNote = BaseNote.derive("CriticalTraceSlideEndNote", is_scored=True, key=NoteKind.CRIT_TAIL_TRACE)
+NormalSlideEndFlickNote = BaseNote.derive("NormalSlideEndFlickNote", is_scored=True, key=NoteKind.NORM_TAIL_FLICK)
+CriticalSlideEndFlickNote = BaseNote.derive("CriticalSlideEndFlickNote", is_scored=True, key=NoteKind.CRIT_TAIL_FLICK)
+InvisibleSlideTickNote = BaseNote.derive("IgnoredSlideTickNote", is_scored=True, key=NoteKind.HIDE_TICK)
+NormalSlideTickNote = BaseNote.derive("NormalSlideTickNote", is_scored=True, key=NoteKind.NORM_TICK)
+CriticalSlideTickNote = BaseNote.derive("CriticalSlideTickNote", is_scored=True, key=NoteKind.CRIT_TICK)
+SlideAnchor = BaseNote.derive("HiddenSlideTickNote", is_scored=False, key=NoteKind.JOINT)
+NormalAttachedSlideTickNote = BaseNote.derive("NormalAttachedSlideTickNote", is_scored=True, key=NoteKind.NORM_TICK)
+CriticalAttachedSlideTickNote = BaseNote.derive("CriticalAttachedSlideTickNote", is_scored=True, key=NoteKind.CRIT_TICK)
 DamageNote = BaseNote.derive("DamageNote", is_scored=True, key=NoteKind.DAMAGE)
 
 ALL_NOTE_ARCHETYPES = (

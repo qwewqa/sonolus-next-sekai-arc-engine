@@ -41,6 +41,7 @@ class Layout:
     scaled_note_h: float
     progress_start: float
     progress_cutoff: float
+    flick_threshold: float
 
 
 def init_layout():
@@ -73,6 +74,8 @@ def init_layout():
         Layout.progress_cutoff = 1 - Options.hidden
     else:
         Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
+
+    Layout.flick_threshold = 2 * Layout.w_scale
 
 
 def approach(progress: float) -> float:
@@ -357,8 +360,12 @@ def layout_sim_line(
 
 
 def layout_hitbox(
-    lane: float,
-    size: float,
-    leniency: float,
-) -> Quad:
-    return layout_lane(lane, size + leniency)
+    l: float,
+    r: float,
+) -> Rect:
+    return Rect(
+        l=transform_vec(Vec2(l, 1.0)).x,
+        r=transform_vec(Vec2(r, 1.0)).x,
+        t=1.0,
+        b=-1.0,
+    )

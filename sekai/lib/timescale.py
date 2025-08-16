@@ -52,7 +52,7 @@ class CachedTimeToScaledTime(Record):
         self.next_change_index = next_index
 
     def get(self, time: float) -> float:
-        if time < 0 or Options.disable_timescale:
+        if time <= 0 or Options.disable_timescale:
             return time
         if time < self.last_time:
             self.init(self.first_change_index)
@@ -86,7 +86,7 @@ class CachedScaledTimeToFirstTime(Record):
         self.next_change_index = next_index
 
     def get(self, scaled_time: float) -> float:
-        if scaled_time < 0 or Options.disable_timescale:
+        if scaled_time <= 0 or Options.disable_timescale:
             return scaled_time
         if scaled_time < self.last_scaled_time:
             self.init(self.first_change_index)
