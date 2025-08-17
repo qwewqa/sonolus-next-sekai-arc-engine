@@ -108,7 +108,7 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
         if now is None:
             now = time()
         progress = progress_to(target_time, now)
-        return 1.0 - ease_in_sine(progress * 1.4)
+        return 1.0 - ease_in_sine(progress * 1.6)
     return 1.0
 
 

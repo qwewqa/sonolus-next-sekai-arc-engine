@@ -47,9 +47,12 @@ class InputManager(PlayArchetype):
     name = "InputManager"
 
     @callback(order=-1)
+    def update_sequential(self):
+        note.NoteMemory.active_tap_input_notes.clear()
+
+    @callback(order=-1)
     def touch(self):
         preassign_taps()
-        note.NoteMemory.active_tap_input_notes.clear()
 
 
 def get_leniency(kind: NoteKind) -> float:
