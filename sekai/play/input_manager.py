@@ -202,6 +202,7 @@ def preassign_taps():
         for tap_i in available_tap_indexes:
             touch = touches()[tap_i]
             if touch.started and hitbox_layout.contains_point(touch.position):
+                disallow_empty(touch)
                 disallow_release(touch)
                 current.tap_id = touch.id
                 available_tap_indexes.remove(tap_i)

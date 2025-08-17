@@ -117,12 +117,12 @@ def invert_direction(direction: Direction) -> Direction:
     match direction:
         case Direction.DOWN_LEFT:
             return Direction.DOWN_RIGHT
-        case Direction.LEFT:
-            return Direction.RIGHT
+        case Direction.UP_LEFT:
+            return Direction.UP_RIGHT
         case Direction.NONE:
             return Direction.NONE
-        case Direction.RIGHT:
-            return Direction.LEFT
+        case Direction.UP_RIGHT:
+            return Direction.UP_LEFT
         case Direction.DOWN_RIGHT:
             return Direction.DOWN_LEFT
         case _:
@@ -322,7 +322,7 @@ def _draw_arrow(
     match direction:
         case _ if Options.marker_animation:
             animation_progress = (time() / FLICK_ARROW_PERIOD) % 1
-        case Direction.LEFT | Direction.NONE | Direction.RIGHT:
+        case Direction.UP_LEFT | Direction.NONE | Direction.UP_RIGHT:
             animation_progress = 0.2
         case Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
             animation_progress = 0.8

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import pi
 from typing import assert_never, cast
 
 from sonolus.script.archetype import (
@@ -16,11 +17,12 @@ from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval
-from sonolus.script.runtime import input_offset, time, touches
+from sonolus.script.quad import Rect
+from sonolus.script.runtime import Touch, input_offset, time, touches
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.buckets import WINDOW_SCALE
-from sekai.lib.layout import Direction, preempt_time, progress_to
+from sekai.lib.layout import Direction, Layout, preempt_time, progress_to
 from sekai.lib.note import NoteKind, draw_note, get_note_bucket, get_note_window, invert_direction
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
@@ -102,7 +104,12 @@ class BaseNote(PlayArchetype):
         return time() >= self.spawn_time
 
     def update_sequential(self):
-        if time() in self.input_interval and not self.despawn and input_manager.has_tap_input(self.kind):
+        if (
+            time() in self.input_interval
+            and not self.despawn
+            and input_manager.has_tap_input(self.kind)
+            and self.tap_id == 0
+        ):
             NoteMemory.active_tap_input_notes.append(self.ref())
 
     def touch(self):
@@ -118,7 +125,7 @@ class BaseNote(PlayArchetype):
             ):
                 self.handle_tap_input()
             case NoteKind.NORM_FLICK | NoteKind.CRIT_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.CRIT_HEAD_FLICK:
-                pass  # Flick
+                self.handle_flick_input()
             case NoteKind.NORM_TAIL_FLICK | NoteKind.CRIT_TAIL_FLICK:
                 pass  # Tail Flick
             case (
@@ -163,16 +170,78 @@ class BaseNote(PlayArchetype):
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def handle_tap_input(self):
-        if self.tap_id <= 0:
+        if self.tap_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.tap_id)
         self.judge(touch.start_time)
+
+    def handle_flick_input(self):
+        if self.tap_id == 0:
+            return
+        # Another touch is allowed to flick the note as long as it started after the start of the input interval,
+        # so we don't care which touch matched the tap id, just that the tap id is set.
+
+        hitbox = input_manager.get_full_hitbox(self)
+
+        for touch in touches():
+            if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
+                continue
+            if not self.check_direction_matches(touch.angle):
+                continue
+            input_manager.disallow_empty(touch)
+            self.judge(touch.time)
+            return
+        for touch in touches():
+            if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
+                continue
+            input_manager.disallow_empty(touch)
+            self.judge_wrong_way(touch.time)
+            return
+
+    def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
+        return (
+            touch.start_time >= self.input_interval.start
+            and touch.speed >= Layout.flick_speed_threshold
+            and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
+        )
+
+    def check_direction_matches(self, angle: float) -> bool:
+        leniency = pi / 2
+        match self.direction:
+            case Direction.NONE:
+                return True
+            case Direction.UP_LEFT:
+                target_angle = pi / 2 + 1
+            case Direction.UP_RIGHT:
+                target_angle = pi / 2 - 1
+            case Direction.DOWN_LEFT:
+                target_angle = -pi / 2 - 1
+            case Direction.DOWN_RIGHT:
+                target_angle = -pi / 2 + 1
+            case _:
+                assert_never(self.direction)
+        angle_diff = abs((angle - target_angle + pi) % (2 * pi) - pi)
+        return angle_diff <= leniency
 
     def judge(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
         error = actual_time - self.target_time
         self.result.judgment = judgment
         self.result.accuracy = error
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = error * WINDOW_SCALE
+        self.despawn = True
+
+    def judge_wrong_way(self, actual_time: float):
+        judgment = self.judgment_window.judge(actual_time, self.target_time)
+        if judgment == Judgment.PERFECT:
+            judgment = Judgment.GREAT
+        error = actual_time - self.target_time
+        self.result.judgment = judgment
+        if error in self.judgment_window.perfect:
+            self.result.accuracy = self.judgment_window.perfect.end
+        else:
+            self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True

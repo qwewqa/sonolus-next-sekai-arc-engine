@@ -38,9 +38,9 @@ DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 class Direction(IntEnum):
     DOWN_LEFT = -2
-    LEFT = -1
+    UP_LEFT = -1
     NONE = 0
-    RIGHT = 1
+    UP_RIGHT = 1
     DOWN_RIGHT = 2
 
 
@@ -52,7 +52,7 @@ class Layout:
     scaled_note_h: float
     progress_start: float
     progress_cutoff: float
-    flick_threshold: float
+    flick_speed_threshold: float
 
 
 def init_layout():
@@ -86,7 +86,7 @@ def init_layout():
     else:
         Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
 
-    Layout.flick_threshold = 2 * Layout.w_scale
+    Layout.flick_speed_threshold = 2 * Layout.w_scale
 
 
 def approach(progress: float) -> float:
@@ -255,10 +255,10 @@ def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: f
         case Direction.NONE:
             is_down = False
             animation_top_x_offset = 0
-        case Direction.LEFT:
+        case Direction.UP_LEFT:
             is_down = False
             animation_top_x_offset = -1
-        case Direction.RIGHT:
+        case Direction.UP_RIGHT:
             is_down = False
             animation_top_x_offset = 1
         case Direction.DOWN_LEFT:
@@ -299,11 +299,11 @@ def layout_flick_arrow_fallback(
             rotation = 0
             animation_top_x_offset = 0
             is_down = False
-        case Direction.LEFT:
+        case Direction.UP_LEFT:
             rotation = pi / 6
             animation_top_x_offset = -1
             is_down = False
-        case Direction.RIGHT:
+        case Direction.UP_RIGHT:
             rotation = -pi / 6
             animation_top_x_offset = 1
             is_down = False
@@ -431,6 +431,6 @@ def layout_hitbox(
     return Rect(
         l=transform_vec(Vec2(l, 1.0)).x,
         r=transform_vec(Vec2(r, 1.0)).x,
-        t=1.0,
+        t=0.2,
         b=-1.0,
     )
