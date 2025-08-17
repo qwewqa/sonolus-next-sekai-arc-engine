@@ -109,21 +109,21 @@ class Skin:
     trace_flick_tick_note_fallback: StandardSprite.NOTE_TICK_RED
 
     guide_green: Sprite = sprite("Sekai+ Guide Green")
-    guide_green_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_GREEN
+    guide_green_fallback: StandardSprite.NOTE_CONNECTION_GREEN_SEAMLESS
     guide_yellow: Sprite = sprite("Sekai+ Guide Yellow")
-    guide_yellow_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_YELLOW
+    guide_yellow_fallback: StandardSprite.NOTE_CONNECTION_YELLOW_SEAMLESS
     guide_red: Sprite = sprite("Sekai+ Guide Red")
-    guide_red_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_RED
+    guide_red_fallback: StandardSprite.NOTE_CONNECTION_RED_SEAMLESS
     guide_purple: Sprite = sprite("Sekai+ Guide Purple")
-    guide_purple_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_PURPLE
+    guide_purple_fallback: StandardSprite.NOTE_CONNECTION_PURPLE_SEAMLESS
     guide_cyan: Sprite = sprite("Sekai+ Guide Cyan")
-    guide_cyan_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_CYAN
+    guide_cyan_fallback: StandardSprite.NOTE_CONNECTION_CYAN_SEAMLESS
     guide_blue: Sprite = sprite("Sekai+ Guide Blue")
-    guide_blue_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_BLUE
+    guide_blue_fallback: StandardSprite.NOTE_CONNECTION_BLUE_SEAMLESS
     guide_neutral: Sprite = sprite("Sekai+ Guide Neutral")
-    guide_neutral_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
+    guide_neutral_fallback: StandardSprite.NOTE_CONNECTION_NEUTRAL_SEAMLESS
     guide_black: Sprite = sprite("Sekai+ Guide Black")
-    guide_black_fallback: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
+    guide_black_fallback: StandardSprite.NOTE_CONNECTION_NEUTRAL_SEAMLESS
 
     damage_note_left: Sprite = sprite("Sekai Trace Note Purple Left")
     damage_note_middle: Sprite = sprite("Sekai Trace Note Purple Middle")

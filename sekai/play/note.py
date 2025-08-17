@@ -11,8 +11,8 @@ from sonolus.script.interval import Interval
 from sonolus.script.runtime import input_offset, time
 from sonolus.script.timing import beat_to_time
 
-from sekai.lib.layout import preempt_time, progress_to
-from sekai.lib.note import NoteKind, draw_note, get_note_bucket, get_note_window
+from sekai.lib.layout import Direction, preempt_time, progress_to
+from sekai.lib.note import NoteKind, draw_note, get_note_bucket, get_note_window, invert_direction
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import connector
@@ -23,7 +23,7 @@ class BaseNote(PlayArchetype):
     beat: StandardImport.BEAT
     lane: float = imported()
     size: float = imported()
-    direction: int = imported()
+    direction: Direction = imported()
     slide_ref: EntityRef[connector.BaseSlideConnector] = imported(name="slide")
     attach_ref: EntityRef[connector.BaseSlideConnector] = imported(name="attach")
     timescale_group_ref: EntityRef[TimescaleGroup] = imported(name="timeScaleGroup")
@@ -49,7 +49,7 @@ class BaseNote(PlayArchetype):
 
         if Options.mirror:
             self.lane *= -1
-            self.direction *= -1
+            self.direction = invert_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
         self.target_scaled_time = group_time_to_scaled_time(self.timescale_group_ref, self.target_time)

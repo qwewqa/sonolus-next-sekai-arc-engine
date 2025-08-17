@@ -1,4 +1,6 @@
+from enum import IntEnum
 from math import log, pi
+from typing import assert_never
 
 from sonolus.script.easing import ease_in_sine
 from sonolus.script.globals import level_data
@@ -6,6 +8,7 @@ from sonolus.script.interval import clamp, lerp, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
 from sonolus.script.transform import Transform2d
+from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
 from sekai.lib.options import Options
@@ -31,6 +34,14 @@ APPROACH_SCALE = 1.06**-45
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
 DEFAULT_APPROACH_CUTOFF = 2.5
 DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
+
+
+class Direction(IntEnum):
+    DOWN_LEFT = -2
+    LEFT = -1
+    NONE = 0
+    RIGHT = 1
+    DOWN_RIGHT = 2
 
 
 @level_data
@@ -239,29 +250,83 @@ def layout_tick(lane: float, travel: float) -> Rect:
     return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * travel)
 
 
-def layout_flick_arrow(lane: float, size: float, direction: int, travel: float, animation_progress: float):
+def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: float, animation_progress: float):
+    match direction:
+        case Direction.NONE:
+            is_down = False
+            animation_top_x_offset = 0
+        case Direction.LEFT:
+            is_down = False
+            animation_top_x_offset = -1
+        case Direction.RIGHT:
+            is_down = False
+            animation_top_x_offset = 1
+        case Direction.DOWN_LEFT:
+            is_down = True
+            animation_top_x_offset = 1
+            lane += 0.25
+        case Direction.DOWN_RIGHT:
+            is_down = True
+            animation_top_x_offset = -1
+            lane -= 0.25
+        case _:
+            assert_never(direction)
     w = clamp(size, 0, 3) * (1 if -direction >= 0 else -1) / 2
     base_bl = transform_vec(Vec2(lane - w, 1) * travel)
     base_br = transform_vec(Vec2(lane + w, 1) * travel)
     up = (base_br - base_bl).rotate(pi / 2 if -direction >= 0 else -pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
-    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * travel
-    return Quad(
+    offset_scale = animation_progress if not is_down else 1 - animation_progress
+    offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
+    result = Quad(
         bl=base_bl,
         br=base_br,
         tl=base_tl,
         tr=base_tr,
     ).translate(offset)
+    if is_down:
+        swap(result.bl, result.tl)
+        swap(result.br, result.tr)
+    return result
 
 
-def layout_flick_arrow_fallback(lane: float, size: float, direction: int, travel: float, animation_progress: float):
+def layout_flick_arrow_fallback(
+    lane: float, size: float, direction: Direction, travel: float, animation_progress: float
+):
+    match direction:
+        case Direction.NONE:
+            rotation = 0
+            animation_top_x_offset = 0
+            is_down = False
+        case Direction.LEFT:
+            rotation = pi / 6
+            animation_top_x_offset = -1
+            is_down = False
+        case Direction.RIGHT:
+            rotation = -pi / 6
+            animation_top_x_offset = 1
+            is_down = False
+        case Direction.DOWN_LEFT:
+            rotation = pi * 5 / 6
+            animation_top_x_offset = 1
+            is_down = True
+            lane -= 0.25  # Note: backwards from the regular skin due to how the sprites are designed
+        case Direction.DOWN_RIGHT:
+            rotation = -pi * 5 / 6
+            animation_top_x_offset = -1
+            is_down = True
+            lane += 0.25
+        case _:
+            assert_never(direction)
+
     w = clamp(size / 2, 1, 2)
-    offset = Vec2(direction * Layout.w_scale, 2 * Layout.w_scale) * animation_progress * travel
+    offset_scale = animation_progress if not is_down else 1 - animation_progress
+    offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
     return (
         Rect(l=-1, r=1, t=1, b=-1)
         .as_quad()
-        .rotate(-pi / 6 * direction)
+        .rotate(rotation)
         .scale(Vec2(w, w) * Layout.w_scale * travel)
         .translate(transform_vec(Vec2(lane, 1) * travel))
         .translate(offset)

@@ -22,6 +22,7 @@ from sekai.lib.buckets import (
 )
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
+    Direction,
     Layout,
     approach,
     get_alpha,
@@ -112,13 +113,23 @@ class NoteKind(IntEnum):
     DAMAGE = auto()
 
 
-class Direction(IntEnum):
-    LEFT = -1
-    NONE = 0
-    RIGHT = 1
+def invert_direction(direction: Direction) -> Direction:
+    match direction:
+        case Direction.DOWN_LEFT:
+            return Direction.DOWN_RIGHT
+        case Direction.LEFT:
+            return Direction.RIGHT
+        case Direction.NONE:
+            return Direction.NONE
+        case Direction.RIGHT:
+            return Direction.LEFT
+        case Direction.DOWN_RIGHT:
+            return Direction.DOWN_LEFT
+        case _:
+            assert_never(direction)
 
 
-def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: int, target_time: float):
+def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: Direction, target_time: float):
     if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
@@ -181,7 +192,7 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
             assert_never(kind)
 
 
-def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: int):
+def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: Direction):
     match kind:
         case (
             NoteKind.NORM_FLICK
@@ -305,9 +316,20 @@ def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: fl
         sprites.fallback.draw(layout, z=z, a=a)
 
 
-def _draw_arrow(sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: int):
-    animation_progress = (time() / FLICK_ARROW_PERIOD) % 1 if Options.marker_animation else 0
-    a = get_alpha(target_time) * (1 - ease_in_cubic(animation_progress))
+def _draw_arrow(
+    sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: Direction
+):
+    match direction:
+        case _ if Options.marker_animation:
+            animation_progress = (time() / FLICK_ARROW_PERIOD) % 1
+        case Direction.LEFT | Direction.NONE | Direction.RIGHT:
+            animation_progress = 0.2
+        case Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
+            animation_progress = 0.8
+        case _:
+            assert_never(direction)
+    animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
+    a = get_alpha(target_time) * animation_alpha
     z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
     if sprites.custom_available:
         layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
