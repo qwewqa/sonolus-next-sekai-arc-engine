@@ -1,5 +1,6 @@
 from sonolus.script.archetype import PlayArchetype, callback
 
+from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.ui import init_ui
 
@@ -11,6 +12,7 @@ class Initialization(PlayArchetype):
     def preprocess(self):
         init_layout()
         init_ui()
+        init_buckets()
 
     def spawn_order(self) -> float:
         return 1e8

@@ -178,3 +178,9 @@ class Options:
         advanced=True,
         default=False,
     )
+    ultra_leniency: bool = toggle_option(
+        name="Ultra Leniency",
+        standard=True,
+        advanced=True,
+        default=False,
+    )

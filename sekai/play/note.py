@@ -1,21 +1,30 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import assert_never, cast
 
-from sonolus.script.archetype import EntityRef, PlayArchetype, StandardImport, entity_data, imported
+from sonolus.script.archetype import (
+    EntityRef,
+    PlayArchetype,
+    StandardImport,
+    entity_data,
+    exported,
+    imported,
+    shared_memory,
+)
 from sonolus.script.array import Dim
-from sonolus.script.bucket import JudgmentWindow
+from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval
-from sonolus.script.runtime import input_offset, time
+from sonolus.script.runtime import input_offset, time, touches
 from sonolus.script.timing import beat_to_time
 
+from sekai.lib.buckets import WINDOW_SCALE
 from sekai.lib.layout import Direction, preempt_time, progress_to
 from sekai.lib.note import NoteKind, draw_note, get_note_bucket, get_note_window, invert_direction
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
-from sekai.play import connector
+from sekai.play import connector, input_manager
 from sekai.play.timescale import TimescaleGroup
 
 
@@ -36,6 +45,12 @@ class BaseNote(PlayArchetype):
     target_scaled_time: float = entity_data()
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
+
+    # The id of the tap that activated this note, for tap notes and flicks.
+    # This is set by the input manager rather than the note itself.
+    tap_id: int = shared_memory()
+
+    finish_time: float = exported()
 
     @classmethod
     def global_preprocess(cls):
@@ -60,6 +75,7 @@ class BaseNote(PlayArchetype):
         if self.judgment_window.good.length > 0:
             self.input_interval = self.judgment_window.good + self.target_time + input_offset()
         else:
+            # Dummy input interval for notes that judge immediately at the judge line or aren't judged at all.
             self.input_interval = Interval(0, 1) + self.target_time + input_offset()
 
         self.start_time = group_scaled_time_to_first_time(self.timescale_group_ref, self.start_scaled_time)
@@ -85,14 +101,95 @@ class BaseNote(PlayArchetype):
             return False
         return time() >= self.spawn_time
 
+    def update_sequential(self):
+        if time() in self.input_interval and not self.despawn and input_manager.has_tap_input(self.kind):
+            NoteMemory.active_tap_input_notes.append(self.ref())
+
+    def touch(self):
+        kind = self.kind
+        match kind:
+            case (
+                NoteKind.NORM_TAP
+                | NoteKind.CRIT_TAP
+                | NoteKind.NORM_HEAD_TAP
+                | NoteKind.CRIT_HEAD_TAP
+                | NoteKind.NORM_TAIL_TAP
+                | NoteKind.CRIT_TAIL_TAP
+            ):
+                self.handle_tap_input()
+            case NoteKind.NORM_FLICK | NoteKind.CRIT_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.CRIT_HEAD_FLICK:
+                pass  # Flick
+            case NoteKind.NORM_TAIL_FLICK | NoteKind.CRIT_TAIL_FLICK:
+                pass  # Tail Flick
+            case (
+                NoteKind.NORM_TRACE
+                | NoteKind.CRIT_TRACE
+                | NoteKind.NORM_HEAD_TRACE
+                | NoteKind.CRIT_HEAD_TRACE
+                | NoteKind.NORM_TAIL_TRACE
+                | NoteKind.CRIT_TAIL_TRACE
+            ):
+                pass  # Trace
+            case (
+                NoteKind.NORM_TRACE_FLICK
+                | NoteKind.CRIT_TRACE_FLICK
+                | NoteKind.NORM_HEAD_TRACE_FLICK
+                | NoteKind.CRIT_HEAD_TRACE_FLICK
+                | NoteKind.NORM_TAIL_TRACE_FLICK
+                | NoteKind.CRIT_TAIL_TRACE_FLICK
+            ):
+                pass  # Trace Flick
+            case (
+                NoteKind.NORM_RELEASE
+                | NoteKind.CRIT_RELEASE
+                | NoteKind.NORM_HEAD_RELEASE
+                | NoteKind.CRIT_HEAD_RELEASE
+                | NoteKind.NORM_TAIL_RELEASE
+                | NoteKind.CRIT_TAIL_RELEASE
+            ):
+                pass  # Release
+            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.DAMAGE | NoteKind.JOINT:
+                pass
+            case _:
+                assert_never(kind)
+
     def update_parallel(self):
         if time() < self.start_time:
             return
         if time() > self.input_interval.end:
-            self.despawn = True
+            self.fail_late()
         if self.despawn:
             return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
+
+    def handle_tap_input(self):
+        if self.tap_id <= 0:
+            return
+        touch = next(tap for tap in touches() if tap.id == self.tap_id)
+        self.judge(touch.start_time)
+
+    def judge(self, actual_time: float):
+        judgment = self.judgment_window.judge(actual_time, self.target_time)
+        error = actual_time - self.target_time
+        self.result.judgment = judgment
+        self.result.accuracy = error
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = error * WINDOW_SCALE
+        self.despawn = True
+
+    def complete(self):
+        self.result.judgment = Judgment.PERFECT
+        self.result.accuracy = 0
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = 0
+        self.despawn = True
+
+    def fail_late(self):
+        self.result.judgment = Judgment.MISS
+        self.result.accuracy = self.judgment_window.good.end
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = self.judgment_window.good.end * WINDOW_SCALE
+        self.despawn = True
 
     @property
     def kind(self) -> NoteKind:
@@ -105,7 +202,7 @@ class BaseNote(PlayArchetype):
 
 @level_memory
 class NoteMemory:
-    active_tappable_notes: VarArray[EntityRef[BaseNote], Dim[32]]
+    active_tap_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
 
 
 NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.NORM_TAP)

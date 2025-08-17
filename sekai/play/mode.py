@@ -6,7 +6,7 @@ from sekai.lib.particle import Particles
 from sekai.lib.skin import Skin
 from sekai.play.connector import ALL_CONNECTOR_ARCHETYPES
 from sekai.play.initialization import Initialization
-from sekai.play.input import InputManager
+from sekai.play.input_manager import InputManager
 from sekai.play.note import ALL_NOTE_ARCHETYPES
 from sekai.play.sim_line import SimLine
 from sekai.play.stage import Stage
