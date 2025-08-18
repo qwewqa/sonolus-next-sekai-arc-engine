@@ -48,11 +48,11 @@ class TimescaleGroup(PlayArchetype):
     def should_spawn(self) -> bool:
         return True
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         self.time_to_scaled_time.init(self.first.index)
         self.scaled_time_to_first_time.init(self.first.index)
 
-    @callback(order=-1)
+    @callback(order=-2)
     def update_sequential(self):
         self.current_scaled_time = self.time_to_scaled_time.get(time())

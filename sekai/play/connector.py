@@ -4,7 +4,7 @@ from typing import cast
 
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, imported
 from sonolus.script.interval import Interval, remap, unlerp_clamped
-from sonolus.script.runtime import input_offset, is_preprocessing, offset_adjusted_time, time
+from sonolus.script.runtime import input_offset, is_preprocessing, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.connector import (
@@ -23,6 +23,8 @@ from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import note
 from sekai.play.timescale import TimescaleGroup
+
+CONNECTOR_LENIENCY = 1
 
 
 class BaseSlideConnector(PlayArchetype):
@@ -59,10 +61,27 @@ class BaseSlideConnector(PlayArchetype):
             self.despawn = True
             return
 
+        if time() in self.input_interval:
+            input_lane, input_size = self.get_attached_params(offset_adjusted_time())
+            self.active_connector_info.input_lane = input_lane
+            self.active_connector_info.input_size = input_size
+            hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+            for touch in touches():
+                if hitbox.contains_point(touch.position):
+                    self.active_connector_info.is_active = True
+                    break
+            else:
+                self.active_connector_info.is_active = False
         if time() in self.visual_interval:
+            if time() < self.start.target_time:
+                visual_state = SlideVisualState.WAITING
+            elif offset_adjusted_time() < self.start.target_time or self.active_connector_info.is_active:
+                visual_state = SlideVisualState.ACTIVE
+            else:
+                visual_state = SlideVisualState.INACTIVE
             draw_connector(
                 kind=self.kind,
-                visual_state=SlideVisualState.WAITING,
+                visual_state=visual_state,
                 ease_type=self.ease,
                 quality=Options.slide_quality,
                 lane_a=self.head.lane,
@@ -77,10 +96,6 @@ class BaseSlideConnector(PlayArchetype):
             visual_lane, visual_size = self.get_attached_params(time())
             self.active_connector_info.visual_lane = visual_lane
             self.active_connector_info.visual_size = visual_size
-        if time() in self.input_interval:
-            input_lane, input_size = self.get_attached_params(offset_adjusted_time())
-            self.active_connector_info.input_lane = input_lane
-            self.active_connector_info.input_size = input_size
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:
         if is_preprocessing():

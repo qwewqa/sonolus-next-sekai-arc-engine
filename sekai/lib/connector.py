@@ -1,5 +1,5 @@
 from enum import IntEnum
-from math import ceil, pi, sin
+from math import ceil, cos, pi
 from typing import assert_never
 
 from sonolus.script.easing import ease_out_cubic
@@ -200,9 +200,9 @@ def draw_connector(
 
         if sprites.custom_available:
             if Options.connector_animation and visual_state == SlideVisualState.ACTIVE:
-                active_a = ease_out_cubic((sin(time() * 2 * pi) + 1) / 2)
-                sprites.active.draw(layout, z=z, a=base_a * active_a)
-                sprites.normal.draw(layout, z=z + 1, a=base_a * (1 - active_a))
+                a_modifier = (cos(2 * pi * time()) + 1) / 2
+                sprites.normal.draw(layout, z=z, a=base_a * ease_out_cubic(a_modifier))
+                sprites.active.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
             else:
                 sprites.normal.draw(layout, z=z, a=base_a * (1 if visual_state != SlideVisualState.INACTIVE else 0.5))
         else:
@@ -355,6 +355,7 @@ class ActiveConnectorInfo(Record):
     visual_size: float
     input_lane: float
     input_size: float
+    is_active: bool
 
     def get_hitbox(self, leniency: float) -> Rect:
         return layout_hitbox(
