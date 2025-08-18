@@ -329,7 +329,7 @@ def draw_guide(
         last_target_time = next_target_time
 
 
-def get_attached(
+def get_attached_params(
     ease_type: EaseType,
     lane_a: float,
     size_a: float,

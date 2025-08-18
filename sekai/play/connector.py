@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, imported
-from sonolus.script.interval import unlerp_clamped
+from sonolus.script.interval import remap, unlerp_clamped
 from sonolus.script.runtime import time
 from sonolus.script.timing import beat_to_time
 
@@ -14,7 +14,7 @@ from sekai.lib.connector import (
     SlideVisualState,
     draw_connector,
     draw_guide,
-    get_attached,
+    get_attached_params,
 )
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import preempt_time, progress_to
@@ -65,10 +65,10 @@ class BaseSlideConnector(PlayArchetype):
             target_time_b=self.tail.target_time,
         )
 
-    def get_attached(self, target_time: float) -> tuple[float, float]:
+    def get_attached_params(self, target_time: float) -> tuple[float, float]:
         self.head.init_data()
         self.tail.init_data()
-        return get_attached(
+        return get_attached_params(
             ease_type=self.ease,
             lane_a=self.head.lane,
             size_a=self.head.size,
@@ -81,6 +81,14 @@ class BaseSlideConnector(PlayArchetype):
                 self.tail.target_scaled_time, group_time_to_scaled_time(self.tail.timescale_group_ref, target_time)
             ),
         )
+
+    def get_attached_progress(self, target_time: float) -> float:
+        head_progress = progress_to(self.head.target_scaled_time, group_scaled_time(self.head.timescale_group_ref))
+        tail_progress = progress_to(self.tail.target_scaled_time, group_scaled_time(self.tail.timescale_group_ref))
+        if abs(self.head.target_time - self.tail.target_time) < 1e-6:
+            return (head_progress + tail_progress) / 2
+        else:
+            return remap(self.head.target_time, self.tail.target_time, head_progress, tail_progress, target_time)
 
     @property
     def kind(self) -> SlideConnectorKind:
