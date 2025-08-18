@@ -431,6 +431,6 @@ def layout_hitbox(
     return Rect(
         l=transform_vec(Vec2(l, 1.0)).x,
         r=transform_vec(Vec2(r, 1.0)).x,
-        t=0.2,
-        b=-1.0,
+        t=transform_vec(Vec2(0.0, LANE_HITBOX_T)).y,
+        b=transform_vec(Vec2(0.0, LANE_HITBOX_B)).y,
     )

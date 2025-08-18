@@ -4,6 +4,8 @@ from typing import assert_never
 
 from sonolus.script.easing import ease_out_cubic
 from sonolus.script.interval import clamp, lerp, unlerp
+from sonolus.script.quad import Rect
+from sonolus.script.record import Record
 from sonolus.script.runtime import time
 
 from sekai.lib.ease import EaseType, ease
@@ -12,6 +14,7 @@ from sekai.lib.layout import (
     Layout,
     approach,
     get_alpha,
+    layout_hitbox,
     layout_slide_connector_segment,
     transformed_vec_at,
 )
@@ -36,12 +39,6 @@ CONNECTOR_QUALITY_SCALE = 3.0
 class SlideConnectorKind(IntEnum):
     NORMAL = 1
     CRITICAL = 2
-
-
-class SlideStartType(IntEnum):
-    TAP = 0
-    TRACE = 1
-    NONE = 2
 
 
 class SlideVisualState(IntEnum):
@@ -351,3 +348,16 @@ def get_attached_params(
     lane = lerp(lane_a, lane_b, eased_frac)
     size = lerp(size_a, size_b, eased_frac)
     return lane, size
+
+
+class ActiveConnectorInfo(Record):
+    visual_lane: float
+    visual_size: float
+    input_lane: float
+    input_size: float
+
+    def get_hitbox(self, leniency: float) -> Rect:
+        return layout_hitbox(
+            self.input_lane - self.input_size - leniency,
+            self.input_lane + self.input_size + leniency,
+        )

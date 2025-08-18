@@ -23,8 +23,19 @@ from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjus
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.buckets import WINDOW_SCALE
-from sekai.lib.layout import Direction, Layout, preempt_time, progress_to
-from sekai.lib.note import NoteKind, draw_note, get_note_bucket, get_note_window, invert_direction
+from sekai.lib.connector import ActiveConnectorInfo
+from sekai.lib.layout import Direction, Layout, layout_hitbox, preempt_time, progress_to
+from sekai.lib.note import (
+    NoteKind,
+    draw_note,
+    get_leniency,
+    get_note_bucket,
+    get_note_window,
+    has_release_input,
+    has_tap_input,
+    invert_direction,
+    is_head,
+)
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import connector, input_manager
@@ -54,6 +65,8 @@ class BaseNote(PlayArchetype):
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
     captured_touch_id: int = shared_memory()
+
+    active_connector_info: ActiveConnectorInfo = shared_memory()
 
     # For trace early touches
     best_touch_time: float = entity_memory()
@@ -112,9 +125,9 @@ class BaseNote(PlayArchetype):
         if self.despawn:
             return
         if time() in self.input_interval and self.captured_touch_id == 0:
-            if input_manager.has_tap_input(self.kind):
+            if has_tap_input(self.kind):
                 NoteMemory.active_tap_input_notes.append(self.ref())
-            elif input_manager.has_release_input(self.kind):
+            elif has_release_input(self.kind):
                 NoteMemory.active_release_input_notes.append(self.ref())
 
     def touch(self):
@@ -134,7 +147,7 @@ class BaseNote(PlayArchetype):
             case NoteKind.NORM_FLICK | NoteKind.CRIT_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.CRIT_HEAD_FLICK:
                 self.handle_flick_input()
             case NoteKind.NORM_TAIL_FLICK | NoteKind.CRIT_TAIL_FLICK:
-                pass  # Tail Flick
+                self.handle_tail_flick_input()
             case (
                 NoteKind.NORM_TRACE
                 | NoteKind.CRIT_TRACE
@@ -181,6 +194,8 @@ class BaseNote(PlayArchetype):
         if time() > self.input_interval.end:
             self.fail_late()
             return
+        if is_head(self.kind) and time() > self.target_time:
+            return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def terminate(self):
@@ -211,7 +226,7 @@ class BaseNote(PlayArchetype):
         # Another touch is allowed to flick the note as long as it started after the start of the input interval,
         # so we don't care which touch matched the tap id, just that the tap id is set.
 
-        hitbox = input_manager.get_full_hitbox(self)
+        hitbox = self.get_full_hitbox()
 
         for touch in touches():
             if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
@@ -228,11 +243,58 @@ class BaseNote(PlayArchetype):
             self.judge_wrong_way(touch.time)
             return
 
+    def handle_tail_flick_input(self):
+        if time() < self.input_interval.start:
+            return
+
+        slide_connector = self.slide_ref.get()
+        start = slide_connector.start
+
+        if not start.is_despawned:
+            return
+
+        if offset_adjusted_time() < self.target_time:
+            hitbox = slide_connector.active_connector_info.get_hitbox(input_manager.get_leniency(self.kind))
+            for touch in touches():
+                if not touch.ended and hitbox.contains_point(touch.position):
+                    return
+            for touch in touches():
+                if not self.check_touch_touch_is_eligible_for_early_tail_flick(hitbox, touch):
+                    continue
+                if not self.check_direction_matches(touch.angle):
+                    continue
+                input_manager.disallow_empty(touch)
+                self.judge(touch.time)
+                return
+            for touch in touches():
+                if not self.check_touch_touch_is_eligible_for_early_tail_flick(hitbox, touch):
+                    continue
+                input_manager.disallow_empty(touch)
+                self.judge_wrong_way(touch.time)
+                return
+        else:
+            hitbox = self.get_full_hitbox()
+            for touch in touches():
+                # Trace flick eligibility since no tap is needed for tail flicks.
+                if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
+                    continue
+                if not self.check_direction_matches(touch.angle):
+                    continue
+                input_manager.disallow_empty(touch)
+                self.judge(touch.time)
+                return
+            for touch in touches():
+                if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
+                    continue
+                input_manager.disallow_empty(touch)
+                self.judge_wrong_way(touch.time)
+                return
+
     def handle_trace_input(self):
         if time() < self.input_interval.start:
             return
 
-        hitbox = input_manager.get_full_hitbox(self)
+        hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
             if not hitbox.contains_point(touch.position):
@@ -255,7 +317,7 @@ class BaseNote(PlayArchetype):
         if time() < self.input_interval.start:
             return
 
-        hitbox = input_manager.get_full_hitbox(self)
+        hitbox = self.get_full_hitbox()
         has_touch = False
         has_correct_direction_touch = False
         for touch in touches():
@@ -277,7 +339,9 @@ class BaseNote(PlayArchetype):
                 self.judge(offset_adjusted_time())
             else:
                 self.judge_wrong_way(offset_adjusted_time())
-        else:
+        elif (
+            has_correct_direction_touch or self.best_touch_time < self.judgment_window.perfect.start + self.target_time
+        ):
             self.best_touch_time = offset_adjusted_time()
             self.best_touch_matches_direction = has_correct_direction_touch
 
@@ -285,7 +349,7 @@ class BaseNote(PlayArchetype):
         if time() < self.input_interval.start:
             return
 
-        hitbox = input_manager.get_full_hitbox(self)
+        hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
             if not hitbox.contains_point(touch.position):
@@ -304,7 +368,16 @@ class BaseNote(PlayArchetype):
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
         )
 
-    def check_touch_is_eligible_for_trace_flick(self, hitbox: Rect, touch: Touch) -> bool:
+    @staticmethod
+    def check_touch_touch_is_eligible_for_early_tail_flick(hitbox: Rect, touch: Touch) -> bool:
+        return (
+            touch.speed >= Layout.flick_speed_threshold
+            and (not hitbox.contains_point(touch.position) or touch.ended)
+            and hitbox.contains_point(touch.prev_position)
+        )
+
+    @staticmethod
+    def check_touch_is_eligible_for_trace_flick(hitbox: Rect, touch: Touch) -> bool:
         return touch.speed >= Layout.flick_speed_threshold and (
             hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position)
         )
@@ -372,6 +445,12 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = self.judgment_window.good.end * WINDOW_SCALE
         self.despawn = True
+
+    def get_full_hitbox(self) -> Rect:
+        leniency = get_leniency(self.kind)
+        hitbox_l = self.lane - self.size - leniency
+        hitbox_r = self.lane + self.size + leniency
+        return layout_hitbox(hitbox_l, hitbox_r)
 
     @property
     def kind(self) -> NoteKind:

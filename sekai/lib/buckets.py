@@ -331,8 +331,8 @@ def init_buckets():
     Buckets.critical_tail_flick.window @= SLIDE_END_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
     Buckets.normal_tail_trace.window @= SLIDE_END_TRACE_NORMAL_WINDOW * WINDOW_SCALE
     Buckets.critical_tail_trace.window @= SLIDE_END_TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_trace_flick.window @= SLIDE_END_TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_trace_flick.window @= SLIDE_END_TRACE_CRITICAL_WINDOW * WINDOW_SCALE
+    Buckets.normal_tail_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
+    Buckets.critical_tail_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
     Buckets.normal_tail_release.window @= SLIDE_END_NORMAL_WINDOW * WINDOW_SCALE
     Buckets.critical_tail_release.window @= SLIDE_END_CRITICAL_WINDOW * WINDOW_SCALE
 
