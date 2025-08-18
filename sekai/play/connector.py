@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, imported
+from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, entity_memory, imported
 from sonolus.script.interval import Interval, remap, unlerp_clamped
 from sonolus.script.runtime import input_offset, is_preprocessing, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
@@ -19,12 +19,14 @@ from sekai.lib.connector import (
 )
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import preempt_time, progress_to
+from sekai.lib.note import draw_slide_note_head
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
 from sekai.play import note
 from sekai.play.timescale import TimescaleGroup
 
 CONNECTOR_LENIENCY = 1
+START_LENIENCY_BEATS = 0.5
 
 
 class BaseSlideConnector(PlayArchetype):
@@ -33,21 +35,29 @@ class BaseSlideConnector(PlayArchetype):
     tail_ref: EntityRef[note.BaseNote] = imported(name="tail")
     end_ref: EntityRef[note.BaseNote] = imported(name="end")
     ease: EaseType = imported(name="ease")
-    start_type: SlideConnectorKind = imported(name="startType")
 
     spawn_time: float = entity_data()
     end_time: float = entity_data()
-    visual_interval: Interval = entity_data()
-    input_interval: Interval = entity_data()
+    visual_active_interval: Interval = entity_data()
+    input_active_interval: Interval = entity_data()
 
     @callback(order=1)  # After note preprocessing is done
     def preprocess(self):
-        self.visual_interval.start = min(self.head.spawn_time, self.tail.spawn_time)
-        self.visual_interval.end = max(self.head.target_time, self.tail.target_time)
-        self.input_interval.start = min(self.head.target_time, self.tail.target_time) + input_offset()
-        self.input_interval.end = max(self.head.target_time, self.tail.target_time) + input_offset()
-        self.spawn_time = min(self.visual_interval.start, self.input_interval.start)
-        self.end_time = max(self.visual_interval.end, self.input_interval.end)
+        self.visual_active_interval.start = min(self.head.target_time, self.tail.target_time)
+        self.visual_active_interval.end = max(self.head.target_time, self.tail.target_time)
+        self.input_active_interval = self.visual_active_interval + input_offset()
+        self.spawn_time = min(
+            self.visual_active_interval.start,
+            self.input_active_interval.start,
+            self.head.spawn_time,
+            self.tail.spawn_time,
+        )
+        self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
+
+    def initialize(self):
+        if self.head_ref.index == self.start.index:
+            # This is the first connector, so it's in charge of spawning the SlideManager.
+            SlideManager.spawn(start_ref=self.start_ref, end_ref=self.end_ref)
 
     def spawn_order(self) -> float:
         return self.spawn_time
@@ -61,7 +71,7 @@ class BaseSlideConnector(PlayArchetype):
             self.despawn = True
             return
 
-        if time() in self.input_interval:
+        if time() in self.input_active_interval:
             input_lane, input_size = self.get_attached_params(offset_adjusted_time())
             self.active_connector_info.input_lane = input_lane
             self.active_connector_info.input_size = input_size
@@ -72,10 +82,17 @@ class BaseSlideConnector(PlayArchetype):
                     break
             else:
                 self.active_connector_info.is_active = False
-        if time() in self.visual_interval:
+        if time() in self.visual_active_interval:
+            visual_lane, visual_size = self.get_attached_params(time())
+            self.active_connector_info.visual_lane = visual_lane
+            self.active_connector_info.visual_size = visual_size
+        if time() < self.visual_active_interval.end:
             if time() < self.start.target_time:
                 visual_state = SlideVisualState.WAITING
-            elif offset_adjusted_time() < self.start.target_time or self.active_connector_info.is_active:
+            elif (
+                offset_adjusted_time() < beat_to_time(self.start.beat + START_LENIENCY_BEATS)
+                or self.active_connector_info.is_active
+            ):
                 visual_state = SlideVisualState.ACTIVE
             else:
                 visual_state = SlideVisualState.INACTIVE
@@ -93,9 +110,6 @@ class BaseSlideConnector(PlayArchetype):
                 progress_b=self.tail.progress,
                 target_time_b=self.tail.target_time,
             )
-            visual_lane, visual_size = self.get_attached_params(time())
-            self.active_connector_info.visual_lane = visual_lane
-            self.active_connector_info.visual_size = visual_size
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:
         if is_preprocessing():
@@ -241,8 +255,36 @@ CriticalSlideConnector = BaseSlideConnector.derive(
     "CriticalSlideConnector", is_scored=False, key=SlideConnectorKind.CRITICAL
 )
 
+
+class SlideManager(PlayArchetype):
+    name = "SlideManager"
+
+    start_ref: EntityRef[note.BaseNote] = entity_memory()
+    end_ref: EntityRef[note.BaseNote] = entity_memory()
+
+    def update_parallel(self):
+        if offset_adjusted_time() > self.end.target_time:
+            self.despawn = True
+            return
+        if self.start.target_time <= time() < self.end.target_time:
+            draw_slide_note_head(
+                self.start.kind,
+                self.start.active_connector_info.visual_lane,
+                self.start.active_connector_info.visual_size,
+            )
+
+    @property
+    def start(self) -> note.BaseNote:
+        return self.start_ref.get()
+
+    @property
+    def end(self) -> note.BaseNote:
+        return self.end_ref.get()
+
+
 ALL_CONNECTOR_ARCHETYPES = (
     NormalSlideConnector,
     CriticalSlideConnector,
     Guide,
+    SlideManager,
 )
