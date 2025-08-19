@@ -24,7 +24,7 @@ from sekai.lib.buckets import (
     TRACE_NORMAL_WINDOW,
     Buckets,
 )
-from sekai.lib.effect import EMPTY_EFFECT, Effects, first_available_effect
+from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
     Direction,
@@ -520,7 +520,7 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
     effect = get_note_effect(kind, judgment)
     particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and effect.is_available():
-        effect.play()
+        effect.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
         if particles.linear.is_available():
             layout = layout_linear_effect(lane, shear=0)
