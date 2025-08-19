@@ -380,6 +380,8 @@ def update_circular_connector_particle(
     lane: float,
     replace: bool,
 ):
+    if not Options.note_effect_enabled:
+        return
     layout = layout_circular_effect(lane, w=3.5, h=2.1)
     if replace:
         particle = +Particle
@@ -403,6 +405,8 @@ def update_linear_connector_particle(
     lane: float,
     replace: bool,
 ):
+    if not Options.note_effect_enabled:
+        return
     layout = layout_linear_effect(lane, shear=0)
     particle = +Particle
     if replace:
@@ -425,6 +429,10 @@ def update_connector_sfx(
     kind: SlideConnectorKind,
     replace: bool,
 ):
+    if not Options.sfx_enabled:
+        return
+    if Options.auto_sfx:
+        return
     effect = +Effect
     match kind:
         case SlideConnectorKind.NONE:

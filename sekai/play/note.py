@@ -35,6 +35,7 @@ from sekai.lib.note import (
     has_tap_input,
     invert_direction,
     is_head,
+    play_note_hit_effects,
 )
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
@@ -175,8 +176,10 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_RELEASE
             ):
                 self.handle_release_input()
-            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.DAMAGE | NoteKind.JOINT:
+            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT:
                 self.handle_tick_input()
+            case NoteKind.DAMAGE:
+                self.handle_damage_input()
             case _:
                 assert_never(kind)
 
@@ -361,6 +364,22 @@ class BaseNote(PlayArchetype):
         else:
             self.fail_late(0.125)
 
+    def handle_damage_input(self):
+        if time() < self.input_interval.start:
+            return
+
+        hitbox = self.get_full_hitbox()
+        has_touch = False
+        for touch in touches():
+            if not hitbox.contains_point(touch.position):
+                continue
+            input_manager.disallow_empty(touch)
+            has_touch = True
+        if has_touch:
+            self.fail_damage()
+        else:
+            self.complete_damage()
+
     def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
         return (
             touch.start_time >= self.input_interval.start
@@ -408,6 +427,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
+        self.play_hit_effects()
 
     def judge_wrong_way(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
@@ -422,6 +442,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
+        self.play_hit_effects()
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -429,10 +450,19 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
+        self.play_hit_effects()
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
         self.result.accuracy = self.judgment_window.good.end
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = 0
+        self.despawn = True
+        self.play_hit_effects()
+
+    def complete_damage(self):
+        self.result.judgment = Judgment.PERFECT
+        self.result.accuracy = 0
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
@@ -445,6 +475,15 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = self.judgment_window.good.end * WINDOW_SCALE
         self.despawn = True
+
+    def fail_damage(self):
+        self.result.judgment = Judgment.MISS
+        self.result.accuracy = 0.125
+        self.despawn = True
+        self.play_hit_effects()
+
+    def play_hit_effects(self):
+        play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
 
     def get_full_hitbox(self) -> Rect:
         leniency = get_leniency(self.kind)

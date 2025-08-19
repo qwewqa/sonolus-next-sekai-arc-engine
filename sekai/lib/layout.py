@@ -385,6 +385,18 @@ def layout_circular_effect(lane: float, w: float, h: float):
     )
 
 
+def layout_tick_effect(lane: float):
+    w = 4 * Layout.w_scale
+    h = w
+    center = transform_vec(Vec2(lane, 1))
+    return Rect(
+        l=center.x - w,
+        r=center.x + w,
+        t=center.y + h,
+        b=center.y - h,
+    )
+
+
 def layout_slide_connector_segment(
     start_lane: float,
     start_size: float,

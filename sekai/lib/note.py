@@ -1,11 +1,13 @@
 from enum import IntEnum, auto
 from typing import assert_never
 
-from sonolus.script.bucket import Bucket, JudgmentWindow
+from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
-from sonolus.script.runtime import time
+from sonolus.script.effect import Effect
+from sonolus.script.runtime import is_watch, time
 
 from sekai.lib.buckets import (
+    EMPTY_JUDGMENT_WINDOW,
     FLICK_CRITICAL_WINDOW,
     FLICK_NORMAL_WINDOW,
     SLIDE_END_CRITICAL_WINDOW,
@@ -16,28 +18,44 @@ from sekai.lib.buckets import (
     SLIDE_END_TRACE_NORMAL_WINDOW,
     TAP_CRITICAL_WINDOW,
     TAP_NORMAL_WINDOW,
-    TICK_WINDOW,
     TRACE_CRITICAL_WINDOW,
     TRACE_FLICK_CRITICAL_WINDOW,
     TRACE_FLICK_NORMAL_WINDOW,
     TRACE_NORMAL_WINDOW,
     Buckets,
 )
+from sekai.lib.effect import EMPTY_EFFECT, Effects, first_available_effect
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
     Direction,
     Layout,
     approach,
     get_alpha,
+    layout_circular_effect,
     layout_flick_arrow,
     layout_flick_arrow_fallback,
+    layout_lane,
+    layout_linear_effect,
     layout_regular_note_body,
     layout_regular_note_body_fallback,
     layout_slim_note_body,
     layout_slim_note_body_fallback,
     layout_tick,
+    layout_tick_effect,
 )
 from sekai.lib.options import Options
+from sekai.lib.particle import (
+    NoteParticleSet,
+    critical_flick_note_particles,
+    critical_note_particles,
+    critical_tick_particles,
+    damage_note_particles,
+    empty_note_particles,
+    flick_note_particles,
+    normal_note_particles,
+    normal_tick_particles,
+    slide_note_particles,
+)
 from sekai.lib.skin import (
     ArrowSprites,
     BodySprites,
@@ -342,6 +360,194 @@ def _draw_arrow(
         sprites.fallback.draw(layout, z=z, a=a)
 
 
+def get_note_particles(kind: NoteKind) -> NoteParticleSet:
+    result = +NoteParticleSet
+    match kind:
+        case NoteKind.NORM_TAP:
+            result @= normal_note_particles
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            result @= slide_note_particles
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            result @= flick_note_particles
+        case (
+            NoteKind.CRIT_TAP
+            | NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result @= critical_note_particles
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            result @= critical_flick_note_particles
+        case NoteKind.NORM_TICK:
+            result @= normal_tick_particles
+        case NoteKind.CRIT_TICK:
+            result @= critical_tick_particles
+        case NoteKind.HIDE_TICK | NoteKind.JOINT:
+            result @= empty_note_particles
+        case NoteKind.DAMAGE:
+            result @= damage_note_particles
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_effect(kind: NoteKind, judgment: Judgment):
+    result = Effect(-1)
+    match kind:
+        case (
+            NoteKind.NORM_TAP
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            match judgment:
+                case Judgment.PERFECT:
+                    result @= Effects.normal_perfect
+                case Judgment.GREAT:
+                    result @= Effects.normal_great
+                case Judgment.GOOD:
+                    result @= Effects.normal_good
+                case Judgment.MISS:
+                    result @= EMPTY_EFFECT
+                case _:
+                    assert_never(judgment)
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            match judgment:
+                case Judgment.PERFECT:
+                    result @= Effects.flick_perfect
+                case Judgment.GREAT:
+                    result @= Effects.flick_great
+                case Judgment.GOOD:
+                    result @= Effects.flick_good
+                case Judgment.MISS:
+                    result @= EMPTY_EFFECT
+                case _:
+                    assert_never(judgment)
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.normal_trace, Effects.normal_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case NoteKind.NORM_TICK:
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.normal_tick, Effects.normal_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case (
+            NoteKind.CRIT_TAP
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.critical_tap, Effects.normal_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.critical_flick, Effects.flick_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.critical_trace, Effects.normal_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case NoteKind.CRIT_TICK:
+            if judgment != Judgment.MISS:
+                result @= first_available_effect(Effects.critical_tick, Effects.normal_perfect)
+            else:
+                result @= EMPTY_EFFECT
+        case NoteKind.HIDE_TICK | NoteKind.JOINT:
+            result @= EMPTY_EFFECT
+        case NoteKind.DAMAGE:
+            if judgment == Judgment.MISS:
+                result @= Effects.normal_good
+            else:
+                result @= EMPTY_EFFECT
+        case _:
+            assert_never(kind)
+    return result
+
+
+def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: Direction, judgment: Judgment):
+    effect = get_note_effect(kind, judgment)
+    particles = get_note_particles(kind)
+    if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and effect.is_available():
+        effect.play()
+    if Options.note_effect_enabled:
+        if particles.linear.is_available():
+            layout = layout_linear_effect(lane, shear=0)
+            particles.linear.spawn(layout, duration=0.5)
+        if particles.circular.is_available():
+            layout = layout_circular_effect(lane, w=1.75, h=1.05)
+            particles.circular.spawn(layout, duration=0.6)
+        if particles.directional.is_available():
+            match direction:
+                case Direction.NONE:
+                    shear = 0
+                case Direction.UP_LEFT | Direction.DOWN_RIGHT:
+                    shear = -1
+                case Direction.UP_RIGHT | Direction.DOWN_LEFT:
+                    shear = 1
+                case _:
+                    assert_never(direction)
+            layout = layout_linear_effect(lane, shear=shear)
+            particles.directional.spawn(layout, duration=0.32)
+        if particles.tick.is_available():
+            layout = layout_tick_effect(lane)
+            particles.tick.spawn(layout, duration=0.6)
+    if Options.lane_effect_enabled and particles.lane.is_available():
+        layout = layout_lane(lane, size)
+        particles.lane.spawn(layout, duration=0.3)
+
+
 def get_note_window(kind: NoteKind) -> JudgmentWindow:
     result = +JudgmentWindow
     match kind:
@@ -378,14 +584,14 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
         case NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
         case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT | NoteKind.DAMAGE:
-            result @= TICK_WINDOW
+            result @= EMPTY_JUDGMENT_WINDOW
         case _:
             assert_never(kind)
     return result
 
 
 def get_note_bucket(kind: NoteKind) -> Bucket:
-    result = +Bucket(-1)
+    result = Bucket(-1)
     match kind:
         case NoteKind.NORM_TAP:
             result @= Buckets.normal_tap
@@ -448,7 +654,7 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
             | NoteKind.JOINT
             | NoteKind.DAMAGE
         ):
-            pass
+            result @= Bucket(-1)
         case _:
             assert_never(kind)
     return result
