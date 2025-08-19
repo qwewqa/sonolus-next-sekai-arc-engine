@@ -3,22 +3,28 @@ from math import ceil, cos, pi
 from typing import assert_never
 
 from sonolus.script.easing import ease_out_cubic
+from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, unlerp
-from sonolus.script.quad import Rect
+from sonolus.script.particle import Particle, ParticleHandle
+from sonolus.script.quad import QuadLike, Rect
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
 
 from sekai.lib.ease import EaseType, ease
+from sekai.lib.effect import Effects
 from sekai.lib.layer import LAYER_NOTE_CONNECTOR, LAYER_NOTE_CONNECTOR_CRITICAL, LAYER_NOTE_GUIDE, get_z
 from sekai.lib.layout import (
     Layout,
     approach,
     get_alpha,
+    layout_circular_effect,
     layout_hitbox,
+    layout_linear_effect,
     layout_slide_connector_segment,
     transformed_vec_at,
 )
 from sekai.lib.options import Options
+from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ConnectorSprites,
     GuideSprites,
@@ -37,6 +43,7 @@ CONNECTOR_QUALITY_SCALE = 3.0
 
 
 class SlideConnectorKind(IntEnum):
+    NONE = 0
     NORMAL = 1
     CRITICAL = 2
 
@@ -67,6 +74,8 @@ class GuideColor(IntEnum):
 def get_connector_sprites(kind: SlideConnectorKind) -> ConnectorSprites:
     result = +ConnectorSprites
     match kind:
+        case SlideConnectorKind.NONE:
+            pass
         case SlideConnectorKind.NORMAL:
             result @= normal_slide_connector_sprites
         case SlideConnectorKind.CRITICAL:
@@ -356,9 +365,110 @@ class ActiveConnectorInfo(Record):
     input_lane: float
     input_size: float
     is_active: bool
+    connector_kind: SlideConnectorKind
 
     def get_hitbox(self, leniency: float) -> Rect:
         return layout_hitbox(
             self.input_lane - self.input_size - leniency,
             self.input_lane + self.input_size + leniency,
         )
+
+
+def update_circular_connector_particle(
+    handle: ParticleHandle,
+    kind: SlideConnectorKind,
+    lane: float,
+    replace: bool,
+):
+    layout = layout_circular_effect(lane, w=3.5, h=2.1)
+    if replace:
+        particle = +Particle
+        match kind:
+            case SlideConnectorKind.NONE:
+                return
+            case SlideConnectorKind.NORMAL:
+                particle @= Particles.normal_slide_connector_circular
+            case SlideConnectorKind.CRITICAL:
+                particle @= Particles.critical_slide_connector_circular
+            case _:
+                assert_never(kind)
+        replace_looped_particle(handle, particle, layout, duration=1)
+    else:
+        update_looped_particle(handle, layout)
+
+
+def update_linear_connector_particle(
+    handle: ParticleHandle,
+    kind: SlideConnectorKind,
+    lane: float,
+    replace: bool,
+):
+    layout = layout_linear_effect(lane, shear=0)
+    particle = +Particle
+    if replace:
+        match kind:
+            case SlideConnectorKind.NONE:
+                return
+            case SlideConnectorKind.NORMAL:
+                particle @= Particles.normal_slide_connector_linear
+            case SlideConnectorKind.CRITICAL:
+                particle @= Particles.critical_slide_connector_linear
+            case _:
+                assert_never(kind)
+        replace_looped_particle(handle, particle, layout, duration=1)
+    else:
+        update_looped_particle(handle, layout)
+
+
+def update_connector_sfx(
+    handle: LoopedEffectHandle,
+    kind: SlideConnectorKind,
+    replace: bool,
+):
+    effect = +Effect
+    match kind:
+        case SlideConnectorKind.NONE:
+            return
+        case SlideConnectorKind.NORMAL:
+            effect @= Effects.normal_hold
+        case SlideConnectorKind.CRITICAL:
+            effect @= Effects.critical_hold
+        case _:
+            assert_never(kind)
+    if replace:
+        replace_looped_sfx(handle, effect)
+    elif handle.id == 0:
+        handle @= effect.loop()
+
+
+def replace_looped_particle(handle: ParticleHandle, particle: Particle, layout: QuadLike, duration: float):
+    if handle.id != 0:
+        handle.destroy()
+    handle @= particle.spawn(layout, duration, loop=True)
+
+
+def update_looped_particle(handle: ParticleHandle, layout: QuadLike):
+    if handle.id != 0:
+        handle.move(layout)
+
+
+def destroy_looped_particle(handle: ParticleHandle):
+    if handle.id != 0:
+        handle.destroy()
+        handle.id = 0
+
+
+def replace_looped_sfx(handle: LoopedEffectHandle, effect: Effect):
+    if handle.id != 0:
+        handle.stop()
+    handle @= effect.loop()
+
+
+def destroy_looped_sfx(handle: LoopedEffectHandle):
+    if handle.id != 0:
+        handle.stop()
+        handle.id = 0
+
+
+def schedule_looped_sfx(effect: Effect, start_time: float, end_time: float):
+    effect.schedule_loop(start_time).stop(end_time)

@@ -504,7 +504,7 @@ NormalAttachedSlideTickNote = BaseNote.derive("NormalAttachedSlideTickNote", is_
 CriticalAttachedSlideTickNote = BaseNote.derive("CriticalAttachedSlideTickNote", is_scored=True, key=NoteKind.CRIT_TICK)
 DamageNote = BaseNote.derive("DamageNote", is_scored=True, key=NoteKind.DAMAGE)
 
-ALL_NOTE_ARCHETYPES = (
+NOTE_ARCHETYPES = (
     NormalTapNote,
     CriticalTapNote,
     NormalFlickNote,

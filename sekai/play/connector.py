@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import cast
 
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, entity_memory, imported
+from sonolus.script.effect import LoopedEffectHandle
 from sonolus.script.interval import Interval, remap, unlerp_clamped
+from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import input_offset, is_preprocessing, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
@@ -13,9 +15,14 @@ from sekai.lib.connector import (
     GuideFadeType,
     SlideConnectorKind,
     SlideVisualState,
+    destroy_looped_particle,
+    destroy_looped_sfx,
     draw_connector,
     draw_guide,
     get_attached_params,
+    update_circular_connector_particle,
+    update_connector_sfx,
+    update_linear_connector_particle,
 )
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import preempt_time, progress_to
@@ -86,6 +93,7 @@ class BaseSlideConnector(PlayArchetype):
             visual_lane, visual_size = self.get_attached_params(time())
             self.active_connector_info.visual_lane = visual_lane
             self.active_connector_info.visual_size = visual_size
+            self.active_connector_info.connector_kind = self.kind
         if time() < self.visual_active_interval.end:
             if time() < self.start.target_time:
                 visual_state = SlideVisualState.WAITING
@@ -262,16 +270,42 @@ class SlideManager(PlayArchetype):
     start_ref: EntityRef[note.BaseNote] = entity_memory()
     end_ref: EntityRef[note.BaseNote] = entity_memory()
 
+    last_kind: SlideConnectorKind = entity_memory()
+    circular_particle: ParticleHandle = entity_memory()
+    linear_particle: ParticleHandle = entity_memory()
+    sfx: LoopedEffectHandle = entity_memory()
+
     def update_parallel(self):
-        if offset_adjusted_time() > self.end.target_time:
+        if time() >= self.end.target_time:
+            destroy_looped_particle(self.circular_particle)
+            destroy_looped_particle(self.linear_particle)
+            destroy_looped_sfx(self.sfx)
             self.despawn = True
             return
-        if self.start.target_time <= time() < self.end.target_time:
-            draw_slide_note_head(
-                self.start.kind,
-                self.start.active_connector_info.visual_lane,
-                self.start.active_connector_info.visual_size,
+        if time() < self.start.target_time:
+            return
+        info = self.start.active_connector_info
+        draw_slide_note_head(
+            self.start.kind,
+            info.visual_lane,
+            info.visual_size,
+        )
+        if info.is_active:
+            replace = info.connector_kind != self.last_kind
+            self.last_kind = info.connector_kind
+            update_circular_connector_particle(
+                self.circular_particle,
+                info.connector_kind,
+                info.visual_lane,
+                replace,
             )
+            update_linear_connector_particle(
+                self.linear_particle,
+                info.connector_kind,
+                info.visual_lane,
+                replace,
+            )
+            update_connector_sfx(self.sfx, info.connector_kind, replace)
 
     @property
     def start(self) -> note.BaseNote:
@@ -282,7 +316,7 @@ class SlideManager(PlayArchetype):
         return self.end_ref.get()
 
 
-ALL_CONNECTOR_ARCHETYPES = (
+CONNECTOR_ARCHETYPES = (
     NormalSlideConnector,
     CriticalSlideConnector,
     Guide,
