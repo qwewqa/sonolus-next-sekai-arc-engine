@@ -373,8 +373,8 @@ def layout_linear_effect(lane: float, shear: float):
 def layout_circular_effect(lane: float, w: float, h: float):
     w *= Options.note_effect_size
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
-    b = 1 + h
-    t = 1 - h
+    t = 1 + h
+    b = 1 - h
     return transform_quad(
         Quad(
             bl=Vec2(lane * b - w, b),
