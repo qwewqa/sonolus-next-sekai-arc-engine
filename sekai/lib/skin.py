@@ -1,7 +1,11 @@
+from typing import assert_never
+
 from sonolus.script.array import Array, Dim
 from sonolus.script.interval import clamp
 from sonolus.script.record import Record
 from sonolus.script.sprite import Sprite, StandardSprite, skin, sprite
+
+from sekai.lib.layout import Direction
 
 
 @skin
@@ -152,13 +156,16 @@ class ArrowSprites(Record):
     def _get_index_from_size(self, size: float) -> int:
         return int(clamp(round(size * 2), 1, 6)) - 1
 
-    def get_sprite(self, size: float, direction: int) -> Sprite:
+    def get_sprite(self, size: float, direction: Direction) -> Sprite:
         result = +Sprite
         index = self._get_index_from_size(size)
-        if direction == 0:
-            result @= self.up[index]
-        else:
-            result @= self.left[index]
+        match direction:
+            case Direction.UP | Direction.DOWN:
+                result @= self.up[index]
+            case Direction.UP_LEFT | Direction.UP_RIGHT | Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
+                result @= self.left[index]
+            case _:
+                assert_never(direction)
         return result
 
     @property

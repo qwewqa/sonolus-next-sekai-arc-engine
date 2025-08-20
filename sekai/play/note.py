@@ -28,13 +28,14 @@ from sekai.lib.layout import Direction, Layout, layout_hitbox, preempt_time, pro
 from sekai.lib.note import (
     NoteKind,
     draw_note,
+    flip_direction,
     get_leniency,
     get_note_bucket,
     get_note_window,
     has_release_input,
     has_tap_input,
-    invert_direction,
     is_head,
+    mirror_direction,
     play_note_hit_effects,
 )
 from sekai.lib.options import Options
@@ -87,7 +88,9 @@ class BaseNote(PlayArchetype):
 
         if Options.mirror:
             self.lane *= -1
-            self.direction = invert_direction(self.direction)
+            self.direction = mirror_direction(self.direction)
+        if Options.flip_flicks:
+            self.direction = flip_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
         self.target_scaled_time = group_time_to_scaled_time(self.timescale_group_ref, self.target_time)
@@ -402,7 +405,7 @@ class BaseNote(PlayArchetype):
     def check_direction_matches(self, angle: float) -> bool:
         leniency = pi / 2
         match self.direction:
-            case Direction.NONE:
+            case Direction.UP | Direction.DOWN:
                 return True
             case Direction.UP_LEFT:
                 target_angle = pi / 2 + 1

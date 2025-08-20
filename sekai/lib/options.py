@@ -184,3 +184,9 @@ class Options:
         advanced=True,
         default=False,
     )
+    flip_flicks: bool = toggle_option(
+        name="Flip Flicks",
+        standard=True,
+        advanced=True,
+        default=False,
+    )

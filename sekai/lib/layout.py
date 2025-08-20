@@ -37,10 +37,11 @@ DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 
 class Direction(IntEnum):
-    DOWN_LEFT = -2
+    UP = 0
+    DOWN = 3
     UP_LEFT = -1
-    NONE = 0
     UP_RIGHT = 1
+    DOWN_LEFT = -2
     DOWN_RIGHT = 2
 
 
@@ -252,8 +253,11 @@ def layout_tick(lane: float, travel: float) -> Rect:
 
 def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: float, animation_progress: float):
     match direction:
-        case Direction.NONE:
+        case Direction.UP:
             is_down = False
+            animation_top_x_offset = 0
+        case Direction.DOWN:
+            is_down = True
             animation_top_x_offset = 0
         case Direction.UP_LEFT:
             is_down = False
@@ -264,11 +268,9 @@ def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: f
         case Direction.DOWN_LEFT:
             is_down = True
             animation_top_x_offset = 1
-            lane += 0.25
         case Direction.DOWN_RIGHT:
             is_down = True
             animation_top_x_offset = -1
-            lane -= 0.25
         case _:
             assert_never(direction)
     w = clamp(size, 0, 3) * (1 if -direction >= 0 else -1) / 2
@@ -277,7 +279,7 @@ def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: f
     up = (base_br - base_bl).rotate(pi / 2 if -direction >= 0 else -pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
-    offset_scale = animation_progress if not is_down else 1 - animation_progress
+    offset_scale = animation_progress if not is_down else 1 - animation_progress - 0.1
     offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
     result = Quad(
         bl=base_bl,
@@ -295,10 +297,14 @@ def layout_flick_arrow_fallback(
     lane: float, size: float, direction: Direction, travel: float, animation_progress: float
 ):
     match direction:
-        case Direction.NONE:
+        case Direction.UP:
             rotation = 0
             animation_top_x_offset = 0
             is_down = False
+        case Direction.DOWN:
+            rotation = pi
+            animation_top_x_offset = 0
+            is_down = True
         case Direction.UP_LEFT:
             rotation = pi / 6
             animation_top_x_offset = -1

@@ -134,18 +134,38 @@ class NoteKind(IntEnum):
     DAMAGE = auto()
 
 
-def invert_direction(direction: Direction) -> Direction:
+def mirror_direction(direction: Direction) -> Direction:
     match direction:
-        case Direction.DOWN_LEFT:
-            return Direction.DOWN_RIGHT
+        case Direction.UP:
+            return Direction.UP
+        case Direction.DOWN:
+            return Direction.DOWN
         case Direction.UP_LEFT:
             return Direction.UP_RIGHT
-        case Direction.NONE:
-            return Direction.NONE
         case Direction.UP_RIGHT:
             return Direction.UP_LEFT
+        case Direction.DOWN_LEFT:
+            return Direction.DOWN_RIGHT
         case Direction.DOWN_RIGHT:
             return Direction.DOWN_LEFT
+        case _:
+            assert_never(direction)
+
+
+def flip_direction(direction: Direction) -> Direction:
+    match direction:
+        case Direction.UP:
+            return Direction.DOWN
+        case Direction.DOWN:
+            return Direction.UP
+        case Direction.UP_LEFT:
+            return Direction.DOWN_LEFT
+        case Direction.UP_RIGHT:
+            return Direction.DOWN_RIGHT
+        case Direction.DOWN_LEFT:
+            return Direction.UP_LEFT
+        case Direction.DOWN_RIGHT:
+            return Direction.UP_RIGHT
         case _:
             assert_never(direction)
 
@@ -343,9 +363,9 @@ def _draw_arrow(
     match direction:
         case _ if Options.marker_animation:
             animation_progress = (time() / FLICK_ARROW_PERIOD) % 1
-        case Direction.UP_LEFT | Direction.NONE | Direction.UP_RIGHT:
+        case Direction.UP_LEFT | Direction.UP | Direction.UP_RIGHT:
             animation_progress = 0.2
-        case Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
+        case Direction.DOWN_LEFT | Direction.DOWN | Direction.DOWN_RIGHT:
             animation_progress = 0.8
         case _:
             assert_never(direction)
@@ -530,7 +550,7 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
             particles.circular.spawn(layout, duration=0.6)
         if particles.directional.is_available():
             match direction:
-                case Direction.NONE:
+                case Direction.UP | Direction.DOWN:
                     shear = 0
                 case Direction.UP_LEFT | Direction.DOWN_RIGHT:
                     shear = -1
