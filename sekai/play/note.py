@@ -250,13 +250,11 @@ class BaseNote(PlayArchetype):
         if time() < self.input_interval.start:
             return
 
-        slide_connector = self.slide_ref.get()
-        start = slide_connector.start
-
-        if not start.is_despawned:
-            return
-
         if offset_adjusted_time() < self.target_time:
+            slide_connector = self.slide_ref.get()
+            start = slide_connector.start
+            if start.active_connector_info.is_active:
+                return
             hitbox = slide_connector.active_connector_info.get_hitbox(input_manager.get_leniency(self.kind))
             for touch in touches():
                 if not touch.ended and hitbox.contains_point(touch.position):
