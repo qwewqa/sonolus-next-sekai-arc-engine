@@ -107,8 +107,8 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
     if Options.fade_out:
         if now is None:
             now = time()
-        progress = progress_to(target_time, now)
-        return 1.0 - ease_in_sine(progress * 1.6)
+        progress = unlerp(Layout.progress_start, 1.0, progress_to(target_time, now))
+        return 1.0 - ease_in_sine(progress * 1.75)
     return 1.0
 
 
