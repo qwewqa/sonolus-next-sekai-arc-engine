@@ -649,18 +649,18 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
 
 
 def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: Direction, judgment: Judgment):
-    effect = get_note_effect(kind, judgment)
+    sfx = get_note_effect(kind, judgment)
     particles = get_note_particles(kind)
-    if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and effect.is_available():
-        effect.play(SFX_DISTANCE)
+    if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
+        sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
-        if particles.linear.is_available():
+        if particles.linear.is_available:
             layout = layout_linear_effect(lane, shear=0)
             particles.linear.spawn(layout, duration=0.5)
-        if particles.circular.is_available():
+        if particles.circular.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
             particles.circular.spawn(layout, duration=0.6)
-        if particles.directional.is_available():
+        if particles.directional.is_available:
             match direction:
                 case Direction.UP | Direction.DOWN:
                     shear = 0
@@ -672,10 +672,10 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
                     assert_never(direction)
             layout = layout_linear_effect(lane, shear=shear)
             particles.directional.spawn(layout, duration=0.32)
-        if particles.tick.is_available():
+        if particles.tick.is_available:
             layout = layout_tick_effect(lane)
             particles.tick.spawn(layout, duration=0.6)
-    if Options.lane_effect_enabled and particles.lane.is_available():
+    if Options.lane_effect_enabled and particles.lane.is_available:
         layout = layout_lane(lane, size)
         particles.lane.spawn(layout, duration=0.3)
     if Options.slot_effect_enabled:
@@ -686,6 +686,16 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
         slot_glow_sprite = get_note_slot_glow_sprite(kind)
         if slot_glow_sprite.is_available:
             SlotGlowEffect.spawn(sprite=slot_glow_sprite, start_time=time(), lane=lane, size=size)
+
+
+def schedule_note_auto_sfx(kind: NoteKind, target_time: float):
+    if not Options.sfx_enabled:
+        return
+    if not Options.auto_sfx:
+        return
+    sfx = get_note_effect(kind, Judgment.PERFECT)
+    if sfx.is_available:
+        sfx.schedule(target_time, SFX_DISTANCE)
 
 
 def get_note_window(kind: NoteKind) -> JudgmentWindow:

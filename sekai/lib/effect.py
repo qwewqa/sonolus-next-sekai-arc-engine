@@ -33,7 +33,7 @@ SFX_DISTANCE = 0.02
 def first_available_effect(*args: Effect) -> Effect:
     result = +EMPTY_EFFECT
     for e in args:
-        if e.is_available():
+        if e.is_available:
             result @= e
             break
     return result

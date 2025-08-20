@@ -132,11 +132,6 @@ class Options:
         scope="Sekai?",
         default=False,
     )
-    show_notes: bool = toggle_option(
-        name=StandardText.NOTE,
-        scope="Sekai?",
-        default=True,
-    )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,
         scope="Sekai?",

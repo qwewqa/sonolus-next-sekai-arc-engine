@@ -431,19 +431,19 @@ def layout_slide_connector_segment(
 
 
 def layout_sim_line(
-    l_lane: float,
-    l_travel: float,
-    r_lane: float,
-    r_travel: float,
+    lane_a: float,
+    travel_a: float,
+    lane_b: float,
+    travel_b: float,
 ) -> Quad:
-    if l_lane > r_lane:
-        l_lane, r_lane = r_lane, l_lane
-        l_travel, r_travel = r_travel, l_travel
+    if lane_a > lane_b:
+        lane_a, lane_b = lane_b, lane_a
+        travel_a, travel_b = travel_b, travel_a
     return Quad(
-        bl=perspective_vec(l_lane, l_travel - NOTE_H, l_travel),
-        br=perspective_vec(r_lane, r_travel - NOTE_H, r_travel),
-        tl=perspective_vec(l_lane, l_travel + NOTE_H, l_travel),
-        tr=perspective_vec(r_lane, r_travel + NOTE_H, r_travel),
+        bl=perspective_vec(lane_a, 1 - NOTE_H, travel_a),
+        br=perspective_vec(lane_b, 1 - NOTE_H, travel_b),
+        tl=perspective_vec(lane_a, 1 + NOTE_H, travel_a),
+        tr=perspective_vec(lane_b, 1 + NOTE_H, travel_b),
     )
 
 

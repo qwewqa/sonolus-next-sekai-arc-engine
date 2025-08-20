@@ -37,6 +37,7 @@ from sekai.lib.note import (
     is_head,
     mirror_direction,
     play_note_hit_effects,
+    schedule_note_auto_sfx,
 )
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_scaled_time, group_scaled_time_to_first_time, group_time_to_scaled_time
@@ -114,6 +115,8 @@ class BaseNote(PlayArchetype):
             lane, size = self.attach_ref.get().get_attached_params(self.target_time)
             self.lane = lane
             self.size = size
+
+        schedule_note_auto_sfx(self.kind, self.target_time)
 
     def spawn_order(self) -> float:
         if self.kind == NoteKind.JOINT:

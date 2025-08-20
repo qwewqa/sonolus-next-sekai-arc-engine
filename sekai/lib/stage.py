@@ -21,6 +21,8 @@ def draw_stage_and_accessories():
 
 
 def draw_stage():
+    if not Options.show_lane:
+        return
     if Skin.sekai_stage.is_available:
         draw_sekai_stage()
     else:
