@@ -58,15 +58,22 @@ class Skin:
     critical_slide_connector_active: Sprite = sprite("Sekai Active Slide Connection Yellow Active")
     critical_slide_connector_fallback: StandardSprite.NOTE_CONNECTION_YELLOW_SEAMLESS
 
-    normal_slot_glow: Sprite = sprite("Sekai Slot Glow Cyan")
-    slide_slot_glow: Sprite = sprite("Sekai Slot Glow Green")
-    flick_slot_glow: Sprite = sprite("Sekai Slot Glow Red")
-    critical_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow")
-
     normal_slot: Sprite = sprite("Sekai Slot Cyan")
     slide_slot: Sprite = sprite("Sekai Slot Green")
     flick_slot: Sprite = sprite("Sekai Slot Red")
     critical_slot: Sprite = sprite("Sekai Slot Yellow")
+    critical_flick_slot: Sprite = sprite("Sekai Slot Yellow Flick")
+    critical_slide_slot: Sprite = sprite("Sekai Slot Yellow Slider")
+
+    normal_slot_glow: Sprite = sprite("Sekai Slot Glow Cyan")
+    slide_slot_glow: Sprite = sprite("Sekai Slot Glow Green")
+    flick_slot_glow: Sprite = sprite("Sekai Slot Glow Red")
+    critical_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow")
+    critical_flick_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow Flick")
+    critical_slide_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow Slider Tap")
+
+    normal_slide_connector_slot_glow: Sprite = sprite("Sekai Slot Glow Green Slider Hold")
+    critical_slide_connector_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow Slider Hold")
 
     flick_arrow_up1: Sprite = sprite("Sekai Flick Arrow Red Up 1")
     flick_arrow_up2: Sprite = sprite("Sekai Flick Arrow Red Up 2")

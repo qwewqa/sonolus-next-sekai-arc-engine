@@ -307,6 +307,10 @@ class SlideManager(PlayArchetype):
                 replace,
             )
             update_connector_sfx(self.sfx, info.connector_kind, replace)
+        else:
+            destroy_looped_sfx(self.sfx)
+            destroy_looped_particle(self.circular_particle)
+            destroy_looped_particle(self.linear_particle)
 
     @property
     def start(self) -> note.BaseNote:

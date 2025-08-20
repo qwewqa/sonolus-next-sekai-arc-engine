@@ -12,7 +12,7 @@ from sekai.watch.mode import watch_mode
 engine = Engine(
     name="sekai",
     title="PySekai",
-    skin="csbs-pjsekai-extended-01",
+    skin="PR-S1-3",
     particle="csbs-pjsekai-v3",
     effect="csbs-pjsekai-fixed",
     background="darkblue",

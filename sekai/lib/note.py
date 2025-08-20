@@ -1,10 +1,12 @@
 from enum import IntEnum, auto
+from math import ceil, floor
 from typing import assert_never
 
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.runtime import is_watch, time
+from sonolus.script.sprite import Sprite
 
 from sekai.lib.buckets import (
     EMPTY_JUDGMENT_WINDOW,
@@ -59,6 +61,7 @@ from sekai.lib.particle import (
 from sekai.lib.skin import (
     ArrowSprites,
     BodySprites,
+    Skin,
     TickSprites,
     critical_arrow_sprites,
     critical_note_body_sprites,
@@ -75,6 +78,7 @@ from sekai.lib.skin import (
     trace_flick_note_body_sprites,
     trace_slide_note_body_sprites,
 )
+from sekai.play.slot_effect import SlotEffect, SlotGlowEffect
 
 FLICK_ARROW_PERIOD = 0.5
 
@@ -536,6 +540,114 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
     return result
 
 
+def get_note_slot_sprite(kind: NoteKind) -> Sprite:
+    result = Sprite(-1)
+    match kind:
+        case NoteKind.NORM_TAP:
+            result @= Skin.normal_slot
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            result @= Skin.flick_slot
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            result @= Skin.slide_slot
+        case NoteKind.CRIT_TAP:
+            result @= Skin.critical_slot
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            result @= Skin.critical_flick_slot
+        case (
+            NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result @= Skin.critical_slide_slot
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT | NoteKind.DAMAGE:
+            result @= Sprite(-1)
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
+    result = Sprite(-1)
+    match kind:
+        case NoteKind.NORM_TAP:
+            result @= Skin.normal_slot_glow
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            result @= Skin.flick_slot_glow
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            result @= Skin.slide_slot_glow
+        case NoteKind.CRIT_TAP:
+            result @= Skin.critical_slot_glow
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            result @= Skin.critical_flick_slot_glow
+        case (
+            NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result @= Skin.critical_slide_slot_glow
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.JOINT | NoteKind.DAMAGE:
+            result @= Sprite(-1)
+        case _:
+            assert_never(kind)
+    return result
+
+
 def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: Direction, judgment: Judgment):
     effect = get_note_effect(kind, judgment)
     particles = get_note_particles(kind)
@@ -566,6 +678,14 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
     if Options.lane_effect_enabled and particles.lane.is_available():
         layout = layout_lane(lane, size)
         particles.lane.spawn(layout, duration=0.3)
+    if Options.slot_effect_enabled:
+        slot_sprite = get_note_slot_sprite(kind)
+        if slot_sprite.is_available:
+            for i in range(floor(lane - size), ceil(lane + size)):
+                SlotEffect.spawn(sprite=slot_sprite, start_time=time(), lane=i + 0.5)
+        slot_glow_sprite = get_note_slot_glow_sprite(kind)
+        if slot_glow_sprite.is_available:
+            SlotGlowEffect.spawn(sprite=slot_glow_sprite, start_time=time(), lane=lane, size=size)
 
 
 def get_note_window(kind: NoteKind) -> JudgmentWindow:
