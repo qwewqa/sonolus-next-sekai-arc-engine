@@ -1,11 +1,12 @@
 from enum import IntEnum, auto
 from math import ceil, floor
-from typing import assert_never
+from typing import assert_never, cast
 
+from sonolus.script.archetype import ArchetypeLife, PlayArchetype, WatchArchetype, get_archetype_by_name
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
-from sonolus.script.runtime import is_watch, time
+from sonolus.script.runtime import is_watch, level_score, time
 from sonolus.script.sprite import Sprite
 
 from sekai.lib.buckets import (
@@ -78,7 +79,6 @@ from sekai.lib.skin import (
     trace_flick_note_body_sprites,
     trace_slide_note_body_sprites,
 )
-from sekai.play.slot_effect import SlotEffect, SlotGlowEffect
 
 FLICK_ARROW_PERIOD = 0.5
 
@@ -136,6 +136,77 @@ class NoteKind(IntEnum):
     JOINT = auto()
 
     DAMAGE = auto()
+
+
+def init_score():
+    level_score().update(
+        perfect_multiplier=1.0,
+        great_multiplier=0.7,
+        good_multiplier=0.5,
+        consecutive_great_multiplier=0.01,
+        consecutive_great_step=100,
+        consecutive_great_cap=1000,
+    )
+
+
+def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
+    life = get_note_life(cast(NoteKind, archetype.key))
+    archetype.life.update(
+        perfect_increment=life.perfect_increment,
+        great_increment=life.great_increment,
+        good_increment=life.good_increment,
+        miss_increment=life.miss_increment,
+    )
+
+
+def get_note_life(kind: NoteKind) -> ArchetypeLife:
+    result = ArchetypeLife(
+        perfect_increment=0,
+        great_increment=0,
+        good_increment=0,
+        miss_increment=0,
+    )
+    match kind:
+        case (
+            NoteKind.NORM_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.NORM_FLICK
+            | NoteKind.CRIT_FLICK
+            | NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.NORM_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result.miss_increment = -80
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.DAMAGE:
+            result.miss_increment = -40
+        case NoteKind.JOINT:
+            pass
+        case _:
+            assert_never(kind)
+    return result
 
 
 def mirror_direction(direction: Direction) -> Direction:
@@ -682,10 +753,12 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
         slot_sprite = get_note_slot_sprite(kind)
         if slot_sprite.is_available:
             for i in range(floor(lane - size), ceil(lane + size)):
-                SlotEffect.spawn(sprite=slot_sprite, start_time=time(), lane=i + 0.5)
+                get_archetype_by_name("_SlotEffect").spawn(sprite=slot_sprite, start_time=time(), lane=i + 0.5)
         slot_glow_sprite = get_note_slot_glow_sprite(kind)
         if slot_glow_sprite.is_available:
-            SlotGlowEffect.spawn(sprite=slot_glow_sprite, start_time=time(), lane=lane, size=size)
+            get_archetype_by_name("_SlotGlowEffect").spawn(
+                sprite=slot_glow_sprite, start_time=time(), lane=lane, size=size
+            )
 
 
 def schedule_note_auto_sfx(kind: NoteKind, target_time: float):

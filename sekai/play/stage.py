@@ -8,7 +8,7 @@ from sekai.play.input_manager import is_allowed_empty
 
 
 class Stage(PlayArchetype):
-    name = "Stage"
+    name = "_Stage"
 
     def spawn_order(self) -> float:
         return -1e8

@@ -44,7 +44,7 @@ def is_allowed_release(touch: Touch, target_time: float) -> bool:
 
 
 class InputManager(PlayArchetype):
-    name = "InputManager"
+    name = "_InputManager"
 
     @callback(order=-1)
     def update_sequential(self):

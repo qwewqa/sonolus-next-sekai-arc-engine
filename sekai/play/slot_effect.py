@@ -11,6 +11,8 @@ SLOT_EFFECT_DURATION = 0.5
 
 
 class SlotGlowEffect(PlayArchetype):
+    name = "_SlotGlowEffect"
+
     sprite: Sprite = entity_memory()
     start_time: float = entity_memory()
     lane: float = entity_memory()
@@ -32,6 +34,8 @@ class SlotGlowEffect(PlayArchetype):
 
 
 class SlotEffect(PlayArchetype):
+    name = "_SlotEffect"
+
     sprite: Sprite = entity_memory()
     start_time: float = entity_memory()
     lane: float = entity_memory()

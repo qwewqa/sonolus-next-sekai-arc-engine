@@ -77,10 +77,6 @@ class BaseNote(PlayArchetype):
 
     finish_time: float = exported()
 
-    @classmethod
-    def global_preprocess(cls):
-        pass
-
     def init_data(self):
         if self.data_init_done:
             return
