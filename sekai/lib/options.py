@@ -178,8 +178,8 @@ class Options:
         advanced=True,
         default=False,
     )
-    ultra_leniency: bool = toggle_option(
-        name="Ultra Leniency",
+    easy: bool = toggle_option(
+        name=StandardText.EASY,
         standard=True,
         advanced=True,
         default=False,

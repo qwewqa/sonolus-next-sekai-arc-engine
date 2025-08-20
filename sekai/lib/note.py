@@ -587,6 +587,8 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= EMPTY_JUDGMENT_WINDOW
         case _:
             assert_never(kind)
+    if Options.easy:
+        result *= 2.0
     return result
 
 
@@ -661,7 +663,7 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
 
 
 def get_leniency(kind: NoteKind) -> float:
-    if Options.ultra_leniency:
+    if Options.easy:
         return 12.0
     match kind:
         case NoteKind.NORM_TAP | NoteKind.CRIT_TAP:
