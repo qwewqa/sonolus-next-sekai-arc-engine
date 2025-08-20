@@ -184,7 +184,7 @@ def draw_connector(
 
     z = get_z(
         LAYER_NOTE_CONNECTOR if kind != SlideConnectorKind.CRITICAL else LAYER_NOTE_CONNECTOR_CRITICAL,
-        time=-target_time_a,
+        time=target_time_a,
         lane=lane_a,
     )
 
@@ -296,7 +296,7 @@ def draw_guide(
 
     z = get_z(
         LAYER_NOTE_GUIDE,
-        time=-target_time_a,
+        time=target_time_a,
         lane=lane_a,
         etc=color,
     )

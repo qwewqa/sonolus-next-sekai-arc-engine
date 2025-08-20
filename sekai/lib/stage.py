@@ -1,3 +1,4 @@
+from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layer import LAYER_BACKGROUND_COVER, LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
 from sekai.lib.layout import (
     layout_background_dim,
@@ -9,6 +10,7 @@ from sekai.lib.layout import (
     layout_stage_cover,
 )
 from sekai.lib.options import Options
+from sekai.lib.particle import Particles
 from sekai.lib.skin import Skin
 
 
@@ -63,3 +65,11 @@ def draw_background_dim():
 
     layout = layout_background_dim()
     sprite.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=1 - Options.background_brightness)
+
+
+def play_lane_hit_effects(lane: float):
+    if Options.sfx_enabled:
+        Effects.stage.play(SFX_DISTANCE)
+    if Options.lane_effect_enabled:
+        layout = layout_lane(lane, 0.5)
+        Particles.lane.spawn(layout, duration=0.3)

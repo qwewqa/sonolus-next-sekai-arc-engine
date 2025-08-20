@@ -1,6 +1,10 @@
 from sonolus.script.archetype import PlayArchetype, callback
+from sonolus.script.interval import clamp
+from sonolus.script.runtime import touches
 
-from sekai.lib.stage import draw_stage_and_accessories
+from sekai.lib.layout import layout_hitbox
+from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
+from sekai.play.input_manager import is_allowed_empty
 
 
 class Stage(PlayArchetype):
@@ -14,7 +18,22 @@ class Stage(PlayArchetype):
 
     @callback(order=2)
     def touch(self):
-        pass
+        total_hitbox = layout_hitbox(-7, 7)
+        w_scale = (total_hitbox.r - total_hitbox.l) / 14
+        for touch in touches():
+            if not total_hitbox.contains_point(touch.position):
+                continue
+            if not is_allowed_empty(touch):
+                continue
+            lane = (touch.position.x - total_hitbox.l) / w_scale - 7
+            rounded_lane = clamp(round(lane - 0.5) + 0.5, -5.5, 5.5)
+            if touch.started:
+                play_lane_hit_effects(rounded_lane)
+            else:
+                prev_lane = (touch.prev_position.x - total_hitbox.l) / w_scale - 7
+                prev_rounded_lane = clamp(round(prev_lane - 0.5) + 0.5, -5.5, 5.5)
+                if rounded_lane != prev_rounded_lane:
+                    play_lane_hit_effects(rounded_lane)
 
     def update_parallel(self):
         draw_stage_and_accessories()
