@@ -289,6 +289,7 @@ class SlideManager(PlayArchetype):
             self.start.kind,
             info.visual_lane,
             info.visual_size,
+            self.start.target_time,
         )
         if info.is_active:
             replace = info.connector_kind != self.last_kind

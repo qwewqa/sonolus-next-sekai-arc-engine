@@ -487,9 +487,7 @@ class BaseNote(PlayArchetype):
 
     def get_full_hitbox(self) -> Rect:
         leniency = get_leniency(self.kind)
-        hitbox_l = self.lane - self.size - leniency
-        hitbox_r = self.lane + self.size + leniency
-        return layout_hitbox(hitbox_l, hitbox_r)
+        return layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
 
     @property
     def kind(self) -> NoteKind:

@@ -159,9 +159,9 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
     draw_note_tick(kind, lane, travel, target_time)
 
 
-def draw_slide_note_head(kind: NoteKind, lane: float, size: float):
-    draw_note_body(kind, lane, size, 1.0, time())
-    draw_note_tick(kind, lane, 1.0, time())
+def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):
+    draw_note_body(kind, lane, size, 1.0, target_time)
+    draw_note_tick(kind, lane, 1.0, target_time)
 
 
 def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
