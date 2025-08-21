@@ -35,6 +35,7 @@ from sekai.lib.note import (
     has_release_input,
     has_tap_input,
     is_head,
+    map_note_kind,
     mirror_direction,
     play_note_hit_effects,
     schedule_note_auto_sfx,
@@ -491,7 +492,7 @@ class BaseNote(PlayArchetype):
 
     @property
     def kind(self) -> NoteKind:
-        return cast(NoteKind, self.key)
+        return map_note_kind(cast(NoteKind, self.key))
 
     @property
     def progress(self) -> float:

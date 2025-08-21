@@ -4,7 +4,7 @@ from typing import assert_never
 
 from sonolus.script.easing import ease_in_sine
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, interp_clamped, lerp, unlerp
+from sonolus.script.interval import clamp, interp_clamped, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
 from sonolus.script.transform import Transform2d
@@ -91,6 +91,12 @@ def init_layout():
 
 
 def approach(progress: float) -> float:
+    if Options.alternative_approach_curve:
+        d_0 = 0.85 / APPROACH_SCALE
+        d_1 = 1.75
+        v_1 = (d_0 - d_1) / d_1**2
+        d = 1 / lerp(d_0, d_1, progress) if progress < 1 else 1 / d_1 + v_1 * (progress - 1)
+        return remap(1 / d_0, 1 / d_1, APPROACH_SCALE, 1, d)
     return APPROACH_SCALE ** (1 - progress)
 
 
@@ -189,6 +195,16 @@ def layout_fallback_judge_line() -> Quad:
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
+    if Options.alternative_approach_curve:
+        offset = 6
+        test_offset = 0.1
+        current_d = 1 / travel + offset
+        current_d_offset = current_d + test_offset
+        reference_d = 1 + offset
+        reference_d_offset = reference_d + test_offset
+        current_ratio = current_d_offset / current_d
+        reference_ratio = reference_d_offset / reference_d
+        h *= reference_ratio / current_ratio
     return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel)
 
 

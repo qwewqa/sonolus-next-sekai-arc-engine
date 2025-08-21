@@ -185,3 +185,21 @@ class Options:
         advanced=True,
         default=False,
     )
+    alternative_approach_curve: bool = toggle_option(
+        name="Alternative Approach Curve",
+        advanced=True,
+        default=False,
+        scope="Sekai?",
+    )
+    all_flicks: bool = toggle_option(
+        name="Oops All Flicks",
+        advanced=True,
+        default=False,
+        scope="Sekai?",
+    )
+    no_flicks: bool = toggle_option(
+        name="Oops No Flicks",
+        advanced=True,
+        default=False,
+        scope="Sekai?",
+    )

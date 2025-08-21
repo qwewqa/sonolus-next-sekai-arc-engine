@@ -212,6 +212,12 @@ class Guide(PlayArchetype):
     spawn_time: float = entity_data()
 
     def preprocess(self):
+        if Options.mirror:
+            self.start_lane = -self.start_lane
+            self.head_lane = -self.head_lane
+            self.tail_lane = -self.tail_lane
+            self.end_lane = -self.end_lane
+
         self.start_time = beat_to_time(self.start_beat)
         self.start_scaled_time = group_time_to_scaled_time(self.start_timescale_group, self.start_time)
 
