@@ -92,8 +92,8 @@ def init_layout():
 
 def approach(progress: float) -> float:
     if Options.alternative_approach_curve:
-        d_0 = 0.85 / APPROACH_SCALE
-        d_1 = 1.75
+        d_0 = 1 / APPROACH_SCALE
+        d_1 = 2.5
         v_1 = (d_0 - d_1) / d_1**2
         d = 1 / lerp(d_0, d_1, progress) if progress < 1 else 1 / d_1 + v_1 * (progress - 1)
         return remap(1 / d_0, 1 / d_1, APPROACH_SCALE, 1, d)
@@ -196,15 +196,15 @@ def layout_fallback_judge_line() -> Quad:
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
     if Options.alternative_approach_curve:
-        offset = 6
-        test_offset = 0.1
+        offset = 80
+        test_offset = 0.5
         current_d = 1 / travel + offset
         current_d_offset = current_d + test_offset
+        current_h = 1 / current_d - 1 / current_d_offset
         reference_d = 1 + offset
         reference_d_offset = reference_d + test_offset
-        current_ratio = current_d_offset / current_d
-        reference_ratio = reference_d_offset / reference_d
-        h *= reference_ratio / current_ratio
+        reference_h = 1 / reference_d - 1 / reference_d_offset
+        h *= current_h / reference_h
     return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel)
 
 
