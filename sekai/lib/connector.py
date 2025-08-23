@@ -4,23 +4,32 @@ from typing import assert_never
 
 from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
-from sonolus.script.interval import clamp, lerp, unlerp
+from sonolus.script.interval import clamp, lerp, remap_clamped, unlerp
 from sonolus.script.particle import Particle, ParticleHandle
 from sonolus.script.quad import QuadLike, Rect
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
+from sonolus.script.sprite import Sprite
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
-from sekai.lib.layer import LAYER_NOTE_CONNECTOR, LAYER_NOTE_CONNECTOR_CRITICAL, LAYER_NOTE_GUIDE, get_z
+from sekai.lib.layer import (
+    LAYER_NOTE_CONNECTOR,
+    LAYER_NOTE_CONNECTOR_CRITICAL,
+    LAYER_NOTE_GUIDE,
+    LAYER_SLOT_GLOW_EFFECT,
+    get_z,
+)
 from sekai.lib.layout import (
     Layout,
     approach,
     get_alpha,
+    iter_slot_lanes,
     layout_circular_effect,
     layout_hitbox,
     layout_linear_effect,
     layout_slide_connector_segment,
+    layout_slot_glow_effect,
     transformed_vec_at,
 )
 from sekai.lib.options import Options
@@ -28,6 +37,7 @@ from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ConnectorSprites,
     GuideSprites,
+    Skin,
     blue_guide_sprites,
     critical_slide_connector_sprites,
     cyan_guide_sprites,
@@ -40,6 +50,9 @@ from sekai.lib.skin import (
 )
 
 CONNECTOR_QUALITY_SCALE = 3.0
+
+CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
+CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
 
 
 class SlideConnectorKind(IntEnum):
@@ -365,6 +378,7 @@ class ActiveConnectorInfo(Record):
     input_lane: float
     input_size: float
     is_active: bool
+    active_start_time: float
     connector_kind: SlideConnectorKind
 
     def get_hitbox(self, leniency: float) -> Rect:
@@ -422,6 +436,69 @@ def update_linear_connector_particle(
         replace_looped_particle(handle, particle, layout, duration=1)
     else:
         update_looped_particle(handle, layout)
+
+
+def spawn_linear_connector_trail_particle(
+    kind: SlideConnectorKind,
+    lane: float,
+):
+    if not Options.note_effect_enabled:
+        return
+    layout = layout_linear_effect(lane, shear=0)
+    particle = +Particle
+    match kind:
+        case SlideConnectorKind.NONE:
+            return
+        case SlideConnectorKind.NORMAL:
+            particle @= Particles.normal_slide_connector_trail_linear
+        case SlideConnectorKind.CRITICAL:
+            particle @= Particles.critical_slide_connector_trail_linear
+        case _:
+            assert_never(kind)
+    particle.spawn(layout, duration=0.5)
+
+
+def spawn_connector_slot_particles(
+    kind: SlideConnectorKind,
+    lane: float,
+    size: float,
+):
+    particle = +Particle
+    match kind:
+        case SlideConnectorKind.NONE:
+            return
+        case SlideConnectorKind.NORMAL:
+            particle @= Particles.normal_slide_connector_slot_linear
+        case SlideConnectorKind.CRITICAL:
+            particle @= Particles.critical_slide_connector_slot_linear
+        case _:
+            assert_never(kind)
+    for slot_lane in iter_slot_lanes(lane, size):
+        layout = layout_linear_effect(slot_lane, shear=0)
+        particle.spawn(layout, duration=0.5)
+
+
+def draw_connector_slot_glow_effect(
+    kind: SlideConnectorKind,
+    start_time: float,
+    lane: float,
+    size: float,
+):
+    sprite = +Sprite
+    match kind:
+        case SlideConnectorKind.NONE:
+            return
+        case SlideConnectorKind.NORMAL:
+            sprite @= Skin.normal_slide_connector_slot_glow
+        case SlideConnectorKind.CRITICAL:
+            sprite @= Skin.critical_slide_connector_slot_glow
+        case _:
+            assert_never(kind)
+    height = (3.25 + (cos((time() - start_time) * 8 * pi) + 1) / 2) / 4.25
+    layout = layout_slot_glow_effect(lane, size, height)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
+    a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.3, time())
+    sprite.draw(layout, z=z, a=a)
 
 
 def update_connector_sfx(

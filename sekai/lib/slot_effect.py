@@ -1,0 +1,41 @@
+from sonolus.script.interval import interp_clamped, lerp, unlerp_clamped
+from sonolus.script.runtime import time
+from sonolus.script.sprite import Sprite
+
+from sekai.lib.layer import LAYER_SLOT_GLOW_EFFECT, get_z
+from sekai.lib.layout import layout_slot_effect, layout_slot_glow_effect
+
+SLOT_GLOW_EFFECT_DURATION = 0.25
+SLOT_EFFECT_DURATION = 0.5
+
+
+def draw_slot_glow_effect(
+    sprite: Sprite,
+    start_time: float,
+    end_time: float,
+    lane: float,
+    size: float,
+):
+    progress = unlerp_clamped(start_time, end_time, time())
+    height = interp_clamped(
+        (0, 0.1, 0.8, 1),
+        (0, 1, 1, 0),
+        progress,
+    )
+    layout = layout_slot_glow_effect(lane, size, height)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
+    a = lerp(1, 0, progress)
+    sprite.draw(layout, z=z, a=a)
+
+
+def draw_slot_effect(
+    sprite: Sprite,
+    start_time: float,
+    end_time: float,
+    lane: float,
+):
+    progress = unlerp_clamped(start_time, end_time, time())
+    layout = layout_slot_effect(lane)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
+    a = lerp(1, 0, progress)
+    sprite.draw(layout, z=z, a=a)

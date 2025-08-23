@@ -93,6 +93,15 @@ class Options:
         step=0.05,
         unit=StandardText.PERCENTAGE_UNIT,
     )
+    lane_alpha: float = slider_option(
+        name=StandardText.LANE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     stage_cover: float = slider_option(
         name=StandardText.STAGE_COVER_VERTICAL,
         advanced=True,
@@ -105,7 +114,7 @@ class Options:
     )
     hidden: float = slider_option(
         name=StandardText.HIDDEN,
-        scope="Sekai?",
+        scope="Sekai",
         advanced=True,
         default=0,
         min=0,
@@ -115,7 +124,7 @@ class Options:
     )
     background_brightness: float = slider_option(
         name="Background brightness",
-        scope="Sekai?",
+        scope="Sekai",
         default=1,
         min=0,
         max=1,
@@ -129,17 +138,17 @@ class Options:
     )
     hide_ui: bool = toggle_option(
         name="Hide UI",
-        scope="Sekai?",
+        scope="Sekai",
         default=False,
     )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,
-        scope="Sekai?",
+        scope="Sekai",
         default=True,
     )
     slide_quality: int = slider_option(
         name="Slide Quality",
-        scope="Sekai?",
+        scope="Sekai",
         default=10,
         min=1,
         max=50,
@@ -147,7 +156,7 @@ class Options:
     )
     guide_quality: int = slider_option(
         name="Guide Quality",
-        scope="Sekai?",
+        scope="Sekai",
         default=10,
         min=1,
         max=50,
@@ -155,7 +164,7 @@ class Options:
     )
     note_margin: float = slider_option(
         name="Note Margin",
-        scope="Sekai?",
+        scope="Sekai",
         default=0.1,
         min=0.0,
         max=0.2,
@@ -189,17 +198,17 @@ class Options:
         name="Alternative Approach Curve",
         advanced=True,
         default=False,
-        scope="Sekai?",
+        scope="Sekai",
     )
     all_flicks: bool = toggle_option(
         name="Oops All Flicks",
         advanced=True,
         default=False,
-        scope="Sekai?",
+        scope="Sekai",
     )
     no_flicks: bool = toggle_option(
         name="Oops No Flicks",
         advanced=True,
         default=False,
-        scope="Sekai?",
+        scope="Sekai",
     )

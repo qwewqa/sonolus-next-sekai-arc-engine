@@ -1,10 +1,10 @@
 from enum import IntEnum
-from math import log, pi
+from math import ceil, floor, log, pi
 from typing import assert_never
 
 from sonolus.script.easing import ease_in_sine
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, interp_clamped, lerp, remap, unlerp
+from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
 from sonolus.script.transform import Transform2d
@@ -364,14 +364,9 @@ def layout_slot_effect(lane: float):
     )
 
 
-def layout_slot_glow_effect(lane: float, size: float, animation_progress: float):
+def layout_slot_glow_effect(lane: float, size: float, height: float):
     s = 1 + 0.25 * Options.slot_effect_size
     h = 4.25 * Layout.w_scale * Options.slot_effect_size
-    h_scale = interp_clamped(
-        (0, 0.1, 0.8, 1),
-        (0, 1, 1, 0),
-        animation_progress,
-    )
     l_min = transform_vec(Vec2(lane - size, 1))
     r_min = transform_vec(Vec2(lane + size, 1))
     l_max = (l_min + Vec2(0, h)) * Vec2(s, 1)
@@ -379,8 +374,8 @@ def layout_slot_glow_effect(lane: float, size: float, animation_progress: float)
     return Quad(
         bl=l_min,
         br=r_min,
-        tl=lerp(l_min, l_max, h_scale),
-        tr=lerp(r_min, r_max, h_scale),
+        tl=lerp(l_min, l_max, height),
+        tr=lerp(r_min, r_max, height),
     )
 
 
@@ -473,3 +468,8 @@ def layout_hitbox(
         t=transform_vec(Vec2(0.0, LANE_HITBOX_T)).y,
         b=transform_vec(Vec2(0.0, LANE_HITBOX_B)).y,
     )
+
+
+def iter_slot_lanes(lane: float, size: float):
+    for i in range(floor(lane - size), ceil(lane + size)):
+        yield i + 0.5

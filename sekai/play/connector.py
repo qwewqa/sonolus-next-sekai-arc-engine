@@ -10,6 +10,8 @@ from sonolus.script.runtime import input_offset, is_preprocessing, offset_adjust
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.connector import (
+    CONNECTOR_SLOT_SPAWN_PERIOD,
+    CONNECTOR_TRAIL_SPAWN_PERIOD,
     ActiveConnectorInfo,
     GuideColor,
     GuideFadeType,
@@ -18,8 +20,11 @@ from sekai.lib.connector import (
     destroy_looped_particle,
     destroy_looped_sfx,
     draw_connector,
+    draw_connector_slot_glow_effect,
     draw_guide,
     get_attached_params,
+    spawn_connector_slot_particles,
+    spawn_linear_connector_trail_particle,
     update_circular_connector_particle,
     update_connector_sfx,
     update_linear_connector_particle,
@@ -85,6 +90,8 @@ class BaseSlideConnector(PlayArchetype):
             hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
             for touch in touches():
                 if hitbox.contains_point(touch.position):
+                    if not self.active_connector_info.is_active:
+                        self.active_connector_info.active_start_time = time()
                     self.active_connector_info.is_active = True
                     break
             else:
@@ -280,6 +287,12 @@ class SlideManager(PlayArchetype):
     circular_particle: ParticleHandle = entity_memory()
     linear_particle: ParticleHandle = entity_memory()
     sfx: LoopedEffectHandle = entity_memory()
+    next_trail_spawn_time: float = entity_memory()
+    next_slot_spawn_time: float = entity_memory()
+
+    def initialize(self):
+        self.next_trail_spawn_time = -1e8
+        self.next_slot_spawn_time = -1e8
 
     def update_parallel(self):
         if time() >= self.end.target_time:
@@ -313,6 +326,19 @@ class SlideManager(PlayArchetype):
                 replace,
             )
             update_connector_sfx(self.sfx, info.connector_kind, replace)
+            if time() >= self.next_trail_spawn_time:
+                self.next_trail_spawn_time = max(
+                    self.next_trail_spawn_time + CONNECTOR_TRAIL_SPAWN_PERIOD, time() + CONNECTOR_TRAIL_SPAWN_PERIOD / 2
+                )
+                spawn_linear_connector_trail_particle(info.connector_kind, info.visual_lane)
+            if time() >= self.next_slot_spawn_time:
+                self.next_slot_spawn_time = max(
+                    self.next_slot_spawn_time + CONNECTOR_SLOT_SPAWN_PERIOD, time() + CONNECTOR_SLOT_SPAWN_PERIOD / 2
+                )
+                spawn_connector_slot_particles(info.connector_kind, info.visual_lane, info.visual_size)
+            draw_connector_slot_glow_effect(
+                info.connector_kind, info.active_start_time, info.visual_lane, info.visual_size
+            )
         else:
             destroy_looped_sfx(self.sfx)
             destroy_looped_particle(self.circular_particle)
