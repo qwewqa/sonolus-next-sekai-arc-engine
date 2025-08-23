@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from math import inf
 from typing import Protocol, cast
 
 from sonolus.script import runtime
@@ -10,6 +11,9 @@ from sonolus.script.record import Record
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.options import Options
+
+MIN_START_TIME = -2.0
+
 
 TIMESCALE_CHANGE_NAME = "TimeScaleChange"
 TIMESCALE_GROUP_NAME = "TimeScaleGroup"
@@ -80,22 +84,22 @@ class CachedScaledTimeToFirstTime(Record):
 
     def init(self, next_index: int):
         self.last_timescale = 1.0
-        self.last_time = 0.0
-        self.last_scaled_time = 0.0
+        self.last_time = MIN_START_TIME
+        self.last_scaled_time = MIN_START_TIME
         self.first_change_index = next_index
         self.next_change_index = next_index
 
     def get(self, scaled_time: float) -> float:
-        if scaled_time <= 0 or Options.disable_timescale:
+        if Options.disable_timescale:
             return scaled_time
-        if scaled_time < self.last_scaled_time:
+        if scaled_time < self.last_scaled_time or self.last_scaled_time < MIN_START_TIME:
             self.init(self.first_change_index)
         for change in iter_timescale_changes(self.next_change_index):
             next_timescale = change.timescale
             next_time = beat_to_time(change.beat)
             next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
-            if (scaled_time <= next_scaled_time and self.last_timescale > 0) or (
-                scaled_time >= next_scaled_time and self.last_timescale < 0
+            if (self.last_scaled_time <= scaled_time <= next_scaled_time) or (
+                self.last_scaled_time >= scaled_time >= next_scaled_time
             ):
                 if (next_scaled_time - self.last_scaled_time) < 1e-6:
                     return self.last_time
@@ -104,7 +108,12 @@ class CachedScaledTimeToFirstTime(Record):
             self.last_time = next_time
             self.last_scaled_time = next_scaled_time
             self.next_change_index = change.next.index
-        return self.last_time + (scaled_time - self.last_scaled_time) / self.last_timescale
+        if self.last_timescale == 0:
+            return inf
+        additional_time = (scaled_time - self.last_scaled_time) / self.last_timescale
+        if additional_time < 0:
+            return inf
+        return self.last_time + additional_time
 
 
 def timescale_change_archetype() -> type[TimescaleChangeLike]:
