@@ -355,6 +355,8 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
 
 
 def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):
+    if Options.hidden > 0:
+        return
     draw_note_body(kind, lane, size, 1.0, target_time)
     draw_note_tick(kind, lane, 1.0, target_time)
 
