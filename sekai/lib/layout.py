@@ -37,12 +37,12 @@ DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 
 class Direction(IntEnum):
-    UP = 0
-    DOWN = 3
-    UP_LEFT = -1
-    UP_RIGHT = 1
-    DOWN_LEFT = -2
-    DOWN_RIGHT = 2
+    UP_OMNI = 0
+    DOWN_OMNI = 1
+    UP_LEFT = 2
+    UP_RIGHT = 3
+    DOWN_LEFT = 4
+    DOWN_RIGHT = 5
 
 
 @level_data
@@ -269,10 +269,10 @@ def layout_tick(lane: float, travel: float) -> Rect:
 
 def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: float, animation_progress: float):
     match direction:
-        case Direction.UP:
+        case Direction.UP_OMNI:
             is_down = False
             animation_top_x_offset = 0
-        case Direction.DOWN:
+        case Direction.DOWN_OMNI:
             is_down = True
             animation_top_x_offset = 0
         case Direction.UP_LEFT:
@@ -313,11 +313,11 @@ def layout_flick_arrow_fallback(
     lane: float, size: float, direction: Direction, travel: float, animation_progress: float
 ):
     match direction:
-        case Direction.UP:
+        case Direction.UP_OMNI:
             rotation = 0
             animation_top_x_offset = 0
             is_down = False
-        case Direction.DOWN:
+        case Direction.DOWN_OMNI:
             rotation = pi
             animation_top_x_offset = 0
             is_down = True

@@ -168,7 +168,7 @@ class ArrowSprites(Record):
         result = +Sprite
         index = self._get_index_from_size(size)
         match direction:
-            case Direction.UP | Direction.DOWN:
+            case Direction.UP_OMNI | Direction.DOWN_OMNI:
                 result @= self.up[index]
             case Direction.UP_LEFT | Direction.UP_RIGHT | Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
                 result @= self.left[index]
@@ -190,7 +190,7 @@ class TickSprites(Record):
         return self.normal.is_available
 
 
-class ConnectorSprites(Record):
+class ActiveConnectorSprites(Record):
     normal: Sprite
     active: Sprite
     fallback: Sprite
@@ -314,12 +314,12 @@ flick_tick_sprites = TickSprites(
     fallback=Skin.trace_flick_tick_note_fallback,
 )
 
-normal_slide_connector_sprites = ConnectorSprites(
+normal_slide_connector_sprites = ActiveConnectorSprites(
     normal=Skin.normal_slide_connector_normal,
     active=Skin.normal_slide_connector_active,
     fallback=Skin.normal_slide_connector_fallback,
 )
-critical_slide_connector_sprites = ConnectorSprites(
+critical_slide_connector_sprites = ActiveConnectorSprites(
     normal=Skin.critical_slide_connector_normal,
     active=Skin.critical_slide_connector_active,
     fallback=Skin.critical_slide_connector_fallback,

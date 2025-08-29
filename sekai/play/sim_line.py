@@ -28,12 +28,12 @@ class SimLine(PlayArchetype):
             self.despawn = True
             return
         draw_sim_line(
-            lane_a=self.a.lane,
-            progress_a=self.a.progress,
-            target_time_a=self.a.target_time,
-            lane_b=self.b.lane,
-            progress_b=self.b.progress,
-            target_time_b=self.b.target_time,
+            left_lane=self.a.lane,
+            left_progress=self.a.progress,
+            left_target_time=self.a.target_time,
+            right_lane=self.b.lane,
+            right_progress=self.b.progress,
+            right_target_time=self.b.target_time,
         )
 
     @property

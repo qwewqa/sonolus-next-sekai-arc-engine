@@ -22,7 +22,10 @@ class TimescaleChange(PlayArchetype):
     name = TIMESCALE_CHANGE_NAME
 
     beat: StandardImport.BEAT
-    timescale: float = imported(name="timeScale")
+    timescale: StandardImport.TIMESCALE
+    timescale_skip: StandardImport.TIMESCALE_SKIP
+    timescale_group: StandardImport.TIMESCALE_GROUP
+    timescale_ease: StandardImport.TIMESCALE_EASE
     next: EntityRef[TimescaleChange] = imported(name="next")
 
     def spawn_order(self) -> float:

@@ -65,10 +65,19 @@ class Options:
         scope="Sekai",
         default=True,
     )
-    connector_alpha: float = slider_option(
-        name=StandardText.CONNECTOR_ALPHA,
+    slide_alpha: float = slider_option(
+        name="Slide Alpha",
         scope="Sekai",
         default=1,
+        min=0,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    guide_alpha: float = slider_option(
+        name="Guide Alpha",
+        scope="Sekai",
+        default=0.6,
         min=0,
         max=1,
         step=0.05,
