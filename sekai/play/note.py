@@ -83,6 +83,8 @@ class BaseNote(PlayArchetype):
     best_touch_time: float = entity_memory()
     best_touch_matches_direction: bool = entity_memory()
 
+    should_play_hit_effects: bool = entity_memory()
+
     finish_time: float = exported()
 
     def init_data(self):
@@ -154,8 +156,10 @@ class BaseNote(PlayArchetype):
 
     def touch(self):
         if not self.is_scored:
-            pass
+            return
         if self.despawn:
+            return
+        if time() < self.input_interval.start:
             return
         kind = self.kind
         match kind:
@@ -209,6 +213,9 @@ class BaseNote(PlayArchetype):
                 assert_never(kind)
 
     def update_parallel(self):
+        if self.should_play_hit_effects:
+            # We do this here for parallelism, and to reduce compilation time.
+            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
         if self.despawn:
             return
         if not self.is_scored and time() >= self.target_time:
@@ -233,24 +240,18 @@ class BaseNote(PlayArchetype):
         self.finish_time = time()
 
     def handle_tap_input(self):
-        if time() < self.input_interval.start:
-            return
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
         self.judge(touch.start_time)
 
     def handle_release_input(self):
-        if time() < self.input_interval.start:
-            return
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
         self.judge(touch.time)
 
     def handle_flick_input(self):
-        if time() < self.input_interval.start:
-            return
         if self.captured_touch_id == 0:
             return
 
@@ -275,9 +276,6 @@ class BaseNote(PlayArchetype):
             return
 
     def handle_tail_flick_input(self):
-        if time() < self.input_interval.start:
-            return
-
         if offset_adjusted_time() < self.target_time:
             active_connector_info = self.active_head_ref.get().active_connector_info
             if active_connector_info.is_active:
@@ -319,9 +317,6 @@ class BaseNote(PlayArchetype):
                 return
 
     def handle_trace_input(self):
-        if time() < self.input_interval.start:
-            return
-
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
@@ -342,9 +337,6 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = True
 
     def handle_trace_flick_input(self):
-        if time() < self.input_interval.start:
-            return
-
         hitbox = self.get_full_hitbox()
         has_touch = False
         has_correct_direction_touch = False
@@ -374,9 +366,6 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
-        if time() < self.input_interval.start:
-            return
-
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
@@ -390,9 +379,6 @@ class BaseNote(PlayArchetype):
             self.fail_late(0.125)
 
     def handle_damage_input(self):
-        if time() < self.input_interval.start:
-            return
-
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
@@ -452,7 +438,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.play_hit_effects()
+        self.should_play_hit_effects = True
 
     def judge_wrong_way(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
@@ -467,7 +453,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.play_hit_effects()
+        self.should_play_hit_effects = True
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -475,7 +461,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
-        self.play_hit_effects()
+        self.should_play_hit_effects = True
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
@@ -483,7 +469,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
-        self.play_hit_effects()
+        self.should_play_hit_effects = True
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
@@ -505,10 +491,7 @@ class BaseNote(PlayArchetype):
         self.result.judgment = Judgment.MISS
         self.result.accuracy = 0.125
         self.despawn = True
-        self.play_hit_effects()
-
-    def play_hit_effects(self):
-        play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
+        self.should_play_hit_effects = True
 
     def get_full_hitbox(self) -> Rect:
         leniency = get_leniency(self.kind)

@@ -7,7 +7,6 @@ from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
-from sonolus.script.transform import Transform2d
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
@@ -47,7 +46,7 @@ class Direction(IntEnum):
 
 @level_data
 class Layout:
-    transform: Transform2d
+    t: float
     w_scale: float
     h_scale: float
     scaled_note_h: float
@@ -72,10 +71,10 @@ def init_layout():
     b = field_h * (0.5 - 1.15875 * (803 / 1176))
     w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
 
+    Layout.t = t
     Layout.w_scale = w
     Layout.h_scale = b - t
     Layout.scaled_note_h = NOTE_H * Layout.h_scale
-    Layout.transform = Transform2d.new().scale(Vec2(Layout.w_scale, Layout.h_scale)).translate(Vec2(0, t))
 
     if Options.stage_cover:
         Layout.progress_start = Options.stage_cover
@@ -120,11 +119,19 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
 
 
 def transform_vec(v: Vec2) -> Vec2:
-    return Layout.transform.transform_vec(v)
+    return Vec2(
+        v.x * Layout.w_scale,
+        v.y * Layout.h_scale + Layout.t,
+    )
 
 
 def transform_quad(q: QuadLike) -> Quad:
-    return Layout.transform.transform_quad(q)
+    return Quad(
+        bl=transform_vec(q.bl),
+        br=transform_vec(q.br),
+        tl=transform_vec(q.tl),
+        tr=transform_vec(q.tr),
+    )
 
 
 def transformed_vec_at(lane: float, travel: float) -> Vec2:
@@ -154,7 +161,7 @@ def layout_sekai_stage() -> Quad:
     w = (2048 / 1420) * 12 / 2
     h = 1176 / 850
     rect = Rect(l=-w, r=w, t=LANE_T, b=LANE_T + h)
-    return Layout.transform.transform_quad(rect)
+    return transform_quad(rect)
 
 
 def layout_lane_by_edges(l: float, r: float) -> Quad:
@@ -462,12 +469,9 @@ def layout_hitbox(
     l: float,
     r: float,
 ) -> Rect:
-    return Rect(
-        l=transform_vec(Vec2(l, 1.0)).x,
-        r=transform_vec(Vec2(r, 1.0)).x,
-        t=transform_vec(Vec2(0.0, LANE_HITBOX_T)).y,
-        b=transform_vec(Vec2(0.0, LANE_HITBOX_B)).y,
-    )
+    bl = transform_vec(Vec2(l, LANE_HITBOX_B))
+    tr = transform_vec(Vec2(r, LANE_HITBOX_T))
+    return Rect(l=bl.x, r=tr.x, b=bl.y, t=tr.y)
 
 
 def iter_slot_lanes(lane: float, size: float):
