@@ -107,14 +107,19 @@ class Connector(PlayArchetype):
             tail = self.tail
             segment_head = self.segment_head
             segment_tail = self.segment_tail
-            if time() < head.target_time:
-                visual_state = SlideVisualState.WAITING
-            elif offset_adjusted_time() < beat_to_time(head.beat + START_LENIENCY_BEATS) or (
-                self.active_head_ref.index > 0 and self.active_connector_info.is_active
-            ):
-                visual_state = SlideVisualState.ACTIVE
+            if self.active_head_ref.index > 0:
+                active_head = self.active_head
+                if time() < active_head.target_time:
+                    visual_state = SlideVisualState.WAITING
+                elif (
+                    offset_adjusted_time() < beat_to_time(active_head.beat + START_LENIENCY_BEATS)
+                    or self.active_connector_info.is_active
+                ):
+                    visual_state = SlideVisualState.ACTIVE
+                else:
+                    visual_state = SlideVisualState.INACTIVE
             else:
-                visual_state = SlideVisualState.INACTIVE
+                visual_state = SlideVisualState.WAITING
             draw_connector(
                 kind=self.kind,
                 visual_state=visual_state,

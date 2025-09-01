@@ -31,7 +31,7 @@ from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import LAYER_NOTE_ARROW, LAYER_NOTE_BODY, LAYER_NOTE_SLIM_BODY, LAYER_NOTE_TICK, get_z
 from sekai.lib.layout import (
-    Direction,
+    FlickDirection,
     Layout,
     approach,
     get_alpha,
@@ -314,38 +314,38 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
     return result
 
 
-def mirror_direction(direction: Direction) -> Direction:
+def mirror_direction(direction: FlickDirection) -> FlickDirection:
     match direction:
-        case Direction.UP_OMNI:
-            return Direction.UP_OMNI
-        case Direction.DOWN_OMNI:
-            return Direction.DOWN_OMNI
-        case Direction.UP_LEFT:
-            return Direction.UP_RIGHT
-        case Direction.UP_RIGHT:
-            return Direction.UP_LEFT
-        case Direction.DOWN_LEFT:
-            return Direction.DOWN_RIGHT
-        case Direction.DOWN_RIGHT:
-            return Direction.DOWN_LEFT
+        case FlickDirection.UP_OMNI:
+            return FlickDirection.UP_OMNI
+        case FlickDirection.DOWN_OMNI:
+            return FlickDirection.DOWN_OMNI
+        case FlickDirection.UP_LEFT:
+            return FlickDirection.UP_RIGHT
+        case FlickDirection.UP_RIGHT:
+            return FlickDirection.UP_LEFT
+        case FlickDirection.DOWN_LEFT:
+            return FlickDirection.DOWN_RIGHT
+        case FlickDirection.DOWN_RIGHT:
+            return FlickDirection.DOWN_LEFT
         case _:
             assert_never(direction)
 
 
-def flip_direction(direction: Direction) -> Direction:
+def flip_direction(direction: FlickDirection) -> FlickDirection:
     match direction:
-        case Direction.UP_OMNI:
-            return Direction.DOWN_OMNI
-        case Direction.DOWN_OMNI:
-            return Direction.UP_OMNI
-        case Direction.UP_LEFT:
-            return Direction.DOWN_LEFT
-        case Direction.UP_RIGHT:
-            return Direction.DOWN_RIGHT
-        case Direction.DOWN_LEFT:
-            return Direction.UP_LEFT
-        case Direction.DOWN_RIGHT:
-            return Direction.UP_RIGHT
+        case FlickDirection.UP_OMNI:
+            return FlickDirection.DOWN_OMNI
+        case FlickDirection.DOWN_OMNI:
+            return FlickDirection.UP_OMNI
+        case FlickDirection.UP_LEFT:
+            return FlickDirection.DOWN_LEFT
+        case FlickDirection.UP_RIGHT:
+            return FlickDirection.DOWN_RIGHT
+        case FlickDirection.DOWN_LEFT:
+            return FlickDirection.UP_LEFT
+        case FlickDirection.DOWN_RIGHT:
+            return FlickDirection.UP_RIGHT
         case _:
             assert_never(direction)
 
@@ -381,7 +381,7 @@ def get_attach_params(
     return lane, size
 
 
-def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: Direction, target_time: float):
+def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: FlickDirection, target_time: float):
     if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
@@ -446,7 +446,9 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
             assert_never(kind)
 
 
-def draw_note_arrow(kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: Direction):
+def draw_note_arrow(
+    kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
+):
     match kind:
         case (
             NoteKind.NORM_FLICK
@@ -571,15 +573,15 @@ def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: fl
 
 
 def _draw_arrow(
-    sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: Direction
+    sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
 ):
     match direction:
         case _ if Options.marker_animation:
             period = 0.5
             animation_progress = (time() / period) % 1
-        case Direction.UP_LEFT | Direction.UP_OMNI | Direction.UP_RIGHT:
+        case FlickDirection.UP_LEFT | FlickDirection.UP_OMNI | FlickDirection.UP_RIGHT:
             animation_progress = 0.2
-        case Direction.DOWN_LEFT | Direction.DOWN_OMNI | Direction.DOWN_RIGHT:
+        case FlickDirection.DOWN_LEFT | FlickDirection.DOWN_OMNI | FlickDirection.DOWN_RIGHT:
             animation_progress = 0.8
         case _:
             assert_never(direction)
@@ -847,7 +849,7 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
     return result
 
 
-def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: Direction, judgment: Judgment):
+def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment):
     sfx = get_note_effect(kind, judgment)
     particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
@@ -869,11 +871,11 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: D
             circular_particle.spawn(layout, duration=0.6)
         if particles.directional.is_available:
             match direction:
-                case Direction.UP_OMNI | Direction.DOWN_OMNI:
+                case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                     shear = 0
-                case Direction.UP_LEFT | Direction.DOWN_RIGHT:
+                case FlickDirection.UP_LEFT | FlickDirection.DOWN_RIGHT:
                     shear = -1
-                case Direction.UP_RIGHT | Direction.DOWN_LEFT:
+                case FlickDirection.UP_RIGHT | FlickDirection.DOWN_LEFT:
                     shear = 1
                 case _:
                     assert_never(direction)

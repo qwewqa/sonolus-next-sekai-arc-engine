@@ -18,7 +18,7 @@ from sonolus.script.array import Dim
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
-from sonolus.script.interval import Interval, remap
+from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
 from sonolus.script.quad import Rect
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
@@ -26,7 +26,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib.buckets import WINDOW_SCALE
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
-from sekai.lib.layout import Direction, Layout, layout_hitbox, progress_to
+from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
 from sekai.lib.note import (
     NoteKind,
     draw_note,
@@ -56,7 +56,7 @@ class BaseNote(PlayArchetype):
     timescale_group_ref: StandardImport.TIMESCALE_GROUP
     lane: float = imported()
     size: float = imported()
-    direction: Direction = imported()
+    direction: FlickDirection = imported()
     active_head_ref: EntityRef[BaseNote] = imported(name="activeHead")
     is_attached: bool = imported(name="isAttached")
     connector_ease: EaseType = imported(name="connectorEase")
@@ -415,15 +415,15 @@ class BaseNote(PlayArchetype):
     def check_direction_matches(self, angle: float) -> bool:
         leniency = pi / 2
         match self.direction:
-            case Direction.UP_OMNI | Direction.DOWN_OMNI:
+            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                 return True
-            case Direction.UP_LEFT:
+            case FlickDirection.UP_LEFT:
                 target_angle = pi / 2 + 1
-            case Direction.UP_RIGHT:
+            case FlickDirection.UP_RIGHT:
                 target_angle = pi / 2 - 1
-            case Direction.DOWN_LEFT:
+            case FlickDirection.DOWN_LEFT:
                 target_angle = -pi / 2 - 1
-            case Direction.DOWN_RIGHT:
+            case FlickDirection.DOWN_RIGHT:
                 target_angle = -pi / 2 + 1
             case _:
                 assert_never(self.direction)
@@ -511,14 +511,17 @@ class BaseNote(PlayArchetype):
                 if time() < attach_head.target_time
                 else 1.0
             )
-            tail_progress = (
-                progress_to(attach_tail.target_scaled_time, group_scaled_time(attach_tail.timescale_group_ref))
-                if time() < attach_tail.target_time
-                else 1.0
+            tail_progress = progress_to(
+                attach_tail.target_scaled_time, group_scaled_time(attach_tail.timescale_group_ref)
             )
-            return remap(
-                attach_head.target_time, attach_tail.target_time, head_progress, tail_progress, self.target_time
+            head_frac = (
+                0.0
+                if time() < attach_head.target_time
+                else unlerp_clamped(attach_head.target_time, attach_tail.target_time, time())
             )
+            tail_frac = 1.0
+            frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
+            return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
             return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group_ref))
 

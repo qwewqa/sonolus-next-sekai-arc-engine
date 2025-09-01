@@ -1,0 +1,346 @@
+from typing import Any
+
+from sonolus.script.archetype import PlayArchetype
+from sonolus.script.level import BpmChange, ExternalLevelData, LevelData
+from sonolus.script.timing import TimescaleEase
+
+from sekai.lib.connector import ConnectorKind
+from sekai.lib.ease import EaseType
+from sekai.lib.layout import FlickDirection
+from sekai.play.connector import Connector
+from sekai.play.initialization import Initialization
+from sekai.play.note import (
+    AnchorNote,
+    BaseNote,
+    CriticalFlickNote,
+    CriticalHeadTapNote,
+    CriticalHeadTraceNote,
+    CriticalTailFlickNote,
+    CriticalTailReleaseNote,
+    CriticalTailTraceNote,
+    CriticalTapNote,
+    CriticalTickNote,
+    CriticalTraceFlickNote,
+    CriticalTraceNote,
+    DamageNote,
+    NormalFlickNote,
+    NormalHeadTapNote,
+    NormalHeadTraceNote,
+    NormalTailFlickNote,
+    NormalTailReleaseNote,
+    NormalTailTraceNote,
+    NormalTapNote,
+    NormalTickNote,
+    NormalTraceFlickNote,
+    NormalTraceNote,
+    TransientHiddenTickNote,
+)
+from sekai.play.timescale import TimescaleChange, TimescaleGroup
+
+note_type_mapping = {
+    "NormalTapNote": NormalTapNote,
+    "CriticalTapNote": CriticalTapNote,
+    "NormalFlickNote": NormalFlickNote,
+    "CriticalFlickNote": CriticalFlickNote,
+    "NormalSlideStartNote": NormalHeadTapNote,
+    "CriticalSlideStartNote": CriticalHeadTapNote,
+    "NormalSlideEndNote": NormalTailReleaseNote,
+    "CriticalSlideEndNote": CriticalTailReleaseNote,
+    "NormalSlideEndFlickNote": NormalTailFlickNote,
+    "CriticalSlideEndFlickNote": CriticalTailFlickNote,
+    "IgnoredSlideTickNote": TransientHiddenTickNote,
+    "NormalSlideTickNote": NormalTickNote,
+    "CriticalSlideTickNote": CriticalTickNote,
+    "HiddenSlideTickNote": AnchorNote,
+    "NormalAttachedSlideTickNote": NormalTickNote,
+    "CriticalAttachedSlideTickNote": CriticalTickNote,
+    "NormalTraceNote": NormalTraceNote,
+    "CriticalTraceNote": CriticalTraceNote,
+    "DamageNote": DamageNote,
+    "NormalTraceFlickNote": NormalTraceFlickNote,
+    "CriticalTraceFlickNote": CriticalTraceFlickNote,
+    "NonDirectionalTraceFlickNote": NormalTraceFlickNote,
+    "HiddenSlideStartNote": AnchorNote,
+    "NormalTraceSlideStartNote": NormalHeadTraceNote,
+    "CriticalTraceSlideStartNote": CriticalHeadTraceNote,
+    "NormalTraceSlideEndNote": NormalTailTraceNote,
+    "CriticalTraceSlideEndNote": CriticalTailTraceNote,
+}
+
+
+active_connector_kind_mapping = {
+    "NormalSlideConnector": ConnectorKind.ACTIVE_NORMAL,
+    "CriticalSlideConnector": ConnectorKind.ACTIVE_CRITICAL,
+}
+
+flick_direction_mapping = {
+    -1: FlickDirection.UP_LEFT,
+    0: FlickDirection.UP_OMNI,
+    1: FlickDirection.UP_RIGHT,
+}
+
+ease_type_mapping = {
+    -2: EaseType.OUT_IN_QUAD,
+    -1: EaseType.OUT_QUAD,
+    0: EaseType.LINEAR,
+    1: EaseType.IN_QUAD,
+    2: EaseType.IN_OUT_QUAD,
+}
+
+fade_alpha_mapping = {
+    0: (1.0, 0.0),
+    1: (1.0, 1.0),
+    2: (0.0, 1.0),
+}
+
+guide_kind_mapping = {
+    0: ConnectorKind.GUIDE_NEUTRAL,
+    1: ConnectorKind.GUIDE_RED,
+    2: ConnectorKind.GUIDE_GREEN,
+    3: ConnectorKind.GUIDE_BLUE,
+    4: ConnectorKind.GUIDE_YELLOW,
+    5: ConnectorKind.GUIDE_PURPLE,
+    6: ConnectorKind.GUIDE_CYAN,
+    7: ConnectorKind.GUIDE_BLACK,
+}
+
+
+def convert_pjsekai_extended_level_data(data: ExternalLevelData) -> LevelData:
+    bpm_changes = convert_bpm_changes(data)
+    timescale_groups_by_index, timescale_entities = convert_timescale_groups(data)
+    notes = convert_notes(data, timescale_groups_by_index)
+    guides = convert_guides(data, timescale_groups_by_index)
+    entities = [
+        Initialization(),
+        *bpm_changes,
+        *timescale_entities,
+        *notes,
+        *guides,
+    ]
+    entities = sorted(entities, key=lambda e: (not isinstance(e, Initialization), (getattr(e, "beat", -1))))
+    return LevelData(
+        bgm_offset=data.bgm_offset,
+        entities=[
+            Initialization(),
+            *bpm_changes,
+            *timescale_entities,
+            *notes,
+            *guides,
+        ],
+    )
+
+
+def convert_timescale_groups(data: ExternalLevelData) -> tuple[dict[int, TimescaleChange], list[PlayArchetype]]:
+    groups_by_original_index = {}
+    entities = []
+    for i, entity in enumerate(data.entities):
+        if entity.archetype != "TimeScaleGroup":
+            continue
+        group = TimescaleGroup()
+        changes = []
+        raw_change = data.entities[entity.data["first"]]
+        while True:
+            change = TimescaleChange(
+                beat=raw_change.data["#BEAT"],
+                timescale=raw_change.data["timeScale"],
+                timescale_skip=0.0,
+                timescale_group_ref=group.ref(),
+                timescale_ease=TimescaleEase.NONE,
+            )
+            if changes:
+                changes[-1].next_ref = change.ref()
+            changes.append(change)
+            if raw_change.data.get("next", 0) <= 0:
+                break
+            raw_change = data.entities[raw_change.data["next"]]
+        if changes:
+            group.first_ref = changes[0].ref()
+        groups_by_original_index[i] = group
+        entities.append(group)
+        entities.extend(changes)
+    return groups_by_original_index, entities
+
+
+def convert_bpm_changes(data: ExternalLevelData) -> list[PlayArchetype]:
+    entities = []
+    for entity in data.entities:
+        if entity.archetype != "#BPM_CHANGE":
+            continue
+        bpm_change = BpmChange(
+            beat=entity.data["#BEAT"],
+            bpm=entity.data["#BPM"],
+        )
+        entities.append(bpm_change)
+    return entities
+
+
+def convert_notes(
+    data: ExternalLevelData, timescale_groups_by_index: dict[int, TimescaleChange]
+) -> list[PlayArchetype]:
+    entities = []
+    notes_by_original_index = {}
+    connectors_by_original_index = {}
+    for i, entity in enumerate(data.entities):
+        if entity.archetype not in note_type_mapping:
+            continue
+        note_class = note_type_mapping[entity.archetype]
+        note = note_class(
+            beat=entity.data["#BEAT"],
+            lane=entity.data.get("lane", 0.0),
+            size=entity.data.get("size", 0.0),
+            direction=flick_direction_mapping[entity.data.get("direction", 0)],
+        )
+        entities.append(note)
+        notes_by_original_index[i] = note
+    for i, entity in enumerate(data.entities):
+        if entity.archetype not in active_connector_kind_mapping:
+            continue
+        connector = Connector(
+            head_ref=notes_by_original_index[entity.data["head"]].ref(),
+            tail_ref=notes_by_original_index[entity.data["tail"]].ref(),
+            segment_head_ref=notes_by_original_index[entity.data["head"]].ref(),
+            segment_tail_ref=notes_by_original_index[entity.data["tail"]].ref(),
+            active_head_ref=notes_by_original_index[entity.data["start"]].ref(),
+            active_tail_ref=notes_by_original_index[entity.data["end"]].ref(),
+        )
+        head = notes_by_original_index[entity.data["head"]]
+        segment_head = notes_by_original_index[entity.data["head"]]
+        head.connector_ease = ease_type_mapping[entity.data["ease"]]
+        segment_head.segment_kind = active_connector_kind_mapping[entity.archetype]
+        entities.append(connector)
+        connectors_by_original_index[i] = connector
+    for i, note in notes_by_original_index.items():
+        entity = data.entities[i]
+        timescale_group_index = entity.data.get("timeScaleGroup", -1)
+        if timescale_group_index in timescale_groups_by_index:
+            note.timescale_group_ref = timescale_groups_by_index[timescale_group_index].ref()
+        attach_index = entity.data.get("attach", -1)
+        if attach_index > 0:
+            attach_connector = connectors_by_original_index[attach_index]
+            note.attach_head_ref = attach_connector.head_ref
+            note.attach_tail_ref = attach_connector.tail_ref
+            note.is_attached = True
+        slide_index = entity.data.get("slide", -1)
+        if slide_index > 0:
+            slide_connector = connectors_by_original_index[slide_index]
+            note.active_head_ref = slide_connector.head_ref
+    return entities
+
+
+def convert_guides(
+    data: ExternalLevelData, timescale_groups_by_index: dict[int, TimescaleChange]
+) -> list[PlayArchetype]:
+    entities = []
+
+    anchors_by_beat = {}
+
+    def get_anchor(
+        beat: float,
+        lane: float,
+        size: float,
+        timescale_group_ref: Any,
+        segment_kind: ConnectorKind | None = None,
+        segment_alpha: float | None = None,
+        connector_ease: EaseType | None = None,
+    ) -> BaseNote:
+        if beat in anchors_by_beat:
+            for anchor in anchors_by_beat[beat]:
+                if (
+                    anchor.lane == lane
+                    and anchor.size == size
+                    and anchor.timescale_group_ref == timescale_group_ref
+                    and (segment_kind is None or anchor.segment_kind in (segment_kind, -1))
+                    and (segment_alpha is None or anchor.segment_alpha in (segment_alpha, -1))
+                    and (connector_ease is None or anchor.connector_ease in (connector_ease, -1))
+                ):
+                    if segment_kind is not None and anchor.segment_kind == -1:
+                        anchor.segment_kind = segment_kind
+                    if segment_alpha is not None and anchor.segment_alpha == -1:
+                        anchor.segment_alpha = segment_alpha
+                    if connector_ease is not None and anchor.connector_ease == -1:
+                        anchor.connector_ease = connector_ease
+                    return anchor
+        anchor = AnchorNote(
+            beat=beat,
+            lane=lane,
+            size=size,
+            timescale_group_ref=timescale_group_ref,
+            segment_kind=segment_kind if segment_kind is not None else -1,
+            segment_alpha=segment_alpha if segment_alpha is not None else -1,
+            connector_ease=connector_ease if connector_ease is not None else -1,
+        )
+        entities.append(anchor)
+        if beat not in anchors_by_beat:
+            anchors_by_beat[beat] = []
+        anchors_by_beat[beat].append(anchor)
+        return anchor
+
+    for entity in data.entities:
+        if entity.archetype != "Guide":
+            continue
+        start_beat = entity.data["startBeat"]
+        start_lane = entity.data["startLane"]
+        start_size = entity.data["startSize"]
+        start_timescale_group = timescale_groups_by_index[entity.data["startTimeScaleGroup"]].ref()
+        head_beat = entity.data["headBeat"]
+        head_lane = entity.data["headLane"]
+        head_size = entity.data["headSize"]
+        head_timescale_group = timescale_groups_by_index[entity.data["headTimeScaleGroup"]].ref()
+        tail_beat = entity.data["tailBeat"]
+        tail_lane = entity.data["tailLane"]
+        tail_size = entity.data["tailSize"]
+        tail_timescale_group = timescale_groups_by_index[entity.data["tailTimeScaleGroup"]].ref()
+        end_beat = entity.data["endBeat"]
+        end_lane = entity.data["endLane"]
+        end_size = entity.data["endSize"]
+        end_timescale_group = timescale_groups_by_index[entity.data["endTimeScaleGroup"]].ref()
+        ease = ease_type_mapping[entity.data.get("ease", 0)]
+        start_alpha, end_alpha = fade_alpha_mapping[entity.data.get("fade", 1)]
+        kind = guide_kind_mapping[entity.data.get("color", 0)]
+
+        start = get_anchor(
+            beat=start_beat,
+            lane=start_lane,
+            size=start_size,
+            timescale_group_ref=start_timescale_group,
+            segment_kind=kind,
+            segment_alpha=start_alpha,
+        )
+        end = get_anchor(
+            beat=end_beat,
+            lane=end_lane,
+            size=end_size,
+            timescale_group_ref=end_timescale_group,
+            segment_alpha=end_alpha,
+        )
+        head = get_anchor(
+            beat=head_beat,
+            lane=head_lane,
+            size=head_size,
+            timescale_group_ref=head_timescale_group,
+            connector_ease=ease,
+        )
+        tail = get_anchor(
+            beat=tail_beat,
+            lane=tail_lane,
+            size=tail_size,
+            timescale_group_ref=tail_timescale_group,
+        )
+        connector = Connector(
+            head_ref=head.ref(),
+            tail_ref=tail.ref(),
+            segment_head_ref=start.ref(),
+            segment_tail_ref=end.ref(),
+        )
+        entities.append(connector)
+
+    for anchor_list in anchors_by_beat.values():
+        for anchor in anchor_list:
+            if anchor.segment_kind == -1:
+                anchor.segment_kind = ConnectorKind.GUIDE_NEUTRAL
+            if anchor.segment_alpha == -1:
+                anchor.segment_alpha = 1.0
+            if anchor.connector_ease == -1:
+                anchor.connector_ease = EaseType.LINEAR
+
+    return entities

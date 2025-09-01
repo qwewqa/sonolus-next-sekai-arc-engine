@@ -5,7 +5,7 @@ from sonolus.script.interval import clamp
 from sonolus.script.record import Record
 from sonolus.script.sprite import Sprite, StandardSprite, skin, sprite
 
-from sekai.lib.layout import Direction
+from sekai.lib.layout import FlickDirection
 
 
 @skin
@@ -164,13 +164,15 @@ class ArrowSprites(Record):
     def _get_index_from_size(self, size: float) -> int:
         return int(clamp(round(size * 2), 1, 6)) - 1
 
-    def get_sprite(self, size: float, direction: Direction) -> Sprite:
+    def get_sprite(self, size: float, direction: FlickDirection) -> Sprite:
         result = +Sprite
         index = self._get_index_from_size(size)
         match direction:
-            case Direction.UP_OMNI | Direction.DOWN_OMNI:
+            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                 result @= self.up[index]
-            case Direction.UP_LEFT | Direction.UP_RIGHT | Direction.DOWN_LEFT | Direction.DOWN_RIGHT:
+            case (
+                FlickDirection.UP_LEFT | FlickDirection.UP_RIGHT | FlickDirection.DOWN_LEFT | FlickDirection.DOWN_RIGHT
+            ):
                 result @= self.left[index]
             case _:
                 assert_never(direction)

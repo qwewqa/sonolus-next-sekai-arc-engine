@@ -24,9 +24,9 @@ class TimescaleChange(PlayArchetype):
     beat: StandardImport.BEAT
     timescale: StandardImport.TIMESCALE
     timescale_skip: StandardImport.TIMESCALE_SKIP
-    timescale_group: StandardImport.TIMESCALE_GROUP
+    timescale_group_ref: StandardImport.TIMESCALE_GROUP
     timescale_ease: StandardImport.TIMESCALE_EASE
-    next: EntityRef[TimescaleChange] = imported(name="next")
+    next_ref: EntityRef[TimescaleChange] = imported(name="next")
 
     def spawn_order(self) -> float:
         return 1e8
@@ -38,7 +38,7 @@ class TimescaleChange(PlayArchetype):
 class TimescaleGroup(PlayArchetype):
     name = TIMESCALE_GROUP_NAME
 
-    first: EntityRef[TimescaleChange] = imported(name="first")
+    first_ref: EntityRef[TimescaleChange] = imported(name="first")
 
     current_scaled_time: float = shared_memory()
 
@@ -53,8 +53,8 @@ class TimescaleGroup(PlayArchetype):
 
     @callback(order=-2)
     def preprocess(self):
-        self.time_to_scaled_time.init(self.first.index)
-        self.scaled_time_to_first_time.init(self.first.index)
+        self.time_to_scaled_time.init(self.first_ref.index)
+        self.scaled_time_to_first_time.init(self.first_ref.index)
 
     @callback(order=-2)
     def update_sequential(self):

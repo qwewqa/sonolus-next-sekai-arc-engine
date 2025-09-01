@@ -303,8 +303,10 @@ def draw_connector(
     if time() >= head_target_time:
         start_progress = 1.0
         end_progress = clamp(tail_progress, Layout.progress_start, Layout.progress_cutoff)
-        start_frac = unlerp_clamped(head_target_time, tail_target_time, time())
-        end_frac = unlerp_clamped(1.0, tail_progress, end_progress)
+        head_frac = unlerp_clamped(head_target_time, tail_target_time, time())
+        tail_frac = 1.0
+        start_frac = head_frac
+        end_frac = remap_clamped(start_progress, tail_progress, start_frac, tail_frac, end_progress)
     else:
         start_progress = clamp(head_progress, Layout.progress_start, Layout.progress_cutoff)
         end_progress = clamp(tail_progress, Layout.progress_start, Layout.progress_cutoff)

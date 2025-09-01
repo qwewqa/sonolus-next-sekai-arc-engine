@@ -24,7 +24,7 @@ class TimescaleChangeLike(Protocol):
     timescale: float
     timescale_skip: float
     timescale_ease: TimescaleEase
-    next: EntityRef
+    next_ref: EntityRef
 
     @classmethod
     def at(cls, index: int) -> TimescaleChangeLike: ...
@@ -34,7 +34,7 @@ class TimescaleChangeLike(Protocol):
 
 
 class TimescaleGroupLike(Protocol):
-    first: EntityRef
+    first_ref: EntityRef
     time_to_scaled_time: CachedTimeToScaledTime
     scaled_time_to_first_time: CachedScaledTimeToFirstTime
     current_scaled_time: float
@@ -58,7 +58,7 @@ class CachedTimeToScaledTime(Record):
         self.next_change_index = next_index
 
     def get(self, time: float) -> float:
-        if time <= 0 or Options.disable_timescale:
+        if time <= MIN_START_TIME or Options.disable_timescale:
             return time
         if time < self.last_time:
             self.init(self.first_change_index)
@@ -77,7 +77,7 @@ class CachedTimeToScaledTime(Record):
                     assert_never(change.timescale_ease)
             skip_scaled_time = beat_to_time(change.beat + change.timescale_skip) - beat_to_time(change.beat)
             if time <= next_time:
-                if (next_time - self.last_time) < 1e-6:
+                if abs(next_time - self.last_time) < 1e-6:
                     return self.last_scaled_time
                 match change.timescale_ease:
                     case TimescaleEase.NONE:
@@ -93,7 +93,7 @@ class CachedTimeToScaledTime(Record):
             self.last_timescale = next_timescale
             self.last_time = next_time
             self.last_scaled_time = next_scaled_time + skip_scaled_time
-            self.next_change_index = change.next.index
+            self.next_change_index = change.next_ref.index
         return self.last_scaled_time + (time - self.last_time) * self.last_timescale
 
 
@@ -173,7 +173,7 @@ class CachedScaledTimeToFirstTime(Record):
             self.last_timescale = next_timescale
             self.last_time = next_time
             self.last_scaled_time = next_scaled_time + skip_scaled_time
-            self.next_change_index = change.next.index
+            self.next_change_index = change.next_ref.index
         if self.last_timescale == 0:
             return inf
         additional_time = (scaled_time - self.last_scaled_time) / self.last_timescale
@@ -196,7 +196,7 @@ def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:
             return
         change = timescale_change_archetype().at(index)
         yield change
-        index = change.next.index
+        index = change.next_ref.index
 
 
 def group_scaled_time(group: int | EntityRef):

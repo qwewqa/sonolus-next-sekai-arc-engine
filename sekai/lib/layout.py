@@ -35,7 +35,7 @@ DEFAULT_APPROACH_CUTOFF = 2.5
 DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 
-class Direction(IntEnum):
+class FlickDirection(IntEnum):
     UP_OMNI = 0
     DOWN_OMNI = 1
     UP_LEFT = 2
@@ -274,32 +274,38 @@ def layout_tick(lane: float, travel: float) -> Rect:
     return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * travel)
 
 
-def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: float, animation_progress: float):
+def layout_flick_arrow(lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float):
     match direction:
-        case Direction.UP_OMNI:
+        case FlickDirection.UP_OMNI:
             is_down = False
+            reverse = False
             animation_top_x_offset = 0
-        case Direction.DOWN_OMNI:
+        case FlickDirection.DOWN_OMNI:
             is_down = True
+            reverse = False
             animation_top_x_offset = 0
-        case Direction.UP_LEFT:
+        case FlickDirection.UP_LEFT:
             is_down = False
+            reverse = False
             animation_top_x_offset = -1
-        case Direction.UP_RIGHT:
+        case FlickDirection.UP_RIGHT:
             is_down = False
+            reverse = True
             animation_top_x_offset = 1
-        case Direction.DOWN_LEFT:
+        case FlickDirection.DOWN_LEFT:
             is_down = True
+            reverse = False
             animation_top_x_offset = 1
-        case Direction.DOWN_RIGHT:
+        case FlickDirection.DOWN_RIGHT:
             is_down = True
+            reverse = True
             animation_top_x_offset = -1
         case _:
             assert_never(direction)
-    w = clamp(size, 0, 3) * (1 if -direction >= 0 else -1) / 2
+    w = clamp(size, 0, 3) / 2
     base_bl = transform_vec(Vec2(lane - w, 1) * travel)
     base_br = transform_vec(Vec2(lane + w, 1) * travel)
-    up = (base_br - base_bl).rotate(pi / 2 if -direction >= 0 else -pi / 2)
+    up = (base_br - base_bl).rotate(pi / 2 if not is_down else -pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
     offset_scale = animation_progress if not is_down else 1 - animation_progress - 0.1
@@ -313,35 +319,38 @@ def layout_flick_arrow(lane: float, size: float, direction: Direction, travel: f
     if is_down:
         swap(result.bl, result.tl)
         swap(result.br, result.tr)
+    if reverse:
+        swap(result.bl, result.br)
+        swap(result.tl, result.tr)
     return result
 
 
 def layout_flick_arrow_fallback(
-    lane: float, size: float, direction: Direction, travel: float, animation_progress: float
+    lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float
 ):
     match direction:
-        case Direction.UP_OMNI:
+        case FlickDirection.UP_OMNI:
             rotation = 0
             animation_top_x_offset = 0
             is_down = False
-        case Direction.DOWN_OMNI:
+        case FlickDirection.DOWN_OMNI:
             rotation = pi
             animation_top_x_offset = 0
             is_down = True
-        case Direction.UP_LEFT:
+        case FlickDirection.UP_LEFT:
             rotation = pi / 6
             animation_top_x_offset = -1
             is_down = False
-        case Direction.UP_RIGHT:
+        case FlickDirection.UP_RIGHT:
             rotation = -pi / 6
             animation_top_x_offset = 1
             is_down = False
-        case Direction.DOWN_LEFT:
+        case FlickDirection.DOWN_LEFT:
             rotation = pi * 5 / 6
             animation_top_x_offset = 1
             is_down = True
             lane -= 0.25  # Note: backwards from the regular skin due to how the sprites are designed
-        case Direction.DOWN_RIGHT:
+        case FlickDirection.DOWN_RIGHT:
             rotation = -pi * 5 / 6
             animation_top_x_offset = -1
             is_down = True
