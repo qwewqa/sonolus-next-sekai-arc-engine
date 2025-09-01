@@ -89,7 +89,7 @@ from sekai.lib.skin import (
     trace_flick_note_body_sprites,
     trace_slide_note_body_sprites,
 )
-from sekai.lib.timescale import group_scaled_time_to_first_time
+from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
 
 
 class NoteKind(IntEnum):
@@ -356,7 +356,7 @@ def get_visual_spawn_time(
 ):
     return min(
         group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time()),
-        group_scaled_time_to_first_time(timescale_group, target_scaled_time + preempt_time()),
+        group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time()),
         -2 if 0 <= progress_to(target_scaled_time, -2) <= 2 else 1e8,
     )
 

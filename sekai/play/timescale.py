@@ -44,6 +44,7 @@ class TimescaleGroup(PlayArchetype):
 
     time_to_scaled_time: TimeToScaledTime = shared_memory()
     scaled_time_to_first_time: ScaledTimeToFirstTime = shared_memory()
+    scaled_time_to_first_time_2: ScaledTimeToFirstTime = shared_memory()
 
     def spawn_order(self) -> float:
         return -1e8
@@ -55,6 +56,7 @@ class TimescaleGroup(PlayArchetype):
     def preprocess(self):
         self.time_to_scaled_time.init(self.first_ref.index)
         self.scaled_time_to_first_time.init(self.first_ref.index)
+        self.scaled_time_to_first_time_2.init(self.first_ref.index)
 
     @callback(order=-2)
     def update_sequential(self):

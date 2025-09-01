@@ -37,6 +37,7 @@ class TimescaleGroupLike(Protocol):
     first_ref: EntityRef
     time_to_scaled_time: TimeToScaledTime
     scaled_time_to_first_time: ScaledTimeToFirstTime
+    scaled_time_to_first_time_2: ScaledTimeToFirstTime
     current_scaled_time: float
 
     @classmethod
@@ -232,3 +233,13 @@ def group_scaled_time_to_first_time(
     if isinstance(group, EntityRef):
         group = group.index
     return timescale_group_archetype().at(group).scaled_time_to_first_time.get(scaled_time)
+
+
+def group_scaled_time_to_first_time_2(
+    group: int | EntityRef,
+    scaled_time: float,
+) -> float:
+    # This is a second function so that we don't have to reset the timescale groups as often
+    if isinstance(group, EntityRef):
+        group = group.index
+    return timescale_group_archetype().at(group).scaled_time_to_first_time_2.get(scaled_time)
