@@ -354,7 +354,7 @@ def draw_connector(
 
     for i in range(1, segment_count + 1):
         next_frac = lerp(start_frac, end_frac, i / segment_count)
-        next_progress = lerp(head_progress, tail_progress, next_frac)
+        next_progress = lerp(start_progress, end_progress, i / segment_count)
         next_travel = approach(next_progress)
         next_lane = lerp(head_lane, tail_lane, ease(ease_type, next_frac))
         next_size = max(1e-3, lerp(head_size, tail_size, ease(ease_type, next_frac)))
