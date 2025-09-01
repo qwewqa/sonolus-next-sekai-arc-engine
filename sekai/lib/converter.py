@@ -35,6 +35,7 @@ from sekai.play.note import (
     NormalTraceNote,
     TransientHiddenTickNote,
 )
+from sekai.play.sim_line import SimLine
 from sekai.play.timescale import TimescaleChange, TimescaleGroup
 
 note_type_mapping = {
@@ -224,6 +225,14 @@ def convert_notes(
         if slide_index > 0:
             slide_connector = connectors_by_original_index[slide_index]
             note.active_head_ref = slide_connector.head_ref
+    for entity in data.entities:
+        if entity.archetype != "SimLine":
+            continue
+        sim_line = SimLine(
+            left_ref=notes_by_original_index[entity.data["a"]].ref(),
+            right_ref=notes_by_original_index[entity.data["b"]].ref(),
+        )
+        entities.append(sim_line)
     return entities
 
 

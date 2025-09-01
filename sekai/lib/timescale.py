@@ -35,15 +35,15 @@ class TimescaleChangeLike(Protocol):
 
 class TimescaleGroupLike(Protocol):
     first_ref: EntityRef
-    time_to_scaled_time: CachedTimeToScaledTime
-    scaled_time_to_first_time: CachedScaledTimeToFirstTime
+    time_to_scaled_time: TimeToScaledTime
+    scaled_time_to_first_time: ScaledTimeToFirstTime
     current_scaled_time: float
 
     @classmethod
     def at(cls, index: int) -> TimescaleGroupLike: ...
 
 
-class CachedTimeToScaledTime(Record):
+class TimeToScaledTime(Record):
     last_timescale: float
     last_time: float
     last_scaled_time: float
@@ -97,7 +97,7 @@ class CachedTimeToScaledTime(Record):
         return self.last_scaled_time + (time - self.last_time) * self.last_timescale
 
 
-class CachedScaledTimeToFirstTime(Record):
+class ScaledTimeToFirstTime(Record):
     last_timescale: float
     last_time: float
     last_scaled_time: float
@@ -114,7 +114,11 @@ class CachedScaledTimeToFirstTime(Record):
     def get(self, scaled_time: float) -> float:
         if Options.disable_timescale:
             return scaled_time
-        if scaled_time < self.last_scaled_time or self.last_scaled_time < MIN_START_TIME:
+        if (
+            scaled_time < self.last_scaled_time
+            or self.last_scaled_time < MIN_START_TIME
+            or scaled_time < MIN_START_TIME
+        ):
             self.init(self.first_change_index)
         for change in iter_timescale_changes(self.next_change_index):
             next_timescale = change.timescale
@@ -122,10 +126,10 @@ class CachedScaledTimeToFirstTime(Record):
             match change.timescale_ease:
                 case TimescaleEase.NONE:
                     next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
-                    lo_scaled_time = min(self.last_scaled_time, next_scaled_time)
-                    hi_scaled_time = max(self.last_scaled_time, next_scaled_time)
-                    if lo_scaled_time <= scaled_time <= hi_scaled_time:
-                        if (next_scaled_time - self.last_scaled_time) < 1e-6:
+                    if (scaled_time <= next_scaled_time and self.last_timescale > 0) or (
+                        scaled_time >= next_scaled_time and self.last_timescale < 0
+                    ):
+                        if abs(next_scaled_time - self.last_scaled_time) < 1e-6:
                             return self.last_time
                         return remap(self.last_scaled_time, next_scaled_time, self.last_time, next_time, scaled_time)
                 case TimescaleEase.LINEAR:

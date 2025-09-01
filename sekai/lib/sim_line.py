@@ -22,23 +22,23 @@ def draw_sim_line(
     if left_progress > Layout.progress_cutoff and right_progress > Layout.progress_cutoff:
         return
 
-    adj_progress_a = clamp(left_progress, Layout.progress_start, Layout.progress_cutoff)
-    adj_progress_b = clamp(right_progress, Layout.progress_start, Layout.progress_cutoff)
+    adj_left_progress = clamp(left_progress, Layout.progress_start, Layout.progress_cutoff)
+    adj_right_progress = clamp(right_progress, Layout.progress_start, Layout.progress_cutoff)
     if abs(left_progress - right_progress) > 1e-6:
-        frac_a = unlerp(left_progress, right_progress, adj_progress_a)
-        frac_b = unlerp(left_progress, right_progress, adj_progress_b)
-        adj_lane_a = lerp(left_lane, right_lane, frac_a)
-        adj_lane_b = lerp(left_lane, right_lane, frac_b)
+        adj_left_frac = unlerp(left_progress, right_progress, adj_left_progress)
+        adj_right_frac = unlerp(left_progress, right_progress, adj_right_progress)
+        adj_left_lane = lerp(left_lane, right_lane, adj_left_frac)
+        adj_right_lane = lerp(left_lane, right_lane, adj_right_frac)
     else:
-        adj_lane_a = left_lane
-        adj_lane_b = right_lane
-    adj_travel_a = approach(adj_progress_a)
-    adj_travel_b = approach(adj_progress_b)
+        adj_left_lane = left_lane
+        adj_right_lane = right_lane
+    adj_left_travel = approach(adj_left_progress)
+    adj_right_travel = approach(adj_right_progress)
     layout = layout_sim_line(
-        adj_lane_a,
-        adj_travel_a,
-        adj_lane_b,
-        adj_travel_b,
+        adj_left_lane,
+        adj_left_travel,
+        adj_right_lane,
+        adj_right_travel,
     )
     z = get_z(LAYER_SIM_LINE, (left_target_time + right_target_time) / 2, (left_lane + right_lane) / 2)
     a = min(

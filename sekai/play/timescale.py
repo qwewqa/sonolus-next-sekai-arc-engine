@@ -13,8 +13,8 @@ from sonolus.script.runtime import time
 from sekai.lib.timescale import (
     TIMESCALE_CHANGE_NAME,
     TIMESCALE_GROUP_NAME,
-    CachedScaledTimeToFirstTime,
-    CachedTimeToScaledTime,
+    ScaledTimeToFirstTime,
+    TimeToScaledTime,
 )
 
 
@@ -42,8 +42,8 @@ class TimescaleGroup(PlayArchetype):
 
     current_scaled_time: float = shared_memory()
 
-    time_to_scaled_time: CachedTimeToScaledTime = shared_memory()
-    scaled_time_to_first_time: CachedScaledTimeToFirstTime = shared_memory()
+    time_to_scaled_time: TimeToScaledTime = shared_memory()
+    scaled_time_to_first_time: ScaledTimeToFirstTime = shared_memory()
 
     def spawn_order(self) -> float:
         return -1e8
