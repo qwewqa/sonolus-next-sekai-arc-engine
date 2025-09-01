@@ -51,11 +51,8 @@ class TimeToScaledTime(Record):
     next_change_index: int
 
     def init(self, next_index: int):
-        self.last_timescale = 1.0
-        self.last_time = MIN_START_TIME
-        self.last_scaled_time = MIN_START_TIME
         self.first_change_index = next_index
-        self.next_change_index = next_index
+        self.reset()
 
     def reset(self):
         self.last_timescale = 1.0
@@ -109,31 +106,25 @@ class ScaledTimeToFirstTime(Record):
     last_scaled_time: float
     first_change_index: int
     next_change_index: int
-    is_monotonic: bool
+    last_query_scaled_time: float
 
     def init(self, next_index: int):
-        self.last_timescale = 1.0
-        self.last_time = MIN_START_TIME
-        self.last_scaled_time = MIN_START_TIME
         self.first_change_index = next_index
-        self.next_change_index = next_index
-        self.is_monotonic = True
-        for change in iter_timescale_changes(next_index):
-            if change.timescale < 0:
-                self.is_monotonic = False
-                return
+        self.reset()
 
     def reset(self):
         self.last_timescale = 1.0
         self.last_time = MIN_START_TIME
         self.last_scaled_time = MIN_START_TIME
         self.next_change_index = self.first_change_index
+        self.last_query_scaled_time = MIN_START_TIME
 
     def get(self, scaled_time: float) -> float:
         if Options.disable_timescale:
             return scaled_time
-        if not self.is_monotonic or scaled_time < self.last_scaled_time:
+        if scaled_time < self.last_query_scaled_time or self.last_query_scaled_time < MIN_START_TIME:
             self.reset()
+        self.last_query_scaled_time = scaled_time
         for change in iter_timescale_changes(self.next_change_index):
             next_timescale = change.timescale
             next_time = beat_to_time(change.beat)

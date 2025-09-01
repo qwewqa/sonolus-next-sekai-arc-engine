@@ -119,15 +119,10 @@ def convert_pjsekai_extended_level_data(data: ExternalLevelData) -> LevelData:
         *guides,
     ]
     entities = sorted(entities, key=lambda e: (not isinstance(e, Initialization), (getattr(e, "beat", -1))))
+    link_slide_notes(entities)
     return LevelData(
         bgm_offset=data.bgm_offset,
-        entities=[
-            Initialization(),
-            *bpm_changes,
-            *timescale_entities,
-            *notes,
-            *guides,
-        ],
+        entities=entities,
     )
 
 
@@ -353,3 +348,12 @@ def convert_guides(
                 anchor.connector_ease = EaseType.LINEAR
 
     return entities
+
+
+def link_slide_notes(entities: list[PlayArchetype]) -> None:
+    for entity in entities:
+        if not isinstance(entity, Connector):
+            continue
+        head = entity.head_ref.get()
+        tail = entity.tail_ref.get()
+        head.next_ref = tail.ref()

@@ -64,6 +64,7 @@ class BaseNote(PlayArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[BaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[BaseNote] = imported(name="attachTail")
+    next_ref: EntityRef[BaseNote] = imported(name="next")  # Only for level data; not used in-game.
 
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
@@ -213,9 +214,6 @@ class BaseNote(PlayArchetype):
                 assert_never(kind)
 
     def update_parallel(self):
-        if self.should_play_hit_effects:
-            # We do this here for parallelism, and to reduce compilation time.
-            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
         if self.despawn:
             return
         if not self.is_scored and time() >= self.target_time:
@@ -237,6 +235,9 @@ class BaseNote(PlayArchetype):
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def terminate(self):
+        if self.should_play_hit_effects:
+            # We do this here for parallelism, and to reduce compilation time.
+            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
         self.finish_time = time()
 
     def handle_tap_input(self):
