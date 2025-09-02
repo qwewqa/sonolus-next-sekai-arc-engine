@@ -24,6 +24,7 @@ from sekai.lib.connector import (
 )
 from sekai.lib.ease import EaseType
 from sekai.lib.note import draw_slide_note_head, get_attach_params
+from sekai.lib.options import Options
 from sekai.lib.streams import Streams
 from sekai.watch import note
 
@@ -122,7 +123,7 @@ class WatchConnector(WatchArchetype):
         )
 
     def schedule_sfx(self):
-        if is_replay():
+        if is_replay() and not Options.auto_sfx:
             if self.head_ref.index == self.active_head_ref.index:
                 last_sfx_kind = ConnectorKind.NONE
                 last_time = -1e8
