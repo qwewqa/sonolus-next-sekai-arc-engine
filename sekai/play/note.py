@@ -53,7 +53,7 @@ DEFAULT_BEST_TOUCH_TIME = -1e8
 
 class BaseNote(PlayArchetype):
     beat: StandardImport.BEAT
-    timescale_group_ref: StandardImport.TIMESCALE_GROUP
+    timescale_group: StandardImport.TIMESCALE_GROUP
     lane: float = imported()
     size: float = imported()
     direction: FlickDirection = imported()
@@ -105,8 +105,8 @@ class BaseNote(PlayArchetype):
         self.input_interval = self.judgment_window.good + self.target_time + input_offset()
 
         if not self.is_attached:
-            self.target_scaled_time = group_time_to_scaled_time(self.timescale_group_ref, self.target_time)
-            self.visual_start_time = get_visual_spawn_time(self.timescale_group_ref, self.target_scaled_time)
+            self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
+            self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
             self.spawn_time = min(self.visual_start_time, self.input_interval.start)
 
     def preprocess(self):
@@ -508,13 +508,11 @@ class BaseNote(PlayArchetype):
             attach_head = self.attach_head_ref.get()
             attach_tail = self.attach_tail_ref.get()
             head_progress = (
-                progress_to(attach_head.target_scaled_time, group_scaled_time(attach_head.timescale_group_ref))
+                progress_to(attach_head.target_scaled_time, group_scaled_time(attach_head.timescale_group))
                 if time() < attach_head.target_time
                 else 1.0
             )
-            tail_progress = progress_to(
-                attach_tail.target_scaled_time, group_scaled_time(attach_tail.timescale_group_ref)
-            )
+            tail_progress = progress_to(attach_tail.target_scaled_time, group_scaled_time(attach_tail.timescale_group))
             head_frac = (
                 0.0
                 if time() < attach_head.target_time
@@ -524,7 +522,7 @@ class BaseNote(PlayArchetype):
             frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
             return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
-            return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group_ref))
+            return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group))
 
 
 @level_memory

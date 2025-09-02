@@ -24,7 +24,7 @@ class TimescaleChange(PlayArchetype):
     beat: StandardImport.BEAT
     timescale: StandardImport.TIMESCALE
     timescale_skip: StandardImport.TIMESCALE_SKIP
-    timescale_group_ref: StandardImport.TIMESCALE_GROUP
+    timescale_group: StandardImport.TIMESCALE_GROUP
     timescale_ease: StandardImport.TIMESCALE_EASE
     next_ref: EntityRef[TimescaleChange] = imported(name="next")
 

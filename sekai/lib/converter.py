@@ -182,7 +182,7 @@ def convert_timescale_groups(data: PJSekaiExtendedLevelData) -> tuple[dict[int, 
                 beat=raw_change.data["#BEAT"],
                 timescale=raw_change.data["timeScale"],
                 timescale_skip=0.0,
-                timescale_group_ref=group.ref(),
+                timescale_group=group.ref(),
                 timescale_ease=TimescaleEase.NONE,
             )
             if changes:
@@ -245,7 +245,7 @@ def convert_notes(
         entity = data[i]
         timescale_group_index = entity.data.get("timeScaleGroup", -1)
         if timescale_group_index in timescale_groups_by_index:
-            note.timescale_group_ref = timescale_groups_by_index[timescale_group_index].ref()
+            note.timescale_group = timescale_groups_by_index[timescale_group_index].ref()
         attach_index = entity.data.get("attach", -1)
         if attach_index > 0:
             attach_connector = connectors_by_original_index[attach_index]
@@ -276,7 +276,7 @@ def convert_guides(
         beat: float,
         lane: float,
         size: float,
-        timescale_group_ref: Any,
+        timescale_group: Any,
         segment_kind: ConnectorKind | None = None,
         segment_alpha: float | None = None,
         connector_ease: EaseType | None = None,
@@ -286,7 +286,7 @@ def convert_guides(
                 if (
                     anchor.lane == lane
                     and anchor.size == size
-                    and anchor.timescale_group_ref == timescale_group_ref
+                    and anchor.timescale_group == timescale_group
                     and (segment_kind is None or anchor.segment_kind in (segment_kind, -1))
                     and (segment_alpha is None or anchor.segment_alpha in (segment_alpha, -1))
                     and (connector_ease is None or anchor.connector_ease in (connector_ease, -1))
@@ -302,7 +302,7 @@ def convert_guides(
             beat=beat,
             lane=lane,
             size=size,
-            timescale_group_ref=timescale_group_ref,
+            timescale_group=timescale_group,
             segment_kind=segment_kind if segment_kind is not None else -1,
             segment_alpha=segment_alpha if segment_alpha is not None else -1,
             connector_ease=connector_ease if connector_ease is not None else -1,
@@ -338,7 +338,7 @@ def convert_guides(
             beat=start_beat,
             lane=start_lane,
             size=start_size,
-            timescale_group_ref=start_timescale_group,
+            timescale_group=start_timescale_group,
             segment_kind=kind,
             segment_alpha=start_alpha,
         )
@@ -346,21 +346,21 @@ def convert_guides(
             beat=end_beat,
             lane=end_lane,
             size=end_size,
-            timescale_group_ref=end_timescale_group,
+            timescale_group=end_timescale_group,
             segment_alpha=end_alpha,
         )
         head = get_anchor(
             beat=head_beat,
             lane=head_lane,
             size=head_size,
-            timescale_group_ref=head_timescale_group,
+            timescale_group=head_timescale_group,
             connector_ease=ease,
         )
         tail = get_anchor(
             beat=tail_beat,
             lane=tail_lane,
             size=tail_size,
-            timescale_group_ref=tail_timescale_group,
+            timescale_group=tail_timescale_group,
         )
         connector = Connector(
             head_ref=head.ref(),
