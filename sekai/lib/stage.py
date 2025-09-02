@@ -71,8 +71,21 @@ def draw_background_dim():
 
 
 def play_lane_hit_effects(lane: float):
+    play_lane_sfx(lane)
+    play_lane_particle(lane)
+
+
+def play_lane_sfx(lane: float):
     if Options.sfx_enabled:
         Effects.stage.play(SFX_DISTANCE)
+
+
+def schedule_lane_sfx(lane: float, target_time: float):
+    if Options.sfx_enabled:
+        Effects.stage.schedule(target_time, SFX_DISTANCE)
+
+
+def play_lane_particle(lane: float):
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, 0.5)
         Particles.lane.spawn(layout, duration=0.3)

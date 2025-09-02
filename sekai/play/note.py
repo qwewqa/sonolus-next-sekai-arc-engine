@@ -69,7 +69,7 @@ class BaseNote(PlayArchetype):
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
-    spawn_time: float = entity_data()
+    start_time: float = entity_data()
     target_scaled_time: float = entity_data()
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
@@ -86,7 +86,8 @@ class BaseNote(PlayArchetype):
 
     should_play_hit_effects: bool = entity_memory()
 
-    finish_time: float = exported()
+    end_time: float = exported()
+    played_hit_effects: bool = exported()
 
     def init_data(self):
         if self.data_init_done:
@@ -107,7 +108,7 @@ class BaseNote(PlayArchetype):
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
-            self.spawn_time = min(self.visual_start_time, self.input_interval.start)
+            self.start_time = min(self.visual_start_time, self.input_interval.start)
 
     def preprocess(self):
         self.init_data()
@@ -134,17 +135,17 @@ class BaseNote(PlayArchetype):
             self.lane = lane
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
-            self.spawn_time = min(self.visual_start_time, self.input_interval.start)
+            self.start_time = min(self.visual_start_time, self.input_interval.start)
 
         schedule_note_auto_sfx(self.kind, self.target_time)
 
     def spawn_order(self) -> float:
         if self.kind == NoteKind.ANCHOR:
             return 1e8
-        return self.spawn_time
+        return self.start_time
 
     def should_spawn(self) -> bool:
-        return time() >= self.spawn_time
+        return time() >= self.start_time
 
     def update_sequential(self):
         if self.despawn:
@@ -238,21 +239,28 @@ class BaseNote(PlayArchetype):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
-        self.finish_time = time()
+        self.end_time = time()
+        self.played_hit_effects = self.should_play_hit_effects
 
     def handle_tap_input(self):
+        if time() > self.input_interval.end:
+            return
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
         self.judge(touch.start_time)
 
     def handle_release_input(self):
+        if time() > self.input_interval.end:
+            return
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
         self.judge(touch.time)
 
     def handle_flick_input(self):
+        if time() > self.input_interval.end:
+            return
         if self.captured_touch_id == 0:
             return
 
@@ -277,6 +285,8 @@ class BaseNote(PlayArchetype):
             return
 
     def handle_tail_flick_input(self):
+        if time() > self.input_interval.end:
+            return
         if offset_adjusted_time() < self.target_time:
             active_connector_info = self.active_head_ref.get().active_connector_info
             if active_connector_info.is_active:
@@ -318,6 +328,8 @@ class BaseNote(PlayArchetype):
                 return
 
     def handle_trace_input(self):
+        if time() > self.input_interval.end:
+            return
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
@@ -338,6 +350,8 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = True
 
     def handle_trace_flick_input(self):
+        if time() > self.input_interval.end:
+            return
         hitbox = self.get_full_hitbox()
         has_touch = False
         has_correct_direction_touch = False
@@ -433,19 +447,19 @@ class BaseNote(PlayArchetype):
 
     def judge(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
-        error = actual_time - self.target_time
+        error = self.judgment_window.good.clamp(actual_time - self.target_time)
         self.result.judgment = judgment
         self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = True
+        self.should_play_hit_effects = judgment != Judgment.MISS
 
     def judge_wrong_way(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
         if judgment == Judgment.PERFECT:
             judgment = Judgment.GREAT
-        error = actual_time - self.target_time
+        error = self.judgment_window.good.clamp(actual_time - self.target_time)
         self.result.judgment = judgment
         if error in self.judgment_window.perfect:
             self.result.accuracy = self.judgment_window.perfect.end
@@ -454,7 +468,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = True
+        self.should_play_hit_effects = judgment != Judgment.MISS
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT

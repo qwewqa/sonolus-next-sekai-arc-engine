@@ -1,12 +1,13 @@
 from typing import Any
 
 from sonolus.script.archetype import PlayArchetype
-from sonolus.script.level import BpmChange, ExternalEntityData, ExternalLevelData, LevelData
+from sonolus.script.level import ExternalEntityData, ExternalLevelData, LevelData
 from sonolus.script.timing import TimescaleEase
 
 from sekai.lib.connector import ConnectorKind
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection
+from sekai.play.bpm_change import BpmChange
 from sekai.play.connector import Connector
 from sekai.play.initialization import Initialization
 from sekai.play.note import (

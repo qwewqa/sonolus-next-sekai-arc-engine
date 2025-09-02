@@ -15,7 +15,7 @@ class SimLine(PlayArchetype):
 
     @callback(order=1)
     def preprocess(self):
-        self.spawn_time = min(self.left.spawn_time, self.right.spawn_time)
+        self.spawn_time = min(self.left.start_time, self.right.start_time)
 
     def spawn_order(self) -> float:
         return self.spawn_time

@@ -92,7 +92,7 @@ GuideConnectorKind = Literal[
 ]
 
 
-class SlideVisualState(IntEnum):
+class ConnectorVisualState(IntEnum):
     WAITING = 0
     INACTIVE = 1
     ACTIVE = 2
@@ -211,7 +211,7 @@ def get_connector_quality_option(kind: ConnectorKind) -> int:
 
 def draw_connector(
     kind: ConnectorKind,
-    visual_state: SlideVisualState,
+    visual_state: ConnectorVisualState,
     ease_type: EaseType,
     head_lane: float,
     head_size: float,
@@ -275,8 +275,8 @@ def draw_connector(
         case ConnectorKind.ACTIVE_FAKE_NORMAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
             segment_head_alpha = 1.0
             segment_tail_alpha = 1.0
-            if visual_state == SlideVisualState.INACTIVE:
-                visual_state = SlideVisualState.ACTIVE
+            if visual_state == ConnectorVisualState.INACTIVE:
+                visual_state = ConnectorVisualState.ACTIVE
         case (
             ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
@@ -287,7 +287,7 @@ def draw_connector(
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            visual_state = SlideVisualState.WAITING
+            visual_state = ConnectorVisualState.WAITING
         case _:
             assert_never(kind)
 
@@ -377,7 +377,7 @@ def draw_connector(
             end_travel=next_travel,
         )
 
-        if visual_state == SlideVisualState.ACTIVE and active_sprite.is_available:
+        if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a_modifier = (cos(2 * pi * time()) + 1) / 2
                 normal_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(a_modifier))
@@ -385,7 +385,7 @@ def draw_connector(
             else:
                 active_sprite.draw(layout, z=z, a=base_a)
         else:
-            normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != SlideVisualState.INACTIVE else 0.5))
+            normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5))
 
         last_travel = next_travel
         last_lane = next_lane
@@ -534,6 +534,22 @@ def update_connector_sfx(
         replace_looped_sfx(handle, effect)
     elif handle.id == 0:
         handle @= effect.loop()
+
+
+def schedule_connector_sfx(
+    kind: ActiveConnectorKind,
+    start_time: float,
+    end_time: float,
+):
+    effect = +Effect
+    match kind:
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
+            effect @= Effects.normal_hold
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
+            effect @= Effects.critical_hold
+        case _:
+            assert_never(kind)
+    schedule_looped_sfx(effect, start_time, end_time)
 
 
 def replace_looped_particle(handle: ParticleHandle, particle: Particle, layout: QuadLike, duration: float):

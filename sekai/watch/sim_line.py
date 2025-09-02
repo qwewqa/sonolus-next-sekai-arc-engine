@@ -1,0 +1,43 @@
+from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_data, imported
+
+from sekai.lib.sim_line import draw_sim_line
+from sekai.watch.note import WatchBaseNote
+
+
+class WatchSimLine(WatchArchetype):
+    name = "SimLine"
+
+    left_ref: EntityRef[WatchBaseNote] = imported(name="left")
+    right_ref: EntityRef[WatchBaseNote] = imported(name="right")
+
+    start_time: float = entity_data()
+    end_time: float = entity_data()
+
+    @callback(order=1)
+    def preprocess(self):
+        self.start_time = min(self.left.start_time, self.right.start_time)
+        self.end_time = max(self.left.end_time, self.right.end_time)
+
+    def spawn_time(self) -> float:
+        return self.start_time
+
+    def despawn_time(self) -> float:
+        return self.end_time
+
+    def update_parallel(self):
+        draw_sim_line(
+            left_lane=self.left.lane,
+            left_progress=self.left.progress,
+            left_target_time=self.left.target_time,
+            right_lane=self.right.lane,
+            right_progress=self.right.progress,
+            right_target_time=self.right.target_time,
+        )
+
+    @property
+    def left(self) -> WatchBaseNote:
+        return self.left_ref.get()
+
+    @property
+    def right(self) -> WatchBaseNote:
+        return self.right_ref.get()

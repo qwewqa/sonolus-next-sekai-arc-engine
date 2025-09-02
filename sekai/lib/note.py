@@ -91,6 +91,9 @@ from sekai.lib.skin import (
 )
 from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
 
+SLOT_GLOW_EFFECT_NAME = "_SlotGlowEffect"
+SLOT_EFFECT_NAME = "_SlotEffect"
+
 
 class NoteKind(IntEnum):
     NORM_TAP = auto()
@@ -850,6 +853,8 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
 
 
 def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment):
+    if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
+        return
     sfx = get_note_effect(kind, judgment)
     particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
@@ -894,16 +899,8 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
             particles.lane.spawn(layout, duration=1)
         elif particles.lane_basic.is_available:
             particles.lane_basic.spawn(layout, duration=0.3)
-    if Options.slot_effect_enabled:
-        slot_sprite = get_note_slot_sprite(kind)
-        if slot_sprite.is_available:
-            for slot_lane in iter_slot_lanes(lane, size):
-                get_archetype_by_name("_SlotEffect").spawn(sprite=slot_sprite, start_time=time(), lane=slot_lane)
-        slot_glow_sprite = get_note_slot_glow_sprite(kind)
-        if slot_glow_sprite.is_available:
-            get_archetype_by_name("_SlotGlowEffect").spawn(
-                sprite=slot_glow_sprite, start_time=time(), lane=lane, size=size
-            )
+    if Options.slot_effect_enabled and not is_watch():
+        schedule_note_slot_effects(kind, lane, size, time())
 
 
 def schedule_note_auto_sfx(kind: NoteKind, target_time: float):
@@ -914,6 +911,30 @@ def schedule_note_auto_sfx(kind: NoteKind, target_time: float):
     sfx = get_note_effect(kind, Judgment.PERFECT)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
+
+
+def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float):
+    if not Options.sfx_enabled:
+        return
+    if Options.auto_sfx:
+        return
+    sfx = get_note_effect(kind, judgment)
+    if sfx.is_available:
+        sfx.schedule(target_time, SFX_DISTANCE)
+
+
+def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float):
+    if not Options.slot_effect_enabled:
+        return
+    slot_sprite = get_note_slot_sprite(kind)
+    if slot_sprite.is_available:
+        for slot_lane in iter_slot_lanes(lane, size):
+            get_archetype_by_name(SLOT_EFFECT_NAME).spawn(sprite=slot_sprite, start_time=target_time, lane=slot_lane)
+    slot_glow_sprite = get_note_slot_glow_sprite(kind)
+    if slot_glow_sprite.is_available:
+        get_archetype_by_name(SLOT_GLOW_EFFECT_NAME).spawn(
+            sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
+        )
 
 
 def get_note_window(kind: NoteKind) -> JudgmentWindow:
