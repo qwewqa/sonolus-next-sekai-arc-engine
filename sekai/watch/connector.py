@@ -63,60 +63,7 @@ class WatchConnector(WatchArchetype):
             # This is the first connector, so spawn the WatchSlideManager.
             WatchSlideManager.spawn(active_head_ref=self.active_head_ref, active_tail_ref=self.active_tail_ref)
 
-        if is_replay():
-            if self.head_ref.index == self.active_head_ref.index:
-                last_sfx_kind = ConnectorKind.NONE
-                last_time = -1e8
-                for next_time, next_sfx_kind in Streams.connector_sfx_kinds[self.active_head_ref.index].iter_items_from(
-                    -2
-                ):
-                    match last_sfx_kind:
-                        case (
-                            ConnectorKind.ACTIVE_NORMAL
-                            | ConnectorKind.ACTIVE_CRITICAL
-                            | ConnectorKind.ACTIVE_FAKE_NORMAL
-                            | ConnectorKind.ACTIVE_FAKE_CRITICAL
-                        ):
-                            schedule_connector_sfx(last_sfx_kind, last_time, next_time)
-                        case (
-                            ConnectorKind.NONE
-                            | ConnectorKind.GUIDE_NEUTRAL
-                            | ConnectorKind.GUIDE_RED
-                            | ConnectorKind.GUIDE_GREEN
-                            | ConnectorKind.GUIDE_BLUE
-                            | ConnectorKind.GUIDE_YELLOW
-                            | ConnectorKind.GUIDE_PURPLE
-                            | ConnectorKind.GUIDE_CYAN
-                            | ConnectorKind.GUIDE_BLACK
-                        ):
-                            pass
-                        case _:
-                            assert_never(last_sfx_kind)
-                    last_sfx_kind = next_sfx_kind
-                    last_time = next_time
-        elif self.head_ref.index == self.segment_head_ref.index:
-            match self.kind:
-                case (
-                    ConnectorKind.ACTIVE_NORMAL
-                    | ConnectorKind.ACTIVE_CRITICAL
-                    | ConnectorKind.ACTIVE_FAKE_NORMAL
-                    | ConnectorKind.ACTIVE_FAKE_CRITICAL
-                ):
-                    schedule_connector_sfx(self.kind, self.segment_head.target_time, self.segment_tail.target_time)
-                case (
-                    ConnectorKind.NONE
-                    | ConnectorKind.GUIDE_NEUTRAL
-                    | ConnectorKind.GUIDE_RED
-                    | ConnectorKind.GUIDE_GREEN
-                    | ConnectorKind.GUIDE_BLUE
-                    | ConnectorKind.GUIDE_YELLOW
-                    | ConnectorKind.GUIDE_PURPLE
-                    | ConnectorKind.GUIDE_CYAN
-                    | ConnectorKind.GUIDE_BLACK
-                ):
-                    pass
-                case _:
-                    assert_never(self.kind)
+        self.schedule_sfx()
 
     def spawn_time(self) -> float:
         return self.start_time
@@ -173,6 +120,62 @@ class WatchConnector(WatchArchetype):
             tail_target_time=tail.target_time,
             target_time=target_time,
         )
+
+    def schedule_sfx(self):
+        if is_replay():
+            if self.head_ref.index == self.active_head_ref.index:
+                last_sfx_kind = ConnectorKind.NONE
+                last_time = -1e8
+                for next_time, next_sfx_kind in Streams.connector_sfx_kinds[self.active_head_ref.index].iter_items_from(
+                    -2
+                ):
+                    match last_sfx_kind:
+                        case (
+                            ConnectorKind.ACTIVE_NORMAL
+                            | ConnectorKind.ACTIVE_CRITICAL
+                            | ConnectorKind.ACTIVE_FAKE_NORMAL
+                            | ConnectorKind.ACTIVE_FAKE_CRITICAL
+                        ):
+                            schedule_connector_sfx(last_sfx_kind, last_time, next_time)
+                        case (
+                            ConnectorKind.NONE
+                            | ConnectorKind.GUIDE_NEUTRAL
+                            | ConnectorKind.GUIDE_RED
+                            | ConnectorKind.GUIDE_GREEN
+                            | ConnectorKind.GUIDE_BLUE
+                            | ConnectorKind.GUIDE_YELLOW
+                            | ConnectorKind.GUIDE_PURPLE
+                            | ConnectorKind.GUIDE_CYAN
+                            | ConnectorKind.GUIDE_BLACK
+                        ):
+                            pass
+                        case _:
+                            assert_never(last_sfx_kind)
+                    last_sfx_kind = next_sfx_kind
+                    last_time = next_time
+        elif self.head_ref.index == self.segment_head_ref.index:
+            match self.kind:
+                case (
+                    ConnectorKind.ACTIVE_NORMAL
+                    | ConnectorKind.ACTIVE_CRITICAL
+                    | ConnectorKind.ACTIVE_FAKE_NORMAL
+                    | ConnectorKind.ACTIVE_FAKE_CRITICAL
+                ):
+                    schedule_connector_sfx(self.kind, self.segment_head.target_time, self.segment_tail.target_time)
+                case (
+                    ConnectorKind.NONE
+                    | ConnectorKind.GUIDE_NEUTRAL
+                    | ConnectorKind.GUIDE_RED
+                    | ConnectorKind.GUIDE_GREEN
+                    | ConnectorKind.GUIDE_BLUE
+                    | ConnectorKind.GUIDE_YELLOW
+                    | ConnectorKind.GUIDE_PURPLE
+                    | ConnectorKind.GUIDE_CYAN
+                    | ConnectorKind.GUIDE_BLACK
+                ):
+                    pass
+                case _:
+                    assert_never(self.kind)
 
     @property
     def head(self):

@@ -229,7 +229,7 @@ class BaseNote(PlayArchetype):
                 self.judge_wrong_way(self.best_touch_time)
             return
         if time() > self.input_interval.end:
-            self.fail_late()
+            self.handle_late_miss()
             return
         if is_head(self.kind) and time() > self.target_time:
             return
@@ -405,6 +405,51 @@ class BaseNote(PlayArchetype):
             self.fail_damage()
         else:
             self.complete_damage()
+
+    def handle_late_miss(self):
+        kind = self.kind
+        match kind:
+            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
+                self.fail_late(0.125)
+            case NoteKind.DAMAGE:
+                self.complete_damage()
+            case (
+                NoteKind.NORM_TAP
+                | NoteKind.CRIT_TAP
+                | NoteKind.NORM_FLICK
+                | NoteKind.CRIT_FLICK
+                | NoteKind.NORM_TRACE
+                | NoteKind.CRIT_TRACE
+                | NoteKind.NORM_TRACE_FLICK
+                | NoteKind.CRIT_TRACE_FLICK
+                | NoteKind.NORM_RELEASE
+                | NoteKind.CRIT_RELEASE
+                | NoteKind.NORM_HEAD_TAP
+                | NoteKind.CRIT_HEAD_TAP
+                | NoteKind.NORM_HEAD_FLICK
+                | NoteKind.CRIT_HEAD_FLICK
+                | NoteKind.NORM_HEAD_TRACE
+                | NoteKind.CRIT_HEAD_TRACE
+                | NoteKind.NORM_HEAD_TRACE_FLICK
+                | NoteKind.CRIT_HEAD_TRACE_FLICK
+                | NoteKind.NORM_HEAD_RELEASE
+                | NoteKind.CRIT_HEAD_RELEASE
+                | NoteKind.NORM_TAIL_TAP
+                | NoteKind.CRIT_TAIL_TAP
+                | NoteKind.NORM_TAIL_FLICK
+                | NoteKind.CRIT_TAIL_FLICK
+                | NoteKind.NORM_TAIL_TRACE
+                | NoteKind.CRIT_TAIL_TRACE
+                | NoteKind.NORM_TAIL_TRACE_FLICK
+                | NoteKind.CRIT_TAIL_TRACE_FLICK
+                | NoteKind.NORM_TAIL_RELEASE
+                | NoteKind.CRIT_TAIL_RELEASE
+            ):
+                self.fail_late()
+            case NoteKind.ANCHOR:
+                pass
+            case _:
+                assert_never(kind)
 
     def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
         return (
