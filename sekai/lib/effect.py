@@ -23,7 +23,7 @@ class Effects:
     critical_hold: Effect = effect("Sekai Critical Hold")
     critical_tick: Effect = effect("Sekai Critical Tick")
 
-    normal_trace: Effect = effect("Sekai Normal Trace")
+    normal_trace: Effect = effect("Sekai Trace")
     critical_trace: Effect = effect("Sekai Critical Trace")
 
 

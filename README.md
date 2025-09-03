@@ -5,7 +5,7 @@
 ## Quick Dev Setup
 1. Install [uv](https://docs.astral.sh/uv/)
 2. Run `uv sync`
-3. Add test chart files to `resources/`
+3. Add test chart files (chcy packed scp files) to `resources/`
 4. Run `sonolus-py dev`
 
 ## Custom Resources
@@ -13,7 +13,7 @@
 ### Skin Sprites
 
 | Name                                          |
-| --------------------------------------------- |
+|-----------------------------------------------|
 | `Sekai Stage`                                 |
 | `Sekai Stage Surface`                         |
 | `Sekai Note Cyan Left`                        |
@@ -98,35 +98,36 @@
 ### Effect Clips
 
 | Name                   |
-| ---------------------- |
+|------------------------|
 | `Sekai Tick`           |
 | `Sekai Critical Tap`   |
 | `Sekai Critical Flick` |
 | `Sekai Critical Hold`  |
 | `Sekai Critical Tick`  |
-| `Sekai Normal Trace`   |
+| `Sekai Trace`          |
 | `Sekai Critical Trace` |
 
 ### Particle Effects
 
-| Name                                     |
-| ---------------------------------------- |
-| `Sekai Note Lane Linear`                 |
-| `Sekai Critical Lane Linear`             |
-| `Sekai Critical Flick Lane Linear`       |
-| `Sekai Slot Linear Tap Cyan`             |
-| `Sekai Slot Linear Slide Tap Green`      |
-| `Sekai Slot Linear Alternative Red`      |
-| `Sekai Slot Linear Tap Yellow`           |
-| `Sekai Critical Slide Circular Yellow`   |
-| `Sekai Critical Slide Linear Yellow`     |
-| `Sekai Slot Linear Slide Tap Yellow`     |
-| `Sekai Critical Flick Circular Yellow`   |
-| `Sekai Critical Flick Linear Yellow`     |
-| `Sekai Slot Linear Alternative Yellow`   |
-| `Sekai Critical Trace Circular Yellow`   |
-| `Sekai Critical Trace Linear Yellow`     |
-| `Sekai Normal Slide Trail Linear`        |
-| `Sekai Slot Linear Slide Green`          |
-| `Sekai Critical Slide Trail Linear`      |
-| `Sekai Slot Linear Slide Yellow`         |
+| Name                                        |
+|---------------------------------------------|
+| `Sekai Note Lane Linear`                    |
+| `Sekai Critical Lane Linear`                |
+| `Sekai Critical Flick Lane Linear`          |
+| `Sekai Slot Linear Tap Cyan`                |
+| `Sekai Slot Linear Slide Tap Green`         |
+| `Sekai Slot Linear Alternative Red`         |
+| `Sekai Slot Linear Tap Yellow`              |
+| `Sekai Slot Linear Slide Tap Yellow`        |
+| `Sekai Slot Linear Alternative Yellow`      |
+| `Sekai Trace Note Circular Green`           |
+| `Sekai Trace Note Linear Green`             |
+| `Sekai Critical Slide Circular Yellow`      |
+| `Sekai Critical Slide Linear Yellow`        |
+| `Sekai Critical Flick Circular Yellow`      |
+| `Sekai Critical Flick Linear Yellow`        |
+| `Sekai Trace Note Circular Yellow`          |
+| `Sekai Normal Slide Trail Linear`           |
+| `Sekai Slot Linear Slide Green`             |
+| `Sekai Critical Slide Trail Linear`         |
+| `Sekai Slot Linear Slide Yellow`            |

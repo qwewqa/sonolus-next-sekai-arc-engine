@@ -27,9 +27,8 @@ class Particles:
 
     flick_note_directional: StandardParticle.NOTE_LINEAR_ALTERNATIVE_RED
 
-    trace_note_circular: StandardParticle.NOTE_CIRCULAR_TAP_GREEN
-    trace_note_linear: StandardParticle.NOTE_LINEAR_TAP_GREEN
-    trace_note_slot_linear: Particle = particle("Sekai Slot Linear Slide Tap Green")
+    trace_note_circular: Particle = particle("Sekai Trace Note Circular Green")
+    trace_note_linear: Particle = particle("Sekai Trace Note Linear Green")
 
     critical_note_circular: StandardParticle.NOTE_CIRCULAR_TAP_YELLOW
     critical_note_linear: StandardParticle.NOTE_LINEAR_TAP_YELLOW
@@ -45,9 +44,8 @@ class Particles:
 
     critical_note_directional: StandardParticle.NOTE_LINEAR_ALTERNATIVE_YELLOW
 
-    critical_trace_note_circular: Particle = particle("Sekai Critical Trace Circular Yellow")
-    critical_trace_note_linear: Particle = particle("Sekai Critical Trace Linear Yellow")
-    critical_trace_note_slot_linear: Particle = particle("Sekai Slot Linear Slide Tap Yellow")
+    critical_trace_note_circular: Particle = particle("Sekai Trace Note Circular Yellow")
+    critical_trace_note_linear: Particle = particle("Sekai Trace Note Circular Yellow")
 
     normal_slide_tick_note: StandardParticle.NOTE_CIRCULAR_ALTERNATIVE_GREEN
 
@@ -113,15 +111,15 @@ flick_note_particles = NoteParticleSet(
     slot_linear=Particles.flick_note_slot_linear,
 )
 trace_note_particles = NoteParticleSet(
-    circular=Particles.trace_note_circular,
-    circular_fallback=Particles.slide_note_circular,
+    circular=EMPTY_PARTICLE,
+    circular_fallback=EMPTY_PARTICLE,
     linear=Particles.trace_note_linear,
     linear_fallback=Particles.slide_note_linear,
     directional=EMPTY_PARTICLE,
-    tick=EMPTY_PARTICLE,
-    lane=Particles.normal_note_lane_linear,
-    lane_basic=Particles.lane,
-    slot_linear=Particles.trace_note_slot_linear,
+    tick=Particles.trace_note_circular,
+    lane=EMPTY_PARTICLE,
+    lane_basic=EMPTY_PARTICLE,
+    slot_linear=EMPTY_PARTICLE,
 )
 trace_flick_note_particles = NoteParticleSet(
     circular=Particles.flick_note_circular,
@@ -130,9 +128,9 @@ trace_flick_note_particles = NoteParticleSet(
     directional=Particles.flick_note_directional,
     linear_fallback=EMPTY_PARTICLE,
     tick=EMPTY_PARTICLE,
-    lane=Particles.normal_flick_note_lane_linear,
-    lane_basic=Particles.lane,
-    slot_linear=Particles.flick_note_slot_linear,
+    lane=EMPTY_PARTICLE,
+    lane_basic=EMPTY_PARTICLE,
+    slot_linear=EMPTY_PARTICLE,
 )
 critical_note_particles = NoteParticleSet(
     circular=Particles.critical_note_circular,
@@ -168,15 +166,15 @@ critical_flick_note_particles = NoteParticleSet(
     slot_linear=Particles.critical_flick_note_slot_linear,
 )
 critical_trace_note_particles = NoteParticleSet(
-    circular=Particles.critical_trace_note_circular,
-    circular_fallback=Particles.critical_note_circular,
+    circular=EMPTY_PARTICLE,
+    circular_fallback=EMPTY_PARTICLE,
     linear=Particles.critical_trace_note_linear,
     linear_fallback=Particles.critical_note_linear,
     directional=EMPTY_PARTICLE,
-    tick=EMPTY_PARTICLE,
-    lane=Particles.critical_note_lane_linear,
-    lane_basic=Particles.lane,
-    slot_linear=Particles.critical_trace_note_slot_linear,
+    tick=Particles.critical_trace_note_circular,
+    lane=EMPTY_PARTICLE,
+    lane_basic=EMPTY_PARTICLE,
+    slot_linear=EMPTY_PARTICLE,
 )
 critical_trace_flick_note_particles = NoteParticleSet(
     circular=Particles.critical_flick_note_circular,
@@ -185,9 +183,9 @@ critical_trace_flick_note_particles = NoteParticleSet(
     linear_fallback=Particles.critical_note_linear,
     directional=Particles.critical_note_directional,
     tick=EMPTY_PARTICLE,
-    lane=Particles.critical_flick_note_lane_linear,
-    lane_basic=Particles.lane,
-    slot_linear=Particles.critical_flick_note_slot_linear,
+    lane=EMPTY_PARTICLE,
+    lane_basic=EMPTY_PARTICLE,
+    slot_linear=EMPTY_PARTICLE,
 )
 damage_note_particles = NoteParticleSet(
     circular=Particles.damage_note_circular,
