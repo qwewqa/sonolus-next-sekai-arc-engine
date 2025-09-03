@@ -420,7 +420,7 @@ def update_circular_connector_particle(
     if not Options.note_effect_enabled:
         return
     layout = layout_circular_effect(lane, w=3.5, h=2.1)
-    if replace:
+    if replace or handle.id == 0:
         particle = +Particle(-1)
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
@@ -444,7 +444,7 @@ def update_linear_connector_particle(
         return
     layout = layout_linear_effect(lane, shear=0)
     particle = +Particle
-    if replace:
+    if replace or handle.id == 0:
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
                 particle @= Particles.normal_slide_connector_linear
