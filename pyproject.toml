@@ -1,11 +1,11 @@
 [project]
-name = "sekai"
+name = "pysekai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Next Sekai Sonolus engine"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "sonolus-py~=0.6.7",
+    "sonolus-py~=0.7.0",
 ]
 
 [tool.ruff]
