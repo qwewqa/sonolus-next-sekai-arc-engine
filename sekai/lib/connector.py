@@ -38,6 +38,7 @@ from sekai.lib.skin import (
     ActiveConnectorSprites,
     GuideSprites,
     Skin,
+    black_guide_sprites,
     blue_guide_sprites,
     critical_slide_connector_sprites,
     cyan_guide_sprites,
@@ -128,7 +129,7 @@ def get_guide_connector_sprites(kind: GuideConnectorKind) -> GuideSprites:
         case ConnectorKind.GUIDE_CYAN:
             result @= cyan_guide_sprites
         case ConnectorKind.GUIDE_BLACK:
-            result @= blue_guide_sprites
+            result @= black_guide_sprites
         case _:
             assert_never(kind)
     return result
