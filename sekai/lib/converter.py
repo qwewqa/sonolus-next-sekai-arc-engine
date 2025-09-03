@@ -224,6 +224,7 @@ def convert_notes(
             lane=entity.data.get("lane", 0.0),
             size=entity.data.get("size", 0.0),
             direction=flick_direction_mapping[entity.data.get("direction", 0)],
+            segment_kind=ConnectorKind.ACTIVE_NORMAL,
         )
         entities.append(note)
         notes_by_original_index[i] = note
@@ -237,9 +238,13 @@ def convert_notes(
             active_tail_ref=notes_by_original_index[entity.data["end"]].ref(),
         )
         head = notes_by_original_index[entity.data["head"]]
+        tail = notes_by_original_index[entity.data["tail"]]
         segment_head = notes_by_original_index[entity.data["head"]]
         head.connector_ease = ease_type_mapping[entity.data["ease"]]
-        segment_head.segment_kind = active_connector_kind_mapping[entity.archetype]
+        connector_kind = active_connector_kind_mapping[entity.archetype]
+        head.segment_kind = connector_kind
+        tail.segment_kind = connector_kind
+        segment_head.segment_kind = connector_kind
         entities.append(connector)
         connectors_by_original_index[i] = connector
     for i, note in notes_by_original_index.items():
