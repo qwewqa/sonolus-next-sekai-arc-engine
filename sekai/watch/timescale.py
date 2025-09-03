@@ -10,16 +10,15 @@ from sonolus.script.archetype import (
 )
 from sonolus.script.runtime import time
 
+from sekai.lib import archetype_names
 from sekai.lib.timescale import (
-    TIMESCALE_CHANGE_NAME,
-    TIMESCALE_GROUP_NAME,
     ScaledTimeToFirstTime,
     TimeToScaledTime,
 )
 
 
 class WatchTimescaleChange(WatchArchetype):
-    name = TIMESCALE_CHANGE_NAME
+    name = archetype_names.TIMESCALE_CHANGE
 
     beat: StandardImport.BEAT
     timescale: StandardImport.TIMESCALE
@@ -30,7 +29,7 @@ class WatchTimescaleChange(WatchArchetype):
 
 
 class WatchTimescaleGroup(WatchArchetype):
-    name = TIMESCALE_GROUP_NAME
+    name = archetype_names.TIMESCALE_GROUP
 
     first_ref: EntityRef[WatchTimescaleChange] = imported(name="first")
 

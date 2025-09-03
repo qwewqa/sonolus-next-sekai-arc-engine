@@ -9,6 +9,7 @@ from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
+from sekai.lib import archetype_names
 from sekai.lib.connector import (
     CONNECTOR_SLOT_SPAWN_PERIOD,
     CONNECTOR_TRAIL_SPAWN_PERIOD,
@@ -37,7 +38,7 @@ START_LENIENCY_BEATS = 0.5
 
 
 class Connector(PlayArchetype):
-    name = "Connector"
+    name = archetype_names.CONNECTOR
 
     head_ref: EntityRef[note.BaseNote] = imported(name="head")
     tail_ref: EntityRef[note.BaseNote] = imported(name="tail")
@@ -219,7 +220,7 @@ class Connector(PlayArchetype):
 
 
 class SlideManager(PlayArchetype):
-    name = "SlideManager"
+    name = archetype_names.SLIDE_MANAGER
 
     active_head_ref: EntityRef[note.BaseNote] = entity_memory()
     active_tail_ref: EntityRef[note.BaseNote] = entity_memory()

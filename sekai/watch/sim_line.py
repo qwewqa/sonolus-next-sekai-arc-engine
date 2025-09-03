@@ -1,12 +1,13 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_data, imported
 from sonolus.script.runtime import is_replay
 
+from sekai.lib import archetype_names
 from sekai.lib.sim_line import draw_sim_line
 from sekai.watch.note import WatchBaseNote
 
 
 class WatchSimLine(WatchArchetype):
-    name = "SimLine"
+    name = archetype_names.SIM_LINE
 
     left_ref: EntityRef[WatchBaseNote] = imported(name="left")
     right_ref: EntityRef[WatchBaseNote] = imported(name="right")

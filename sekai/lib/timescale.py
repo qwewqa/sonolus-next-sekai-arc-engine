@@ -10,13 +10,10 @@ from sonolus.script.interval import remap
 from sonolus.script.record import Record
 from sonolus.script.timing import TimescaleEase, beat_to_time
 
+from sekai.lib import archetype_names
 from sekai.lib.options import Options
 
 MIN_START_TIME = -2.0
-
-
-TIMESCALE_CHANGE_NAME = "TimeScaleChange"
-TIMESCALE_GROUP_NAME = "TimeScaleGroup"
 
 
 class TimescaleChangeLike(Protocol):
@@ -193,11 +190,11 @@ class ScaledTimeToFirstTime(Record):
 
 
 def timescale_change_archetype() -> type[TimescaleChangeLike]:
-    return cast(type[TimescaleChangeLike], get_archetype_by_name(TIMESCALE_CHANGE_NAME))
+    return cast(type[TimescaleChangeLike], get_archetype_by_name(archetype_names.TIMESCALE_CHANGE))
 
 
 def timescale_group_archetype() -> type[TimescaleGroupLike]:
-    return cast(type[TimescaleGroupLike], get_archetype_by_name(TIMESCALE_GROUP_NAME))
+    return cast(type[TimescaleGroupLike], get_archetype_by_name(archetype_names.TIMESCALE_GROUP))
 
 
 def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:

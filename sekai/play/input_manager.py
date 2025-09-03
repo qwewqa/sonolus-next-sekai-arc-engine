@@ -7,6 +7,7 @@ from sonolus.script.globals import level_memory
 from sonolus.script.iterator import maybe_next
 from sonolus.script.runtime import Touch, touches
 
+from sekai.lib import archetype_names
 from sekai.lib.buckets import SLIDE_END_LOCKOUT_DURATION
 from sekai.lib.layout import layout_hitbox
 from sekai.lib.note import get_leniency, is_head
@@ -44,7 +45,7 @@ def is_allowed_release(touch: Touch, target_time: float) -> bool:
 
 
 class InputManager(PlayArchetype):
-    name = "_InputManager"
+    name = archetype_names.INPUT_MANAGER
 
     @callback(order=-1)
     def update_sequential(self):

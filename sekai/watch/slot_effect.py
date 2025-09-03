@@ -1,7 +1,7 @@
 from sonolus.script.archetype import WatchArchetype, entity_memory
 from sonolus.script.sprite import Sprite
 
-from sekai.lib.note import SLOT_EFFECT_NAME, SLOT_GLOW_EFFECT_NAME
+from sekai.lib import archetype_names
 from sekai.lib.slot_effect import (
     SLOT_EFFECT_DURATION,
     SLOT_GLOW_EFFECT_DURATION,
@@ -11,7 +11,7 @@ from sekai.lib.slot_effect import (
 
 
 class WatchSlotGlowEffect(WatchArchetype):
-    name = SLOT_GLOW_EFFECT_NAME
+    name = archetype_names.SLOT_GLOW_EFFECT
 
     sprite: Sprite = entity_memory()
     start_time: float = entity_memory()
@@ -39,7 +39,7 @@ class WatchSlotGlowEffect(WatchArchetype):
 
 
 class WatchSlotEffect(WatchArchetype):
-    name = SLOT_EFFECT_NAME
+    name = archetype_names.SLOT_EFFECT
 
     sprite: Sprite = entity_memory()
     start_time: float = entity_memory()

@@ -4,6 +4,7 @@ from sonolus.script.containers import VarArray
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import time, touches
 
+from sekai.lib import archetype_names
 from sekai.lib.layout import layout_hitbox
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
@@ -11,7 +12,7 @@ from sekai.play.input_manager import is_allowed_empty
 
 
 class Stage(PlayArchetype):
-    name = "_Stage"
+    name = archetype_names.STAGE
 
     def spawn_order(self) -> float:
         return -1e8

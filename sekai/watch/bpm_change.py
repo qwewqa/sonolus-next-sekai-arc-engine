@@ -1,8 +1,10 @@
-from sonolus.script.archetype import StandardArchetypeName, StandardImport, WatchArchetype
+from sonolus.script.archetype import StandardImport, WatchArchetype
+
+from sekai.lib import archetype_names
 
 
 class WatchBpmChange(WatchArchetype):
-    name = StandardArchetypeName.BPM_CHANGE
+    name = archetype_names.BPM_CHANGE
 
     beat: StandardImport.BEAT
     bpm: StandardImport.BPM

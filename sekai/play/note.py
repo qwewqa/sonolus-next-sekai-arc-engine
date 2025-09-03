@@ -23,6 +23,7 @@ from sonolus.script.quad import Rect
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
+from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
@@ -590,102 +591,172 @@ class NoteMemory:
     active_release_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
 
 
-NormalTapNote = BaseNote.derive("NormalTapNote", is_scored=True, key=NoteKind.NORM_TAP)
-CriticalTapNote = BaseNote.derive("CriticalTapNote", is_scored=True, key=NoteKind.CRIT_TAP)
-NormalFlickNote = BaseNote.derive("NormalFlickNote", is_scored=True, key=NoteKind.NORM_FLICK)
-CriticalFlickNote = BaseNote.derive("CriticalFlickNote", is_scored=True, key=NoteKind.CRIT_FLICK)
-NormalTraceNote = BaseNote.derive("NormalTraceNote", is_scored=True, key=NoteKind.NORM_TRACE)
-CriticalTraceNote = BaseNote.derive("CriticalTraceNote", is_scored=True, key=NoteKind.CRIT_TRACE)
-NormalTraceFlickNote = BaseNote.derive("NormalTraceFlickNote", is_scored=True, key=NoteKind.NORM_TRACE_FLICK)
-CriticalTraceFlickNote = BaseNote.derive("CriticalTraceFlickNote", is_scored=True, key=NoteKind.CRIT_TRACE_FLICK)
-NormalReleaseNote = BaseNote.derive("NormalReleaseNote", is_scored=True, key=NoteKind.NORM_RELEASE)
-CriticalReleaseNote = BaseNote.derive("CriticalReleaseNote", is_scored=True, key=NoteKind.CRIT_RELEASE)
-NormalHeadTapNote = BaseNote.derive("NormalHeadTapNote", is_scored=True, key=NoteKind.NORM_HEAD_TAP)
-CriticalHeadTapNote = BaseNote.derive("CriticalHeadTapNote", is_scored=True, key=NoteKind.CRIT_HEAD_TAP)
-NormalHeadFlickNote = BaseNote.derive("NormalHeadFlickNote", is_scored=True, key=NoteKind.NORM_HEAD_FLICK)
-CriticalHeadFlickNote = BaseNote.derive("CriticalHeadFlickNote", is_scored=True, key=NoteKind.CRIT_HEAD_FLICK)
-NormalHeadTraceNote = BaseNote.derive("NormalHeadTraceNote", is_scored=True, key=NoteKind.NORM_HEAD_TRACE)
-CriticalHeadTraceNote = BaseNote.derive("CriticalHeadTraceNote", is_scored=True, key=NoteKind.CRIT_HEAD_TRACE)
+NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)
+CriticalTapNote = BaseNote.derive(archetype_names.CRITICAL_TAP_NOTE, is_scored=True, key=NoteKind.CRIT_TAP)
+NormalFlickNote = BaseNote.derive(archetype_names.NORMAL_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_FLICK)
+CriticalFlickNote = BaseNote.derive(archetype_names.CRITICAL_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_FLICK)
+NormalTraceNote = BaseNote.derive(archetype_names.NORMAL_TRACE_NOTE, is_scored=True, key=NoteKind.NORM_TRACE)
+CriticalTraceNote = BaseNote.derive(archetype_names.CRITICAL_TRACE_NOTE, is_scored=True, key=NoteKind.CRIT_TRACE)
+NormalTraceFlickNote = BaseNote.derive(
+    archetype_names.NORMAL_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_TRACE_FLICK
+)
+CriticalTraceFlickNote = BaseNote.derive(
+    archetype_names.CRITICAL_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_TRACE_FLICK
+)
+NormalReleaseNote = BaseNote.derive(archetype_names.NORMAL_RELEASE_NOTE, is_scored=True, key=NoteKind.NORM_RELEASE)
+CriticalReleaseNote = BaseNote.derive(archetype_names.CRITICAL_RELEASE_NOTE, is_scored=True, key=NoteKind.CRIT_RELEASE)
+NormalHeadTapNote = BaseNote.derive(archetype_names.NORMAL_HEAD_TAP_NOTE, is_scored=True, key=NoteKind.NORM_HEAD_TAP)
+CriticalHeadTapNote = BaseNote.derive(
+    archetype_names.CRITICAL_HEAD_TAP_NOTE, is_scored=True, key=NoteKind.CRIT_HEAD_TAP
+)
+NormalHeadFlickNote = BaseNote.derive(
+    archetype_names.NORMAL_HEAD_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_HEAD_FLICK
+)
+CriticalHeadFlickNote = BaseNote.derive(
+    archetype_names.CRITICAL_HEAD_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_HEAD_FLICK
+)
+NormalHeadTraceNote = BaseNote.derive(
+    archetype_names.NORMAL_HEAD_TRACE_NOTE, is_scored=True, key=NoteKind.NORM_HEAD_TRACE
+)
+CriticalHeadTraceNote = BaseNote.derive(
+    archetype_names.CRITICAL_HEAD_TRACE_NOTE, is_scored=True, key=NoteKind.CRIT_HEAD_TRACE
+)
 NormalHeadTraceFlickNote = BaseNote.derive(
-    "NormalHeadTraceFlickNote", is_scored=True, key=NoteKind.NORM_HEAD_TRACE_FLICK
+    archetype_names.NORMAL_HEAD_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_HEAD_TRACE_FLICK
 )
 CriticalHeadTraceFlickNote = BaseNote.derive(
-    "CriticalHeadTraceFlickNote", is_scored=True, key=NoteKind.CRIT_HEAD_TRACE_FLICK
+    archetype_names.CRITICAL_HEAD_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_HEAD_TRACE_FLICK
 )
-NormalHeadReleaseNote = BaseNote.derive("NormalHeadReleaseNote", is_scored=True, key=NoteKind.NORM_HEAD_RELEASE)
-CriticalHeadReleaseNote = BaseNote.derive("CriticalHeadReleaseNote", is_scored=True, key=NoteKind.CRIT_HEAD_RELEASE)
-NormalTailTapNote = BaseNote.derive("NormalTailTapNote", is_scored=True, key=NoteKind.NORM_TAIL_TAP)
-CriticalTailTapNote = BaseNote.derive("CriticalTailTapNote", is_scored=True, key=NoteKind.CRIT_TAIL_TAP)
-NormalTailFlickNote = BaseNote.derive("NormalTailFlickNote", is_scored=True, key=NoteKind.NORM_TAIL_FLICK)
-CriticalTailFlickNote = BaseNote.derive("CriticalTailFlickNote", is_scored=True, key=NoteKind.CRIT_TAIL_FLICK)
-NormalTailTraceNote = BaseNote.derive("NormalTailTraceNote", is_scored=True, key=NoteKind.NORM_TAIL_TRACE)
-CriticalTailTraceNote = BaseNote.derive("CriticalTailTraceNote", is_scored=True, key=NoteKind.CRIT_TAIL_TRACE)
+NormalHeadReleaseNote = BaseNote.derive(
+    archetype_names.NORMAL_HEAD_RELEASE_NOTE, is_scored=True, key=NoteKind.NORM_HEAD_RELEASE
+)
+CriticalHeadReleaseNote = BaseNote.derive(
+    archetype_names.CRITICAL_HEAD_RELEASE_NOTE, is_scored=True, key=NoteKind.CRIT_HEAD_RELEASE
+)
+NormalTailTapNote = BaseNote.derive(archetype_names.NORMAL_TAIL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAIL_TAP)
+CriticalTailTapNote = BaseNote.derive(
+    archetype_names.CRITICAL_TAIL_TAP_NOTE, is_scored=True, key=NoteKind.CRIT_TAIL_TAP
+)
+NormalTailFlickNote = BaseNote.derive(
+    archetype_names.NORMAL_TAIL_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_TAIL_FLICK
+)
+CriticalTailFlickNote = BaseNote.derive(
+    archetype_names.CRITICAL_TAIL_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_TAIL_FLICK
+)
+NormalTailTraceNote = BaseNote.derive(
+    archetype_names.NORMAL_TAIL_TRACE_NOTE, is_scored=True, key=NoteKind.NORM_TAIL_TRACE
+)
+CriticalTailTraceNote = BaseNote.derive(
+    archetype_names.CRITICAL_TAIL_TRACE_NOTE, is_scored=True, key=NoteKind.CRIT_TAIL_TRACE
+)
 NormalTailTraceFlickNote = BaseNote.derive(
-    "NormalTailTraceFlickNote", is_scored=True, key=NoteKind.NORM_TAIL_TRACE_FLICK
+    archetype_names.NORMAL_TAIL_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_TAIL_TRACE_FLICK
 )
 CriticalTailTraceFlickNote = BaseNote.derive(
-    "CriticalTailTraceFlickNote", is_scored=True, key=NoteKind.CRIT_TAIL_TRACE_FLICK
+    archetype_names.CRITICAL_TAIL_TRACE_FLICK_NOTE, is_scored=True, key=NoteKind.CRIT_TAIL_TRACE_FLICK
 )
-NormalTailReleaseNote = BaseNote.derive("NormalTailReleaseNote", is_scored=True, key=NoteKind.NORM_TAIL_RELEASE)
-CriticalTailReleaseNote = BaseNote.derive("CriticalTailReleaseNote", is_scored=True, key=NoteKind.CRIT_TAIL_RELEASE)
-NormalTickNote = BaseNote.derive("NormalTickNote", is_scored=True, key=NoteKind.NORM_TICK)
-CriticalTickNote = BaseNote.derive("CriticalTickNote", is_scored=True, key=NoteKind.CRIT_TICK)
-DamageNote = BaseNote.derive("DamageNote", is_scored=True, key=NoteKind.DAMAGE)
-AnchorNote = BaseNote.derive("AnchorNote", is_scored=False, key=NoteKind.ANCHOR)
-TransientHiddenTickNote = BaseNote.derive("TransientHiddenTickNote", is_scored=True, key=NoteKind.HIDE_TICK)
-FakeNormalTapNote = BaseNote.derive("FakeNormalTapNote", is_scored=False, key=NoteKind.NORM_TAP)
-FakeCriticalTapNote = BaseNote.derive("FakeCriticalTapNote", is_scored=False, key=NoteKind.CRIT_TAP)
-FakeNormalFlickNote = BaseNote.derive("FakeNormalFlickNote", is_scored=False, key=NoteKind.NORM_FLICK)
-FakeCriticalFlickNote = BaseNote.derive("FakeCriticalFlickNote", is_scored=False, key=NoteKind.CRIT_FLICK)
-FakeNormalTraceNote = BaseNote.derive("FakeNormalTraceNote", is_scored=False, key=NoteKind.NORM_TRACE)
-FakeCriticalTraceNote = BaseNote.derive("FakeCriticalTraceNote", is_scored=False, key=NoteKind.CRIT_TRACE)
-FakeNormalTraceFlickNote = BaseNote.derive("FakeNormalTraceFlickNote", is_scored=False, key=NoteKind.NORM_TRACE_FLICK)
+NormalTailReleaseNote = BaseNote.derive(
+    archetype_names.NORMAL_TAIL_RELEASE_NOTE, is_scored=True, key=NoteKind.NORM_TAIL_RELEASE
+)
+CriticalTailReleaseNote = BaseNote.derive(
+    archetype_names.CRITICAL_TAIL_RELEASE_NOTE, is_scored=True, key=NoteKind.CRIT_TAIL_RELEASE
+)
+NormalTickNote = BaseNote.derive(archetype_names.NORMAL_TICK_NOTE, is_scored=True, key=NoteKind.NORM_TICK)
+CriticalTickNote = BaseNote.derive(archetype_names.CRITICAL_TICK_NOTE, is_scored=True, key=NoteKind.CRIT_TICK)
+DamageNote = BaseNote.derive(archetype_names.DAMAGE_NOTE, is_scored=True, key=NoteKind.DAMAGE)
+AnchorNote = BaseNote.derive(archetype_names.ANCHOR_NOTE, is_scored=False, key=NoteKind.ANCHOR)
+TransientHiddenTickNote = BaseNote.derive(
+    archetype_names.TRANSIENT_HIDDEN_TICK_NOTE, is_scored=True, key=NoteKind.HIDE_TICK
+)
+FakeNormalTapNote = BaseNote.derive(archetype_names.FAKE_NORMAL_TAP_NOTE, is_scored=False, key=NoteKind.NORM_TAP)
+FakeCriticalTapNote = BaseNote.derive(archetype_names.FAKE_CRITICAL_TAP_NOTE, is_scored=False, key=NoteKind.CRIT_TAP)
+FakeNormalFlickNote = BaseNote.derive(archetype_names.FAKE_NORMAL_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_FLICK)
+FakeCriticalFlickNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_FLICK_NOTE, is_scored=False, key=NoteKind.CRIT_FLICK
+)
+FakeNormalTraceNote = BaseNote.derive(archetype_names.FAKE_NORMAL_TRACE_NOTE, is_scored=False, key=NoteKind.NORM_TRACE)
+FakeCriticalTraceNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_TRACE_NOTE, is_scored=False, key=NoteKind.CRIT_TRACE
+)
+FakeNormalTraceFlickNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_TRACE_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_TRACE_FLICK
+)
 FakeCriticalTraceFlickNote = BaseNote.derive(
     "FakeCriticalTraceFlickNote", is_scored=False, key=NoteKind.CRIT_TRACE_FLICK
 )
-FakeNormalReleaseNote = BaseNote.derive("FakeNormalReleaseNote", is_scored=False, key=NoteKind.NORM_RELEASE)
-FakeCriticalReleaseNote = BaseNote.derive("FakeCriticalReleaseNote", is_scored=False, key=NoteKind.CRIT_RELEASE)
-FakeNormalHeadTapNote = BaseNote.derive("FakeNormalHeadTapNote", is_scored=False, key=NoteKind.NORM_HEAD_TAP)
-FakeCriticalHeadTapNote = BaseNote.derive("FakeCriticalHeadTapNote", is_scored=False, key=NoteKind.CRIT_HEAD_TAP)
-FakeNormalHeadFlickNote = BaseNote.derive("FakeNormalHeadFlickNote", is_scored=False, key=NoteKind.NORM_HEAD_FLICK)
-FakeCriticalHeadFlickNote = BaseNote.derive("FakeCriticalHeadFlickNote", is_scored=False, key=NoteKind.CRIT_HEAD_FLICK)
-FakeNormalHeadTraceNote = BaseNote.derive("FakeNormalHeadTraceNote", is_scored=False, key=NoteKind.NORM_HEAD_TRACE)
-FakeCriticalHeadTraceNote = BaseNote.derive("FakeCriticalHeadTraceNote", is_scored=False, key=NoteKind.CRIT_HEAD_TRACE)
+FakeNormalReleaseNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_RELEASE_NOTE, is_scored=False, key=NoteKind.NORM_RELEASE
+)
+FakeCriticalReleaseNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_RELEASE_NOTE, is_scored=False, key=NoteKind.CRIT_RELEASE
+)
+FakeNormalHeadTapNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_HEAD_TAP_NOTE, is_scored=False, key=NoteKind.NORM_HEAD_TAP
+)
+FakeCriticalHeadTapNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_HEAD_TAP_NOTE, is_scored=False, key=NoteKind.CRIT_HEAD_TAP
+)
+FakeNormalHeadFlickNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_HEAD_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_HEAD_FLICK
+)
+FakeCriticalHeadFlickNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_HEAD_FLICK_NOTE, is_scored=False, key=NoteKind.CRIT_HEAD_FLICK
+)
+FakeNormalHeadTraceNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_HEAD_TRACE_NOTE, is_scored=False, key=NoteKind.NORM_HEAD_TRACE
+)
+FakeCriticalHeadTraceNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_HEAD_TRACE_NOTE, is_scored=False, key=NoteKind.CRIT_HEAD_TRACE
+)
 FakeNormalHeadTraceFlickNote = BaseNote.derive(
-    "FakeNormalHeadTraceFlickNote", is_scored=False, key=NoteKind.NORM_HEAD_TRACE_FLICK
+    archetype_names.FAKE_NORMAL_HEAD_TRACE_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_HEAD_TRACE_FLICK
 )
 FakeCriticalHeadTraceFlickNote = BaseNote.derive(
-    "FakeCriticalHeadTraceFlickNote", is_scored=False, key=NoteKind.CRIT_HEAD_TRACE_FLICK
+    archetype_names.FAKE_CRITICAL_HEAD_TRACE_FLICK_NOTE, is_scored=False, key=NoteKind.CRIT_HEAD_TRACE_FLICK
 )
 FakeNormalHeadReleaseNote = BaseNote.derive(
-    "FakeNormalHeadReleaseNote", is_scored=False, key=NoteKind.NORM_HEAD_RELEASE
+    archetype_names.FAKE_NORMAL_HEAD_RELEASE_NOTE, is_scored=False, key=NoteKind.NORM_HEAD_RELEASE
 )
 FakeCriticalHeadReleaseNote = BaseNote.derive(
-    "FakeCriticalHeadReleaseNote", is_scored=False, key=NoteKind.CRIT_HEAD_RELEASE
+    archetype_names.FAKE_CRITICAL_HEAD_RELEASE_NOTE, is_scored=False, key=NoteKind.CRIT_HEAD_RELEASE
 )
-FakeNormalTailTapNote = BaseNote.derive("FakeNormalTailTapNote", is_scored=False, key=NoteKind.NORM_TAIL_TAP)
-FakeCriticalTailTapNote = BaseNote.derive("FakeCriticalTailTapNote", is_scored=False, key=NoteKind.CRIT_TAIL_TAP)
-FakeNormalTailFlickNote = BaseNote.derive("FakeNormalTailFlickNote", is_scored=False, key=NoteKind.NORM_TAIL_FLICK)
-FakeCriticalTailFlickNote = BaseNote.derive("FakeCriticalTailFlickNote", is_scored=False, key=NoteKind.CRIT_TAIL_FLICK)
-FakeNormalTailTraceNote = BaseNote.derive("FakeNormalTailTraceNote", is_scored=False, key=NoteKind.NORM_TAIL_TRACE)
-FakeCriticalTailTraceNote = BaseNote.derive("FakeCriticalTailTraceNote", is_scored=False, key=NoteKind.CRIT_TAIL_TRACE)
+FakeNormalTailTapNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_TAIL_TAP_NOTE, is_scored=False, key=NoteKind.NORM_TAIL_TAP
+)
+FakeCriticalTailTapNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_TAIL_TAP_NOTE, is_scored=False, key=NoteKind.CRIT_TAIL_TAP
+)
+FakeNormalTailFlickNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_TAIL_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_TAIL_FLICK
+)
+FakeCriticalTailFlickNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_TAIL_FLICK_NOTE, is_scored=False, key=NoteKind.CRIT_TAIL_FLICK
+)
+FakeNormalTailTraceNote = BaseNote.derive(
+    archetype_names.FAKE_NORMAL_TAIL_TRACE_NOTE, is_scored=False, key=NoteKind.NORM_TAIL_TRACE
+)
+FakeCriticalTailTraceNote = BaseNote.derive(
+    archetype_names.FAKE_CRITICAL_TAIL_TRACE_NOTE, is_scored=False, key=NoteKind.CRIT_TAIL_TRACE
+)
 FakeNormalTailTraceFlickNote = BaseNote.derive(
-    "FakeNormalTailTraceFlickNote", is_scored=False, key=NoteKind.NORM_TAIL_TRACE_FLICK
+    archetype_names.FAKE_NORMAL_TAIL_TRACE_FLICK_NOTE, is_scored=False, key=NoteKind.NORM_TAIL_TRACE_FLICK
 )
 FakeCriticalTailTraceFlickNote = BaseNote.derive(
-    "FakeCriticalTailTraceFlickNote", is_scored=False, key=NoteKind.CRIT_TAIL_TRACE_FLICK
+    archetype_names.FAKE_CRITICAL_TAIL_TRACE_FLICK_NOTE, is_scored=False, key=NoteKind.CRIT_TAIL_TRACE_FLICK
 )
 FakeNormalTailReleaseNote = BaseNote.derive(
-    "FakeNormalTailReleaseNote", is_scored=False, key=NoteKind.NORM_TAIL_RELEASE
+    archetype_names.FAKE_NORMAL_TAIL_RELEASE_NOTE, is_scored=False, key=NoteKind.NORM_TAIL_RELEASE
 )
 FakeCriticalTailReleaseNote = BaseNote.derive(
-    "FakeCriticalTailReleaseNote", is_scored=False, key=NoteKind.CRIT_TAIL_RELEASE
+    archetype_names.FAKE_CRITICAL_TAIL_RELEASE_NOTE, is_scored=False, key=NoteKind.CRIT_TAIL_RELEASE
 )
-FakeNormalTickNote = BaseNote.derive("FakeNormalTickNote", is_scored=False, key=NoteKind.NORM_TICK)
-FakeCriticalTickNote = BaseNote.derive("FakeCriticalTickNote", is_scored=False, key=NoteKind.CRIT_TICK)
-FakeDamageNote = BaseNote.derive("FakeDamageNote", is_scored=False, key=NoteKind.DAMAGE)
-FakeAnchorNote = BaseNote.derive("FakeAnchorNote", is_scored=False, key=NoteKind.ANCHOR)
-FakeTransientHiddenTickNote = BaseNote.derive("FakeTransientHiddenTickNote", is_scored=False, key=NoteKind.HIDE_TICK)
+FakeNormalTickNote = BaseNote.derive(archetype_names.FAKE_NORMAL_TICK_NOTE, is_scored=False, key=NoteKind.NORM_TICK)
+FakeCriticalTickNote = BaseNote.derive(archetype_names.FAKE_CRITICAL_TICK_NOTE, is_scored=False, key=NoteKind.CRIT_TICK)
+FakeDamageNote = BaseNote.derive(archetype_names.FAKE_DAMAGE_NOTE, is_scored=False, key=NoteKind.DAMAGE)
+FakeAnchorNote = BaseNote.derive(archetype_names.FAKE_ANCHOR_NOTE, is_scored=False, key=NoteKind.ANCHOR)
+FakeTransientHiddenTickNote = BaseNote.derive(
+    archetype_names.FAKE_TRANSIENT_HIDDEN_TICK_NOTE, is_scored=False, key=NoteKind.HIDE_TICK
+)
 
 
 NOTE_ARCHETYPES = (

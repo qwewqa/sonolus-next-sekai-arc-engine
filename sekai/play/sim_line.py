@@ -1,12 +1,13 @@
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_data, imported
 from sonolus.script.runtime import time
 
+from sekai.lib import archetype_names
 from sekai.lib.sim_line import draw_sim_line
 from sekai.play.note import BaseNote
 
 
 class SimLine(PlayArchetype):
-    name = "SimLine"
+    name = archetype_names.SIM_LINE
 
     left_ref: EntityRef[BaseNote] = imported(name="left")
     right_ref: EntityRef[BaseNote] = imported(name="right")

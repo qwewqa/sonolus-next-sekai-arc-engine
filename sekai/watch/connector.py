@@ -7,6 +7,7 @@ from sonolus.script.interval import Interval
 from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import is_replay, is_skip, time
 
+from sekai.lib import archetype_names
 from sekai.lib.connector import (
     CONNECTOR_SLOT_SPAWN_PERIOD,
     CONNECTOR_TRAIL_SPAWN_PERIOD,
@@ -30,7 +31,7 @@ from sekai.watch import note
 
 
 class WatchConnector(WatchArchetype):
-    name = "Connector"
+    name = archetype_names.CONNECTOR
 
     head_ref: EntityRef[note.WatchBaseNote] = imported(name="head")
     tail_ref: EntityRef[note.WatchBaseNote] = imported(name="tail")
@@ -208,7 +209,7 @@ class WatchConnector(WatchArchetype):
 
 
 class WatchSlideManager(WatchArchetype):
-    name = "SlideManager"
+    name = archetype_names.SLIDE_MANAGER
 
     active_head_ref: EntityRef[note.WatchBaseNote] = entity_memory()
     active_tail_ref: EntityRef[note.WatchBaseNote] = entity_memory()

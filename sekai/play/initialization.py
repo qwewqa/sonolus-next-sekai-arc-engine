@@ -1,5 +1,6 @@
 from sonolus.script.archetype import PlayArchetype, callback
 
+from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
@@ -10,7 +11,7 @@ from sekai.play.stage import Stage
 
 
 class Initialization(PlayArchetype):
-    name = "Initialization"
+    name = archetype_names.INITIALIZATION
 
     @callback(order=-1)
     def preprocess(self):

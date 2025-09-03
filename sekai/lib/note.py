@@ -9,6 +9,7 @@ from sonolus.script.interval import lerp, remap_clamped
 from sonolus.script.runtime import is_watch, level_score, time
 from sonolus.script.sprite import Sprite
 
+from sekai.lib import archetype_names
 from sekai.lib.buckets import (
     EMPTY_JUDGMENT_WINDOW,
     FLICK_CRITICAL_WINDOW,
@@ -90,9 +91,6 @@ from sekai.lib.skin import (
     trace_slide_note_body_sprites,
 )
 from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
-
-SLOT_GLOW_EFFECT_NAME = "_SlotGlowEffect"
-SLOT_EFFECT_NAME = "_SlotEffect"
 
 
 class NoteKind(IntEnum):
@@ -929,10 +927,12 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
     slot_sprite = get_note_slot_sprite(kind)
     if slot_sprite.is_available:
         for slot_lane in iter_slot_lanes(lane, size):
-            get_archetype_by_name(SLOT_EFFECT_NAME).spawn(sprite=slot_sprite, start_time=target_time, lane=slot_lane)
+            get_archetype_by_name(archetype_names.SLOT_EFFECT).spawn(
+                sprite=slot_sprite, start_time=target_time, lane=slot_lane
+            )
     slot_glow_sprite = get_note_slot_glow_sprite(kind)
     if slot_glow_sprite.is_available:
-        get_archetype_by_name(SLOT_GLOW_EFFECT_NAME).spawn(
+        get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
             sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
         )
 
