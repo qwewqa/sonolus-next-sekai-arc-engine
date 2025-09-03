@@ -1,7 +1,6 @@
 from sonolus.script.engine import Engine, EngineData
 from sonolus.script.project import Project
 
-from sekai.level import load_levels
 from sekai.lib.converter import convert_pjsekai_extended_level_data
 from sekai.lib.options import Options
 from sekai.lib.ui import ui_config
@@ -11,11 +10,11 @@ from sekai.tutorial.mode import tutorial_mode
 from sekai.watch.mode import watch_mode
 
 engine = Engine(
-    name="sekai",
+    name="pysekai",
     title="PySekai",
-    skin="PyS-S1",
-    particle="PR-PT-3",
-    effect="PR-SD-1",
+    skin="PyS-Skin-1",
+    particle="PyS-Particles-3",
+    effect="PyS-Effects-1",
     background="darkblue",
     data=EngineData(
         ui=ui_config,
@@ -29,7 +28,6 @@ engine = Engine(
 
 project = Project(
     engine=engine,
-    levels=load_levels,
     converters={
         None: convert_pjsekai_extended_level_data,
     },

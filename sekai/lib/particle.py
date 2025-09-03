@@ -55,12 +55,12 @@ class Particles:
 
     normal_slide_connector_circular: StandardParticle.NOTE_CIRCULAR_HOLD_GREEN
     normal_slide_connector_linear: StandardParticle.NOTE_LINEAR_HOLD_GREEN
-    normal_slide_connector_trail_linear: Particle = particle("Sekai Normal Slide Connector Linear")
+    normal_slide_connector_trail_linear: Particle = particle("Sekai Normal Slide Trail Linear")
     normal_slide_connector_slot_linear: Particle = particle("Sekai Slot Linear Slide Green")
 
     critical_slide_connector_circular: StandardParticle.NOTE_CIRCULAR_HOLD_YELLOW
     critical_slide_connector_linear: StandardParticle.NOTE_LINEAR_HOLD_YELLOW
-    critical_slide_connector_trail_linear: Particle = particle("Sekai Critical Slide Connector Linear")
+    critical_slide_connector_trail_linear: Particle = particle("Sekai Critical Slide Trail Linear")
     critical_slide_connector_slot_linear: Particle = particle("Sekai Slot Linear Slide Yellow")
 
     damage_note_circular: StandardParticle.NOTE_CIRCULAR_TAP_PURPLE

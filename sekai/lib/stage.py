@@ -32,7 +32,7 @@ def draw_stage():
 def draw_sekai_stage():
     layout = layout_sekai_stage()
     Skin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
-    Skin.sekai_stage_cover.draw(layout, z=get_z(LAYER_STAGE, etc=-1), a=Options.lane_alpha)
+    Skin.sekai_stage_surface.draw(layout, z=get_z(LAYER_STAGE, etc=-1), a=Options.lane_alpha)
 
 
 def draw_fallback_stage():

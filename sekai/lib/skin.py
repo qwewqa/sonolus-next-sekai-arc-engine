@@ -18,7 +18,7 @@ class Skin:
     stage_right_border: StandardSprite.STAGE_RIGHT_BORDER
 
     sekai_stage: Sprite = sprite("Sekai Stage")
-    sekai_stage_cover: Sprite = sprite("Sekai Stage Cover")
+    sekai_stage_surface: Sprite = sprite("Sekai Stage Surface")
 
     sim_line: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
 
@@ -120,21 +120,21 @@ class Skin:
     trace_flick_tick_note: Sprite = sprite("Sekai Trace Diamond Red")
     trace_flick_tick_note_fallback: StandardSprite.NOTE_TICK_RED
 
-    guide_green: Sprite = sprite("Sekai+ Guide Green")
+    guide_green: Sprite = sprite("Sekai Guide Green")
     guide_green_fallback: StandardSprite.NOTE_CONNECTION_GREEN_SEAMLESS
-    guide_yellow: Sprite = sprite("Sekai+ Guide Yellow")
+    guide_yellow: Sprite = sprite("Sekai Guide Yellow")
     guide_yellow_fallback: StandardSprite.NOTE_CONNECTION_YELLOW_SEAMLESS
-    guide_red: Sprite = sprite("Sekai+ Guide Red")
+    guide_red: Sprite = sprite("Sekai Guide Red")
     guide_red_fallback: StandardSprite.NOTE_CONNECTION_RED_SEAMLESS
-    guide_purple: Sprite = sprite("Sekai+ Guide Purple")
+    guide_purple: Sprite = sprite("Sekai Guide Purple")
     guide_purple_fallback: StandardSprite.NOTE_CONNECTION_PURPLE_SEAMLESS
-    guide_cyan: Sprite = sprite("Sekai+ Guide Cyan")
+    guide_cyan: Sprite = sprite("Sekai Guide Cyan")
     guide_cyan_fallback: StandardSprite.NOTE_CONNECTION_CYAN_SEAMLESS
-    guide_blue: Sprite = sprite("Sekai+ Guide Blue")
+    guide_blue: Sprite = sprite("Sekai Guide Blue")
     guide_blue_fallback: StandardSprite.NOTE_CONNECTION_BLUE_SEAMLESS
-    guide_neutral: Sprite = sprite("Sekai+ Guide Neutral")
+    guide_neutral: Sprite = sprite("Sekai Guide Neutral")
     guide_neutral_fallback: StandardSprite.NOTE_CONNECTION_NEUTRAL_SEAMLESS
-    guide_black: Sprite = sprite("Sekai+ Guide Black")
+    guide_black: Sprite = sprite("Sekai Guide Black")
     guide_black_fallback: StandardSprite.NOTE_CONNECTION_NEUTRAL_SEAMLESS
 
     damage_note_left: Sprite = sprite("Sekai Trace Note Purple Left")
@@ -142,7 +142,7 @@ class Skin:
     damage_note_right: Sprite = sprite("Sekai Trace Note Purple Right")
     damage_note_fallback: StandardSprite.NOTE_HEAD_PURPLE
 
-    background_dim: Sprite = sprite("Sekai+ Black Background")
+    background_dim: Sprite = sprite("Sekai Black Background")
 
 
 class BodySprites(Record):
