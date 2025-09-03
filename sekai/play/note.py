@@ -257,9 +257,7 @@ class BaseNote(PlayArchetype):
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
-        self.judge(
-            max(touch.time, offset_adjusted_time() - delta_time(), self.judgment_window.good.start + self.target_time)
-        )
+        self.judge(touch.time)
 
     def handle_flick_input(self):
         if time() > self.input_interval.end:

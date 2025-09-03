@@ -152,7 +152,11 @@ def preassign_releases():
         hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
         for release_i in active_release_indexes:
             touch = touches()[release_i]
-            if hitbox_layout.contains_point(touch.position) and is_allowed_release(touch, current.target_time):
+            if (
+                hitbox_layout.contains_point(touch.position)
+                and is_allowed_release(touch, current.target_time)
+                and touch.time in current.input_interval
+            ):
                 disallow_empty(touch)
                 current.captured_touch_id = touch.id
                 active_release_indexes.remove(release_i)
