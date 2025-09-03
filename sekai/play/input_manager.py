@@ -111,7 +111,7 @@ def preassign_taps():
         hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
         for tap_i in available_tap_indexes:
             touch = touches()[tap_i]
-            if hitbox_layout.contains_point(touch.position) and touch.time in current.input_interval:
+            if hitbox_layout.contains_point(touch.position) and touch.time in current.unadjusted_input_interval:
                 disallow_empty(touch)
                 if not is_head(current.kind):
                     disallow_release(touch, current.target_time + SLIDE_END_LOCKOUT_DURATION)
@@ -155,7 +155,7 @@ def preassign_releases():
             if (
                 hitbox_layout.contains_point(touch.position)
                 and is_allowed_release(touch, current.target_time)
-                and touch.time in current.input_interval
+                and touch.time in current.unadjusted_input_interval
             ):
                 disallow_empty(touch)
                 current.captured_touch_id = touch.id

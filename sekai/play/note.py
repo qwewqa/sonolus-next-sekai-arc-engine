@@ -74,6 +74,7 @@ class BaseNote(PlayArchetype):
     target_scaled_time: float = entity_data()
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
+    unadjusted_input_interval: Interval = entity_data()
 
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
@@ -105,6 +106,7 @@ class BaseNote(PlayArchetype):
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
         self.input_interval = self.judgment_window.good + self.target_time + input_offset()
+        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
@@ -454,7 +456,7 @@ class BaseNote(PlayArchetype):
 
     def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
         return (
-            touch.start_time >= self.input_interval.start
+            touch.start_time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
         )
