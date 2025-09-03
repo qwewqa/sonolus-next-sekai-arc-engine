@@ -128,9 +128,9 @@ class WatchConnector(WatchArchetype):
             if self.head_ref.index == self.active_head_ref.index:
                 last_sfx_kind = ConnectorKind.NONE
                 last_time = -1e8
-                for next_time, next_sfx_kind in Streams.connector_sfx_kinds[self.active_head_ref.index].iter_items_from(
-                    -2
-                ):
+                for next_time, next_sfx_kind in Streams.connector_effect_kinds[
+                    self.active_head_ref.index
+                ].iter_items_from(-2):
                     match last_sfx_kind:
                         case (
                             ConnectorKind.ACTIVE_NORMAL
@@ -243,24 +243,29 @@ class WatchSlideManager(WatchArchetype):
             info.visual_size,
             self.active_head.target_time,
         )
-        match info.connector_kind:
+        connector_kind = (
+            Streams.connector_effect_kinds[self.active_head.index].get_previous_inclusive(time())
+            if is_replay()
+            else info.connector_kind
+        )
+        match connector_kind:
             case (
                 ConnectorKind.ACTIVE_NORMAL
                 | ConnectorKind.ACTIVE_CRITICAL
                 | ConnectorKind.ACTIVE_FAKE_NORMAL
                 | ConnectorKind.ACTIVE_FAKE_CRITICAL
             ):
-                replace = info.connector_kind != self.last_kind
-                self.last_kind = info.connector_kind
+                replace = connector_kind != self.last_kind
+                self.last_kind = connector_kind
                 update_circular_connector_particle(
                     self.circular_particle,
-                    info.connector_kind,
+                    connector_kind,
                     info.visual_lane,
                     replace,
                 )
                 update_linear_connector_particle(
                     self.linear_particle,
-                    info.connector_kind,
+                    connector_kind,
                     info.visual_lane,
                     replace,
                 )
@@ -269,15 +274,15 @@ class WatchSlideManager(WatchArchetype):
                         self.next_trail_spawn_time + CONNECTOR_TRAIL_SPAWN_PERIOD,
                         time() + CONNECTOR_TRAIL_SPAWN_PERIOD / 2,
                     )
-                    spawn_linear_connector_trail_particle(info.connector_kind, info.visual_lane)
+                    spawn_linear_connector_trail_particle(connector_kind, info.visual_lane)
                 if time() >= self.next_slot_spawn_time:
                     self.next_slot_spawn_time = max(
                         self.next_slot_spawn_time + CONNECTOR_SLOT_SPAWN_PERIOD,
                         time() + CONNECTOR_SLOT_SPAWN_PERIOD / 2,
                     )
-                    spawn_connector_slot_particles(info.connector_kind, info.visual_lane, info.visual_size)
+                    spawn_connector_slot_particles(connector_kind, info.visual_lane, info.visual_size)
                 draw_connector_slot_glow_effect(
-                    info.connector_kind, self.active_head.target_time, info.visual_lane, info.visual_size
+                    connector_kind, self.active_head.target_time, info.visual_lane, info.visual_size
                 )
             case _:
                 destroy_looped_particle(self.circular_particle)

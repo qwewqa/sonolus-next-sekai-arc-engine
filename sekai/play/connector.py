@@ -231,22 +231,22 @@ class SlideManager(PlayArchetype):
     sfx: LoopedEffectHandle = entity_memory()
     next_trail_spawn_time: float = entity_memory()
     next_slot_spawn_time: float = entity_memory()
-    last_sfx_kind: ConnectorKind = entity_memory()
+    last_effect_kind: ConnectorKind = entity_memory()
 
     def initialize(self):
         self.next_trail_spawn_time = -1e8
         self.next_slot_spawn_time = -1e8
-        Streams.connector_sfx_kinds[self.active_head.index][-2] = ConnectorKind.NONE
-        self.last_sfx_kind = ConnectorKind.NONE
+        Streams.connector_effect_kinds[self.active_head.index][-2] = ConnectorKind.NONE
+        self.last_effect_kind = ConnectorKind.NONE
 
     def update_parallel(self):
-        connector_sfx_kind_stream = Streams.connector_sfx_kinds[self.active_head.index]
+        connector_effect_kind_stream = Streams.connector_effect_kinds[self.active_head.index]
         if time() >= self.active_tail.target_time:
             destroy_looped_particle(self.circular_particle)
             destroy_looped_particle(self.linear_particle)
             destroy_looped_sfx(self.sfx)
-            connector_sfx_kind_stream[time()] = ConnectorKind.NONE
-            self.last_sfx_kind = ConnectorKind.NONE
+            connector_effect_kind_stream[time()] = ConnectorKind.NONE
+            self.last_effect_kind = ConnectorKind.NONE
             self.despawn = True
             return
         if time() < self.active_head.target_time:
@@ -280,9 +280,9 @@ class SlideManager(PlayArchetype):
                     replace,
                 )
                 update_connector_sfx(self.sfx, info.connector_kind, replace)
-                if self.last_sfx_kind != info.connector_kind:
-                    connector_sfx_kind_stream[time()] = info.connector_kind
-                    self.last_sfx_kind = info.connector_kind
+                if self.last_effect_kind != info.connector_kind:
+                    connector_effect_kind_stream[time()] = info.connector_kind
+                    self.last_effect_kind = info.connector_kind
                 if time() >= self.next_trail_spawn_time:
                     self.next_trail_spawn_time = max(
                         self.next_trail_spawn_time + CONNECTOR_TRAIL_SPAWN_PERIOD,
@@ -302,9 +302,9 @@ class SlideManager(PlayArchetype):
                 destroy_looped_sfx(self.sfx)
                 destroy_looped_particle(self.circular_particle)
                 destroy_looped_particle(self.linear_particle)
-                if self.last_sfx_kind != ConnectorKind.NONE:
-                    connector_sfx_kind_stream[time()] = ConnectorKind.NONE
-                    self.last_sfx_kind = ConnectorKind.NONE
+                if self.last_effect_kind != ConnectorKind.NONE:
+                    connector_effect_kind_stream[time()] = ConnectorKind.NONE
+                    self.last_effect_kind = ConnectorKind.NONE
 
     @property
     def active_head(self) -> note.BaseNote:
