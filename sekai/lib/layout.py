@@ -37,9 +37,9 @@ DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 class FlickDirection(IntEnum):
     UP_OMNI = 0
-    DOWN_OMNI = 1
-    UP_LEFT = 2
-    UP_RIGHT = 3
+    UP_LEFT = 1
+    UP_RIGHT = 2
+    DOWN_OMNI = 3
     DOWN_LEFT = 4
     DOWN_RIGHT = 5
 
