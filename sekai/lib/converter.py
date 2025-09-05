@@ -232,14 +232,14 @@ def convert_notes(
         connector = Connector(
             head_ref=notes_by_original_index[entity.data["head"]].ref(),
             tail_ref=notes_by_original_index[entity.data["tail"]].ref(),
-            segment_head_ref=notes_by_original_index[entity.data["head"]].ref(),
-            segment_tail_ref=notes_by_original_index[entity.data["tail"]].ref(),
+            segment_head_ref=notes_by_original_index[entity.data["start"]].ref(),
+            segment_tail_ref=notes_by_original_index[entity.data["end"]].ref(),
             active_head_ref=notes_by_original_index[entity.data["start"]].ref(),
             active_tail_ref=notes_by_original_index[entity.data["end"]].ref(),
         )
         head = notes_by_original_index[entity.data["head"]]
         tail = notes_by_original_index[entity.data["tail"]]
-        segment_head = notes_by_original_index[entity.data["head"]]
+        segment_head = notes_by_original_index[entity.data["start"]]
         head.connector_ease = ease_type_mapping[entity.data["ease"]]
         connector_kind = active_connector_kind_mapping[entity.archetype]
         head.segment_kind = connector_kind
@@ -261,7 +261,7 @@ def convert_notes(
         slide_index = entity.data.get("slide", -1)
         if slide_index > 0:
             slide_connector = connectors_by_original_index[slide_index]
-            note.active_head_ref = slide_connector.head_ref
+            note.active_head_ref = slide_connector.active_head_ref
     for entity in data.iter_by_archetype("SimLine"):
         sim_line = SimLine(
             left_ref=notes_by_original_index[entity.data["a"]].ref(),
