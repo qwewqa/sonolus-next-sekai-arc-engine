@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from sonolus.script.archetype import PlayArchetype
 from sonolus.script.level import ExternalEntityData, ExternalLevelData, LevelData
@@ -277,18 +277,22 @@ def convert_guides(
     entities = []
 
     anchors_by_beat = {}
+    anchor_positions = {}
 
     def get_anchor(
         beat: float,
         lane: float,
         size: float,
         timescale_group: Any,
+        pos: Literal["segment_head", "segment_tail", "head", "tail"],
         segment_kind: ConnectorKind | None = None,
         segment_alpha: float | None = None,
         connector_ease: EaseType | None = None,
     ) -> BaseNote:
         if beat in anchors_by_beat:
             for anchor in anchors_by_beat[beat]:
+                if pos in anchor_positions[anchor]:
+                    continue
                 if (
                     anchor.lane == lane
                     and anchor.size == size
@@ -303,6 +307,7 @@ def convert_guides(
                         anchor.segment_alpha = segment_alpha
                     if connector_ease is not None and anchor.connector_ease == -1:
                         anchor.connector_ease = connector_ease
+                    anchor_positions[anchor].add(pos)
                     return anchor
         anchor = AnchorNote(
             beat=beat,
@@ -317,6 +322,7 @@ def convert_guides(
         if beat not in anchors_by_beat:
             anchors_by_beat[beat] = []
         anchors_by_beat[beat].append(anchor)
+        anchor_positions[anchor] = {pos}
         return anchor
 
     for entity in data.iter_by_archetype("Guide"):
@@ -344,6 +350,7 @@ def convert_guides(
             beat=start_beat,
             lane=start_lane,
             size=start_size,
+            pos="segment_head",
             timescale_group=start_timescale_group,
             segment_kind=kind,
             segment_alpha=start_alpha,
@@ -352,21 +359,27 @@ def convert_guides(
             beat=end_beat,
             lane=end_lane,
             size=end_size,
+            pos="segment_tail",
             timescale_group=end_timescale_group,
+            segment_kind=kind,
             segment_alpha=end_alpha,
         )
         head = get_anchor(
             beat=head_beat,
             lane=head_lane,
             size=head_size,
+            pos="head",
             timescale_group=head_timescale_group,
+            segment_kind=kind,
             connector_ease=ease,
         )
         tail = get_anchor(
             beat=tail_beat,
             lane=tail_lane,
             size=tail_size,
+            pos="tail",
             timescale_group=tail_timescale_group,
+            segment_kind=kind,
         )
         connector = Connector(
             head_ref=head.ref(),
