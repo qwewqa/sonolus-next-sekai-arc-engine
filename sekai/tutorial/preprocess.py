@@ -1,2 +1,5 @@
+from sekai.lib.ui import init_ui
+
+
 def preprocess():
-    pass
+    init_ui()
