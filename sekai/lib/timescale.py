@@ -45,6 +45,7 @@ class TimeToScaledTime(Record):
     last_timescale: float
     last_time: float
     last_scaled_time: float
+    last_ease: TimescaleEase
     first_change_index: int
     next_change_index: int
 
@@ -56,6 +57,7 @@ class TimeToScaledTime(Record):
         self.last_timescale = 1.0
         self.last_time = MIN_START_TIME
         self.last_scaled_time = MIN_START_TIME
+        self.last_ease = TimescaleEase.NONE
         self.next_change_index = self.first_change_index
 
     def get(self, time: float) -> float:
@@ -66,7 +68,7 @@ class TimeToScaledTime(Record):
         for change in iter_timescale_changes(self.next_change_index):
             next_timescale = change.timescale
             next_time = beat_to_time(change.beat)
-            match change.timescale_ease:
+            match self.last_ease:
                 case TimescaleEase.NONE:
                     next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
                 case TimescaleEase.LINEAR:
@@ -75,12 +77,12 @@ class TimeToScaledTime(Record):
                         + (next_time - self.last_time) * (next_timescale + self.last_timescale) / 2
                     )
                 case _:
-                    assert_never(change.timescale_ease)
+                    assert_never(self.last_ease)
             skip_scaled_time = beat_to_time(change.beat + change.timescale_skip) - beat_to_time(change.beat)
             if time <= next_time:
                 if abs(next_time - self.last_time) < 1e-6:
                     return self.last_scaled_time
-                match change.timescale_ease:
+                match self.last_ease:
                     case TimescaleEase.NONE:
                         return remap(self.last_time, next_time, self.last_scaled_time, next_scaled_time, time)
                     case TimescaleEase.LINEAR:
@@ -90,10 +92,11 @@ class TimeToScaledTime(Record):
                         ) / 2
                         return self.last_scaled_time + (time - self.last_time) * avg_timescale
                     case _:
-                        assert_never(change.timescale_ease)
+                        assert_never(self.last_ease)
             self.last_timescale = next_timescale
             self.last_time = next_time
             self.last_scaled_time = next_scaled_time + skip_scaled_time
+            self.last_ease = change.timescale_ease
             self.next_change_index = change.next_ref.index
         return self.last_scaled_time + (time - self.last_time) * self.last_timescale
 
@@ -102,6 +105,7 @@ class ScaledTimeToFirstTime(Record):
     last_timescale: float
     last_time: float
     last_scaled_time: float
+    last_ease: TimescaleEase
     first_change_index: int
     next_change_index: int
     last_query_scaled_time: float
@@ -114,6 +118,7 @@ class ScaledTimeToFirstTime(Record):
         self.last_timescale = 1.0
         self.last_time = MIN_START_TIME
         self.last_scaled_time = MIN_START_TIME
+        self.last_ease = TimescaleEase.NONE
         self.next_change_index = self.first_change_index
         self.last_query_scaled_time = MIN_START_TIME
 
@@ -126,7 +131,7 @@ class ScaledTimeToFirstTime(Record):
         for change in iter_timescale_changes(self.next_change_index):
             next_timescale = change.timescale
             next_time = beat_to_time(change.beat)
-            match change.timescale_ease:
+            match self.last_ease:
                 case TimescaleEase.NONE:
                     next_scaled_time = self.last_scaled_time + (next_time - self.last_time) * self.last_timescale
                     if (self.last_scaled_time <= scaled_time <= next_scaled_time and self.last_timescale > 0) or (
@@ -171,7 +176,7 @@ class ScaledTimeToFirstTime(Record):
                         if found_time:
                             return first_time
                 case _:
-                    assert_never(change.timescale_ease)
+                    assert_never(self.last_ease)
             skip_scaled_time = beat_to_time(change.beat + change.timescale_skip) - beat_to_time(change.beat)
             if (next_scaled_time <= scaled_time <= next_scaled_time + change.timescale_skip) or (
                 next_scaled_time + change.timescale_skip <= scaled_time <= next_scaled_time
@@ -180,6 +185,7 @@ class ScaledTimeToFirstTime(Record):
             self.last_timescale = next_timescale
             self.last_time = next_time
             self.last_scaled_time = next_scaled_time + skip_scaled_time
+            self.last_ease = change.timescale_ease
             self.next_change_index = change.next_ref.index
         if self.last_timescale == 0:
             return inf
