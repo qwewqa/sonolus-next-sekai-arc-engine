@@ -424,7 +424,7 @@ def layout_circular_effect(lane: float, w: float, h: float):
 
 
 def layout_tick_effect(lane: float):
-    w = 4 * Layout.w_scale
+    w = 4 * Layout.w_scale * Options.note_effect_size
     h = w
     center = transform_vec(Vec2(lane, 1))
     return Rect(
