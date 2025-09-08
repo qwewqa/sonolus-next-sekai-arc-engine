@@ -6,7 +6,7 @@ from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
-from sonolus.script.runtime import is_watch, level_score, time
+from sonolus.script.runtime import is_tutorial, is_watch, level_score, time
 from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
@@ -96,6 +96,12 @@ from sekai.lib.skin import (
     slide_note_body_sprites,
     trace_flick_note_body_sprites,
     trace_slide_note_body_sprites,
+)
+from sekai.lib.slot_effect import (
+    SLOT_EFFECT_DURATION,
+    SLOT_GLOW_EFFECT_DURATION,
+    draw_slot_effect,
+    draw_slot_glow_effect,
 )
 from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
 
@@ -941,6 +947,8 @@ def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float):
 
 
 def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float):
+    if is_tutorial():
+        return
     if not Options.slot_effect_enabled:
         return
     slot_sprite = get_note_slot_sprite(kind)
@@ -953,6 +961,27 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
     if slot_glow_sprite.is_available:
         get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
             sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
+        )
+
+
+def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, start_time: float):
+    slot_sprite = get_note_slot_sprite(kind)
+    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION:
+        for slot_lane in iter_slot_lanes(lane, size):
+            draw_slot_effect(
+                sprite=slot_sprite,
+                start_time=start_time,
+                end_time=start_time + SLOT_EFFECT_DURATION,
+                lane=slot_lane,
+            )
+    slot_glow_sprite = get_note_slot_glow_sprite(kind)
+    if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION:
+        draw_slot_glow_effect(
+            sprite=slot_glow_sprite,
+            start_time=start_time,
+            end_time=start_time + SLOT_GLOW_EFFECT_DURATION,
+            lane=lane,
+            size=size,
         )
 
 

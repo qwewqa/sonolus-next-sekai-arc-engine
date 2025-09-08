@@ -134,7 +134,7 @@ def transform_quad(q: QuadLike) -> Quad:
     )
 
 
-def transformed_vec_at(lane: float, travel: float) -> Vec2:
+def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
     return transform_vec(Vec2(lane * travel, travel))
 
 
