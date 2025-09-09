@@ -723,12 +723,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
                 result @= first_available_effect(Effects.normal_tick, Effects.normal_perfect)
             else:
                 result @= EMPTY_EFFECT
-        case (
-            NoteKind.CRIT_TAP
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.CRIT_TAIL_RELEASE
-        ):
+        case NoteKind.CRIT_TAP | NoteKind.CRIT_RELEASE | NoteKind.CRIT_TAIL_TAP | NoteKind.CRIT_TAIL_RELEASE:
             if judgment != Judgment.MISS:
                 result @= first_available_effect(Effects.critical_tap, Effects.normal_perfect)
             else:
@@ -814,13 +809,7 @@ def get_note_slot_sprite(kind: NoteKind) -> Sprite:
             | NoteKind.CRIT_TAIL_RELEASE
         ):
             result @= Skin.critical_slide_slot
-        case (
-            NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= Sprite(-1)
         case _:
             assert_never(kind)
@@ -855,23 +844,23 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
         ):
             result @= Skin.critical_slide_slot_glow
         case (
-            NoteKind.NORM_TICK
+            NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
             | NoteKind.CRIT_TICK
             | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
             | NoteKind.DAMAGE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TRACE
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.ANCHOR
         ):
             result @= Sprite(-1)
         case _:
