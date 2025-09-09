@@ -19,7 +19,7 @@ class WatchSimLine(WatchArchetype):
     def preprocess(self):
         self.start_time = min(self.left.start_time, self.right.start_time)
         if is_replay():
-            self.end_time = min(self.left.end_time, self.right.end_time)
+            self.end_time = min(self.left.end_time, self.right.end_time, self.left.target_time)
         else:
             self.end_time = min(self.left.target_time, self.right.target_time)
 

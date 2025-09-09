@@ -101,6 +101,7 @@ class PhaseRange(Record):
         else:
             return remap_clamped(self.start, self.end, 0, 1, self.phase.time) * self.segments % 1
 
+    @property
     def current_segment(self) -> int:
         return floor(remap_clamped(self.start, self.end, 0, self.segments, self.phase.time))
 
@@ -142,13 +143,13 @@ class PhaseInstant(Record):
 
 
 def zoom_to(pos: Vec2):
-    transform = Transform2d.new().translate(-pos).scale(Vec2(2.5, 2.5))
+    transform = Transform2d.new().translate(-pos).scale(Vec2(1.8, 1.8))
     set_skin_transform(transform)
     set_particle_transform(transform)
 
 
 def zoom_to_center():
-    zoom_to(transformed_vec_at(0, 0.9))
+    zoom_to(transformed_vec_at(0, 0.82))
 
 
 def reset_zoom():

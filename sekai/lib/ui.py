@@ -156,7 +156,7 @@ def init_ui():
         background=True,
     )
     ui.instruction.update(
-        anchor=Vec2(0, 0),
+        anchor=Vec2(0, 0.4),
         pivot=Vec2(0.5, 0.5),
         dimensions=Vec2(1.2, 0.15) * ui.instruction_config.scale,
         alpha=ui.instruction_config.alpha,

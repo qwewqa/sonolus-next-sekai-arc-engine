@@ -308,7 +308,7 @@ def layout_flick_arrow(lane: float, size: float, direction: FlickDirection, trav
     up = (base_br - base_bl).rotate(pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
-    offset_scale = animation_progress if not is_down else 1 - animation_progress - 0.1
+    offset_scale = animation_progress if not is_down else 1 - animation_progress - 0.06
     offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
     result = Quad(
         bl=base_bl,

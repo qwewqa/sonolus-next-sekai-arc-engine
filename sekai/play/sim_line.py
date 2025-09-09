@@ -25,7 +25,7 @@ class SimLine(PlayArchetype):
         return time() >= self.spawn_time
 
     def update_parallel(self):
-        if self.left.is_despawned or self.right.is_despawned:
+        if self.left.is_despawned or self.right.is_despawned or time() > self.left.target_time:
             self.despawn = True
             return
         draw_sim_line(
