@@ -5,6 +5,7 @@ from typing import Self
 
 from sonolus.script.array import Array, Dim
 from sonolus.script.bucket import Judgment
+from sonolus.script.containers import VarArray
 from sonolus.script.effect import LoopedEffectHandle
 from sonolus.script.globals import level_memory
 from sonolus.script.instruction import clear_instruction
@@ -58,14 +59,6 @@ class SlideEffectHandles(Record):
         self.next_slot_spawn_time = 0
 
 
-@level_memory
-class PhaseState:
-    start_time: float
-    slide_handles: Array[SlideEffectHandles, Dim[2]]
-    slide_is_active: bool
-    prev_time: float
-
-
 def update_start():
     PhaseState.slide_is_active = False
     clear_instruction()
@@ -74,10 +67,23 @@ def update_start():
 
 
 def update_end():
+    PhaseState.prev_time = time()
+    # For engine size and compile performance reasons, we queue up actions, then
+    # execute them at the end of the frame.
+    # This means that the body of the act() methods are only compiled once due to
+    # how the compiler inlines all function calls.
+    for action_group in (
+        PhaseState.queued_note_draws,
+        PhaseState.queued_note_hit_effects,
+        PhaseState.queued_note_slot_effects,
+        PhaseState.queued_connector_draws,
+    ):
+        for action in action_group:
+            action.act()
+        action_group.clear()
     if not PhaseState.slide_is_active:
         for handles in PhaseState.slide_handles:
             handles.destroy()
-    PhaseState.prev_time = time()
 
 
 def reset_phase():
@@ -192,7 +198,8 @@ def reset_zoom():
     set_particle_transform(transform)
 
 
-class TutorialNoteInfo[Kind](Record):
+class TutorialNoteInfo(Record):
+    kind: NoteKind
     lane: float
     size: float
     direction: FlickDirection
@@ -207,38 +214,16 @@ class TutorialNoteInfo[Kind](Record):
         direction: FlickDirection = FlickDirection.UP_OMNI,
         offset: float = 0,
     ) -> Self:
-        return cls[kind](lane=lane, size=size, direction=direction, offset=offset)  # type: ignore
-
-    @property
-    def kind(self) -> NoteKind:
-        return self.type_var_value(Kind)
+        return cls(kind=kind, lane=lane, size=size, direction=direction, offset=offset)  # type: ignore
 
     def draw(self, progress: float = 1):
-        draw_note(
-            kind=self.kind,
-            lane=self.lane,
-            size=self.size,
-            progress=progress + self.offset,
-            direction=self.direction,
-            target_time=time() + 1 - progress - self.offset,
-        )
+        PhaseState.queued_note_draws.append(QueuedTutorialNoteDraw(note=self, progress=progress))
 
     def play_hit_effects(self):
-        play_note_hit_effects(
-            kind=self.kind,
-            lane=self.lane,
-            size=self.size,
-            direction=self.direction,
-            judgment=Judgment.PERFECT,
-        )
+        PhaseState.queued_note_hit_effects.append(QueuedTutorialNotePlayHitEffects(note=self))
 
     def draw_slot_effects(self, end_range: PhaseRange):
-        draw_tutorial_note_slot_effects(
-            kind=self.kind,
-            lane=self.lane,
-            size=self.size,
-            start_time=phase_time_to_time(end_range.start),
-        )
+        PhaseState.queued_note_slot_effects.append(QueuedTutorialNoteDrawSlotEffects(note=self, end_range=end_range))
 
     def draw_connector_to(
         self,
@@ -251,36 +236,104 @@ class TutorialNoteInfo[Kind](Record):
         show_touch: bool = False,
         effect_index: int = -1,
     ):
-        kind = ConnectorKind.ACTIVE_CRITICAL if critical else ConnectorKind.ACTIVE_NORMAL
-        visual_state = ConnectorVisualState.ACTIVE if active else ConnectorVisualState.WAITING
-        head_progress = progress + self.offset
-        head_target_time = time() + 1 - progress - self.offset
-        tail_progress = progress + other.offset
-        tail_target_time = time() + 1 - progress - other.offset
+        PhaseState.queued_connector_draws.append(
+            QueuedTutorialNoteDrawConnectorTo(
+                from_note=self,
+                to_note=other,
+                critical=critical,
+                active=active,
+                progress=progress,
+                active_head_kind=active_head_kind,
+                ease_type=ease_type,
+                show_touch=show_touch,
+                effect_index=effect_index,
+            )
+        )
+
+
+class QueuedTutorialNoteDraw(Record):
+    note: TutorialNoteInfo
+    progress: float
+
+    def act(self):
+        draw_note(
+            kind=self.note.kind,
+            lane=self.note.lane,
+            size=self.note.size,
+            progress=self.progress + self.note.offset,
+            direction=self.note.direction,
+            target_time=time() + 1 - self.progress - self.note.offset,
+        )
+
+
+class QueuedTutorialNotePlayHitEffects(Record):
+    note: TutorialNoteInfo
+
+    def act(self):
+        play_note_hit_effects(
+            kind=self.note.kind,
+            lane=self.note.lane,
+            size=self.note.size,
+            direction=self.note.direction,
+            judgment=Judgment.PERFECT,
+        )
+
+
+class QueuedTutorialNoteDrawSlotEffects(Record):
+    note: TutorialNoteInfo
+    end_range: PhaseRange
+
+    def act(self):
+        draw_tutorial_note_slot_effects(
+            kind=self.note.kind,
+            lane=self.note.lane,
+            size=self.note.size,
+            start_time=phase_time_to_time(self.end_range.start),
+        )
+
+
+class QueuedTutorialNoteDrawConnectorTo(Record):
+    from_note: TutorialNoteInfo
+    to_note: TutorialNoteInfo
+    critical: bool
+    active: bool
+    progress: float
+    active_head_kind: NoteKind
+    ease_type: EaseType
+    show_touch: bool
+    effect_index: int
+
+    def act(self):
+        kind = ConnectorKind.ACTIVE_CRITICAL if self.critical else ConnectorKind.ACTIVE_NORMAL
+        visual_state = ConnectorVisualState.ACTIVE if self.active else ConnectorVisualState.WAITING
+        head_progress = self.progress + self.from_note.offset
+        head_target_time = time() + 1 - self.progress - self.from_note.offset
+        tail_progress = self.progress + self.to_note.offset
+        tail_target_time = time() + 1 - self.progress - self.to_note.offset
         draw_connector(
             kind=kind,
             visual_state=visual_state,
-            ease_type=ease_type,
-            head_lane=self.lane,
-            head_size=self.size,
+            ease_type=self.ease_type,
+            head_lane=self.from_note.lane,
+            head_size=self.from_note.size,
             head_progress=head_progress,
             head_target_time=head_target_time,
-            tail_lane=other.lane,
-            tail_size=other.size,
+            tail_lane=self.to_note.lane,
+            tail_size=self.to_note.size,
             tail_progress=tail_progress,
             tail_target_time=tail_target_time,
             segment_head_target_time=head_target_time,
-            segment_head_lane=self.lane,
+            segment_head_lane=self.from_note.lane,
             segment_head_alpha=1,
             segment_tail_target_time=tail_target_time,
             segment_tail_alpha=1,
         )
-        if effect_index >= 0 and tail_progress < 1 < head_progress and active:
+        if self.effect_index >= 0 and tail_progress < 1 < head_progress and self.active:
             frac = unlerp(head_progress, tail_progress, 1)
-            eased_frac = ease(ease_type, frac)
-            lane = lerp(self.lane, other.lane, eased_frac)
-            size = lerp(self.size, other.size, eased_frac)
-            handles = get_slide_effect_handles(effect_index)
+            eased_frac = ease(self.ease_type, frac)
+            lane = lerp(self.from_note.lane, self.to_note.lane, eased_frac)
+            size = lerp(self.from_note.size, self.to_note.size, eased_frac)
+            handles = get_slide_effect_handles(self.effect_index)
             update_circular_connector_particle(
                 handles.circular,
                 kind,
@@ -312,10 +365,23 @@ class TutorialNoteInfo[Kind](Record):
             )
             draw_connector_slot_glow_effect(kind, head_target_time, lane, size)
             draw_slide_note_head(
-                active_head_kind,
+                self.active_head_kind,
                 lane,
                 size,
                 head_target_time,
             )
-            if show_touch:
+            if self.show_touch:
                 paint_hold_motion(transformed_vec_at(lane))
+
+
+@level_memory
+class PhaseState:
+    start_time: float
+    slide_handles: Array[SlideEffectHandles, Dim[8]]
+    slide_is_active: bool
+    prev_time: float
+
+    queued_note_draws: VarArray[QueuedTutorialNoteDraw, Dim[8]]
+    queued_note_hit_effects: VarArray[QueuedTutorialNotePlayHitEffects, Dim[8]]
+    queued_note_slot_effects: VarArray[QueuedTutorialNoteDrawSlotEffects, Dim[8]]
+    queued_connector_draws: VarArray[QueuedTutorialNoteDrawConnectorTo, Dim[8]]
