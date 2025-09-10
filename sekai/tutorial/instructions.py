@@ -12,6 +12,7 @@ class Instructions:
     tap_flick: StandardInstruction.TAP_FLICK
     tap_hold: StandardInstruction.TAP_HOLD
     hold_follow: StandardInstruction.HOLD_FOLLOW
+    hold: StandardInstruction.HOLD
     release: StandardInstruction.RELEASE
     hold_flick: StandardInstruction.FLICK
     avoid: StandardInstruction.AVOID

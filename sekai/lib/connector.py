@@ -347,10 +347,10 @@ def draw_connector(
         * Layout.w_scale
     )
     y_change = abs(start_screen_center.y - end_screen_center.y)
-    change_scale = min(x_change, y_change)
+    change_scale = (x_change * y_change) ** 0.5
     if ease_type == EaseType.LINEAR:
         # Linear still curves due to the approach curve, but less, so we need fewer segments.
-        change_scale /= 3
+        change_scale /= 2
     if Options.fade_out:
         change_scale = max(change_scale, y_change)
     change_scale = max(change_scale, abs(start_alpha - end_alpha) * 2)

@@ -62,7 +62,6 @@ class Connector(PlayArchetype):
         tail = self.tail
         self.kind = self.segment_head.segment_kind
         self.ease_type = head.connector_ease
-        self.kind = self.segment_head.segment_kind
         self.visual_active_interval.start = min(head.target_time, tail.target_time)
         self.visual_active_interval.end = max(head.target_time, tail.target_time)
         self.input_active_interval = self.visual_active_interval + input_offset()
