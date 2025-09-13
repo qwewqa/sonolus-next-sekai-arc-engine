@@ -8,7 +8,7 @@ from sonolus.script import runtime
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.interval import remap
 from sonolus.script.record import Record
-from sonolus.script.timing import TimescaleEase, beat_to_time
+from sonolus.script.timing import TimescaleEase, beat_to_bpm, beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.options import Options
@@ -78,7 +78,7 @@ class TimeToScaledTime(Record):
                     )
                 case _:
                     assert_never(self.last_ease)
-            skip_scaled_time = beat_to_time(change.beat + change.timescale_skip) - beat_to_time(change.beat)
+            skip_scaled_time = change.timescale_skip * 60 / beat_to_bpm(change.beat)
             if time <= next_time:
                 if abs(next_time - self.last_time) < 1e-6:
                     return self.last_scaled_time
@@ -177,7 +177,7 @@ class ScaledTimeToFirstTime(Record):
                             return first_time
                 case _:
                     assert_never(self.last_ease)
-            skip_scaled_time = beat_to_time(change.beat + change.timescale_skip) - beat_to_time(change.beat)
+            skip_scaled_time = change.timescale_skip * 60 / beat_to_bpm(change.beat)
             if (next_scaled_time <= scaled_time <= next_scaled_time + change.timescale_skip) or (
                 next_scaled_time + change.timescale_skip <= scaled_time <= next_scaled_time
             ):
