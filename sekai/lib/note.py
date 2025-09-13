@@ -932,8 +932,6 @@ def schedule_note_auto_sfx(kind: NoteKind, target_time: float):
 def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float):
     if not Options.sfx_enabled:
         return
-    if Options.auto_sfx:
-        return
     sfx = get_note_effect(kind, judgment)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
