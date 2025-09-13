@@ -183,13 +183,13 @@ class PhaseInstant(Record):
 
 
 def zoom_to(pos: Vec2):
-    transform = Transform2d.new().translate(-pos).scale(Vec2(1.75, 1.75))
+    transform = Transform2d.new().translate(-pos).scale(Vec2(1.7, 1.7))
     set_skin_transform(transform)
     set_particle_transform(transform)
 
 
 def zoom_for_intro():
-    zoom_to(transformed_vec_at(0, 0.8))
+    zoom_to(transformed_vec_at(0, 0.78))
 
 
 def reset_zoom():
