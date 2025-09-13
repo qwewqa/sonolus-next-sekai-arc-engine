@@ -138,6 +138,8 @@ class Connector(PlayArchetype):
                 self.active_connector_info.visual_lane = visual_lane
                 self.active_connector_info.visual_size = visual_size
                 self.active_connector_info.connector_kind = self.kind
+
+    def update_parallel(self):
         if time() < self.visual_active_interval.end:
             head = self.head
             tail = self.tail
