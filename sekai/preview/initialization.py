@@ -43,7 +43,7 @@ def print_preview_col_head_text():
 
 
 def draw_beat_lines():
-    for beat in range(int(PreviewData.max_beat)):
+    for beat in range(int(PreviewData.max_beat) + 1):
         for beat_offset, extend_scale in (
             (0, 0.3),
             (0.25, 0.1),
