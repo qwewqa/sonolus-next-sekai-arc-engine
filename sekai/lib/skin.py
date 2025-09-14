@@ -144,6 +144,11 @@ class Skin:
 
     background_dim: Sprite = sprite("Sekai Black Background")
 
+    beat_line: StandardSprite.GRID_NEUTRAL
+    bpm_change_line: StandardSprite.GRID_PURPLE
+    timescale_change_line: StandardSprite.GRID_YELLOW
+    special_line: StandardSprite.GRID_RED
+
 
 class BodySprites(Record):
     left: Sprite

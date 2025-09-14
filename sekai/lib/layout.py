@@ -274,7 +274,9 @@ def layout_tick(lane: float, travel: float) -> Rect:
     return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * travel)
 
 
-def layout_flick_arrow(lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float):
+def layout_flick_arrow(
+    lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float
+) -> Quad:
     match direction:
         case FlickDirection.UP_OMNI:
             is_down = False
@@ -327,7 +329,7 @@ def layout_flick_arrow(lane: float, size: float, direction: FlickDirection, trav
 
 def layout_flick_arrow_fallback(
     lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float
-):
+) -> Quad:
     match direction:
         case FlickDirection.UP_OMNI:
             rotation = 0
@@ -371,7 +373,7 @@ def layout_flick_arrow_fallback(
     )
 
 
-def layout_slot_effect(lane: float):
+def layout_slot_effect(lane: float) -> Quad:
     return perspective_rect(
         l=lane - 0.5,
         r=lane + 0.5,
@@ -380,7 +382,7 @@ def layout_slot_effect(lane: float):
     )
 
 
-def layout_slot_glow_effect(lane: float, size: float, height: float):
+def layout_slot_glow_effect(lane: float, size: float, height: float) -> Quad:
     s = 1 + 0.25 * Options.slot_effect_size
     h = 4.25 * Layout.w_scale * Options.slot_effect_size
     l_min = transform_vec(Vec2(lane - size, 1))
@@ -395,7 +397,7 @@ def layout_slot_glow_effect(lane: float, size: float, height: float):
     )
 
 
-def layout_linear_effect(lane: float, shear: float):
+def layout_linear_effect(lane: float, shear: float) -> Quad:
     w = Options.note_effect_size
     bl = transform_vec(Vec2(lane - w, 1))
     br = transform_vec(Vec2(lane + w, 1))
@@ -408,7 +410,7 @@ def layout_linear_effect(lane: float, shear: float):
     )
 
 
-def layout_circular_effect(lane: float, w: float, h: float):
+def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
     w *= Options.note_effect_size
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
     t = 1 + h
@@ -423,7 +425,7 @@ def layout_circular_effect(lane: float, w: float, h: float):
     )
 
 
-def layout_tick_effect(lane: float):
+def layout_tick_effect(lane: float) -> Rect:
     w = 4 * Layout.w_scale * Options.note_effect_size
     h = w
     center = transform_vec(Vec2(lane, 1))
