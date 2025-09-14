@@ -15,7 +15,7 @@ from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
     LAYER_ACTIVE_SIDE_CONNECTOR,
-    LAYER_NOTE_GUIDE,
+    LAYER_GUIDE_CONNECTOR,
     LAYER_SLOT_GLOW_EFFECT,
     get_z,
 )
@@ -155,7 +155,7 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            return get_z(LAYER_NOTE_GUIDE, time=-target_time, lane=lane, etc=kind - ConnectorKind.GUIDE_NEUTRAL)
+            return get_z(LAYER_GUIDE_CONNECTOR, time=-target_time, lane=lane, etc=kind - ConnectorKind.GUIDE_NEUTRAL)
         case ConnectorKind.NONE:
             return 0.0
         case _:

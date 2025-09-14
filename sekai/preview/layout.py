@@ -5,7 +5,7 @@ from typing import Literal, assert_never
 from sonolus.script.array import Dim
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, lerp, remap
+from sonolus.script.interval import clamp, lerp, remap_clamped
 from sonolus.script.printing import PrintColor, PrintFormat, print_number
 from sonolus.script.quad import Quad, Rect
 from sonolus.script.runtime import HorizontalAlign, ScrollDirection, canvas, screen
@@ -17,16 +17,16 @@ from sekai.lib.options import Options
 PREVIEW_COLUMN_SECS = 2
 
 PREVIEW_MARGIN_Y = 0.15
-PREVIEW_MARGIN_X = 0.4
-PREVIEW_EXTEND_MARGIN_X = 0.05
+PREVIEW_MARGIN_X = 0.25
+PREVIEW_EXTEND_MARGIN_X = 0.02
 PREVIEW_TEXT_MARGIN_X = 0.015
 PREVIEW_TEXT_MARGIN_Y = 0
 PREVIEW_TEXT_H = 0.12
 PREVIEW_TEXT_W = PREVIEW_MARGIN_X - 2 * PREVIEW_TEXT_MARGIN_X
 
-PREVIEW_LANE_W = 0.02
+PREVIEW_LANE_W = 0.05
 PREVIEW_STAGE_BORDER_W = 0.25 * PREVIEW_LANE_W
-PREVIEW_NOTE_H = PREVIEW_LANE_W / 2
+PREVIEW_NOTE_H = PREVIEW_LANE_W / 3
 PREVIEW_BAR_LINE_H = 0.002
 PREVIEW_BAR_LINE_ALPHA = 0.8
 
@@ -64,8 +64,10 @@ def time_to_preview_col(time: float) -> int:
     return floor(time / PREVIEW_COLUMN_SECS)
 
 
-def time_to_preview_y(time: float) -> float:
-    return lerp(PREVIEW_Y_MIN, PREVIEW_Y_MAX, time % PREVIEW_COLUMN_SECS / PREVIEW_COLUMN_SECS)
+def time_to_preview_y(time: float, col: int | None = None) -> float:
+    if col is None:
+        col = time_to_preview_col(time)
+    return lerp(PREVIEW_Y_MIN, PREVIEW_Y_MAX, (time - col * PREVIEW_COLUMN_SECS) / PREVIEW_COLUMN_SECS)
 
 
 def lane_to_preview_x(lane: float, col: int) -> float:
@@ -83,6 +85,33 @@ def layout_preview_lane_by_edges(l: float, r: float, col: int) -> Rect:
 
 def layout_preview_lane(lane: float, size: float, col: int) -> Rect:
     return layout_preview_lane_by_edges(lane - size, lane + size, col)
+
+
+def layout_preview_background_dim() -> Rect:
+    return Rect(
+        l=screen().l,
+        r=PreviewLayout.column_width * PreviewLayout.column_count + 1,
+        b=-1,
+        t=1,
+    )
+
+
+def layout_preview_bottom_cover() -> Rect:
+    return Rect(
+        l=screen().l,
+        r=PreviewLayout.column_width * PreviewLayout.column_count + 1,
+        b=screen().b,
+        t=PREVIEW_Y_MIN,
+    )
+
+
+def layout_preview_top_cover() -> Rect:
+    return Rect(
+        l=screen().l,
+        r=PreviewLayout.column_width * PreviewLayout.column_count + 1,
+        b=PREVIEW_Y_MAX,
+        t=screen().t,
+    )
 
 
 def layout_preview_note_body_by_edges(l: float, r: float, h: float, col: int, y: float) -> Rect:
@@ -184,7 +213,7 @@ def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirecti
         l=lane_to_preview_x(lane - w, col),
         r=lane_to_preview_x(lane + w, col),
         b=y,
-        t=y + 2 * w * PREVIEW_NOTE_H,
+        t=y + 2 * w * PREVIEW_LANE_W,
     )
     if is_down:
         result.t, result.b = result.b, result.t
@@ -193,7 +222,9 @@ def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirecti
     return result
 
 
-def layout_flick_arrow_fallback(lane: float, size: float, direction: FlickDirection, col: int, y: float) -> Quad:
+def layout_preview_flick_arrow_fallback(
+    lane: float, size: float, direction: FlickDirection, col: int, y: float
+) -> Quad:
     match direction:
         case FlickDirection.UP_OMNI:
             rotation = 0
@@ -245,20 +276,20 @@ def layout_preview_slide_connector_segment(
     r_x_min = min(br.x, tr.x)
     r_x_max = max(br.x, tr.x)
     if l_x_min < x_min < l_x_max:
-        endpoints.append(remap(l_x_min, l_x_max, bl.y, tl.y, x_min))
+        endpoints.append(remap_clamped(l_x_min, l_x_max, bl.y, tl.y, x_min))
     if l_x_min < x_max < l_x_max:
-        endpoints.append(remap(l_x_min, l_x_max, bl.y, tl.y, x_max))
+        endpoints.append(remap_clamped(l_x_min, l_x_max, bl.y, tl.y, x_max))
     if r_x_min < x_min < r_x_max:
-        endpoints.append(remap(r_x_min, r_x_max, br.y, tr.y, x_min))
+        endpoints.append(remap_clamped(r_x_min, r_x_max, br.y, tr.y, x_min))
     if r_x_min < x_max < r_x_max:
-        endpoints.append(remap(r_x_min, r_x_max, br.y, tr.y, x_max))
+        endpoints.append(remap_clamped(r_x_min, r_x_max, br.y, tr.y, x_max))
     prev_y = start_y
-    prev_l_x = bl.x
-    prev_r_x = br.x
+    prev_l_x = clamp(bl.x, x_min, x_max)
+    prev_r_x = clamp(br.x, x_min, x_max)
     endpoints.sort()
     for next_y in endpoints:
-        next_l_x = clamp(remap(start_y, end_y, bl.x, tl.x, next_y), x_min, x_max)
-        next_r_x = clamp(remap(start_y, end_y, br.x, tr.x, next_y), x_min, x_max)
+        next_l_x = clamp(remap_clamped(start_y, end_y, bl.x, tl.x, next_y), x_min, x_max)
+        next_r_x = clamp(remap_clamped(start_y, end_y, br.x, tr.x, next_y), x_min, x_max)
         yield Quad(
             bl=Vec2(prev_l_x, prev_y),
             br=Vec2(prev_r_x, prev_y),

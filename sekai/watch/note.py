@@ -51,8 +51,8 @@ class WatchBaseNote(WatchArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[WatchBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
-    next_ref: EntityRef[WatchBaseNote] = imported(name="next")
 
+    kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
@@ -70,6 +70,8 @@ class WatchBaseNote(WatchArchetype):
     def init_data(self):
         if self.data_init_done:
             return
+
+        self.kind = map_note_kind(cast(NoteKind, self.key))
 
         self.data_init_done = True
 
@@ -149,10 +151,6 @@ class WatchBaseNote(WatchArchetype):
             return
         if not is_replay() or self.played_hit_effects:
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
-
-    @property
-    def kind(self) -> NoteKind:
-        return map_note_kind(cast(NoteKind, self.key))
 
     @property
     def progress(self) -> float:

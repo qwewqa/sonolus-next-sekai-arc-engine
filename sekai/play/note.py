@@ -67,6 +67,7 @@ class BaseNote(PlayArchetype):
     attach_tail_ref: EntityRef[BaseNote] = imported(name="attachTail")
     next_ref: EntityRef[BaseNote] = imported(name="next")  # Only for level data; not used in-game.
 
+    kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
@@ -94,6 +95,8 @@ class BaseNote(PlayArchetype):
     def init_data(self):
         if self.data_init_done:
             return
+
+        self.kind = map_note_kind(cast(NoteKind, self.key))
 
         self.data_init_done = True
 
@@ -569,10 +572,6 @@ class BaseNote(PlayArchetype):
     def get_full_hitbox(self) -> Rect:
         leniency = get_leniency(self.kind)
         return layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
-
-    @property
-    def kind(self) -> NoteKind:
-        return map_note_kind(cast(NoteKind, self.key))
 
     @property
     def progress(self) -> float:
