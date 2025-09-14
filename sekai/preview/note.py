@@ -85,9 +85,6 @@ class PreviewBaseNote(PreviewArchetype):
 
         self.target_time = beat_to_time(self.beat)
 
-        PreviewData.max_time = max(PreviewData.max_time, self.target_time)
-        PreviewData.max_beat = max(PreviewData.max_beat, self.beat)
-
     def preprocess(self):
         self.init_data()
 
@@ -109,6 +106,14 @@ class PreviewBaseNote(PreviewArchetype):
             self.lane = lane
             self.size = size
 
+        PreviewData.max_time = max(PreviewData.max_time, self.target_time)
+        PreviewData.max_beat = max(PreviewData.max_beat, self.beat)
+
+        if self.is_scored:
+            col = max(time_to_preview_col(self.target_time), 0)
+            if col < len(PreviewData.note_counts_by_col):
+                PreviewData.note_counts_by_col[col] += 1
+
     def render(self):
         if abs(self.lane) > 12:
             return
@@ -117,7 +122,7 @@ class PreviewBaseNote(PreviewArchetype):
 
 def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):
     col = time_to_preview_col(target_time)
-    y = time_to_preview_y(target_time)
+    y = time_to_preview_y(target_time, col)
     draw_note_body(kind, lane, size, target_time, col, y)
     draw_note_arrow(kind, lane, size, target_time, direction, col, y)
     draw_note_tick(kind, lane, target_time, col, y)

@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from math import ceil, floor, pi
 from typing import Literal, assert_never
 
-from sonolus.script.array import Dim
+from sonolus.script.array import Array, Dim
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap_clamped
@@ -16,18 +16,16 @@ from sekai.lib.options import Options
 
 PREVIEW_COLUMN_SECS = 2
 
-PREVIEW_MARGIN_Y = 0.15
-PREVIEW_MARGIN_X = 0.25
+PREVIEW_MARGIN_Y = 0.125
+PREVIEW_MARGIN_X = 0.26
 PREVIEW_EXTEND_MARGIN_X = 0.02
-PREVIEW_TEXT_MARGIN_X = 0.015
-PREVIEW_TEXT_MARGIN_Y = 0
-PREVIEW_TEXT_H = 0.12
-PREVIEW_TEXT_W = PREVIEW_MARGIN_X - 2 * PREVIEW_TEXT_MARGIN_X
+PREVIEW_TEXT_MARGIN_X = 0
+PREVIEW_TEXT_MARGIN_Y = -0.002
 
 PREVIEW_LANE_W = 0.05
 PREVIEW_STAGE_BORDER_W = 0.25 * PREVIEW_LANE_W
 PREVIEW_NOTE_H = PREVIEW_LANE_W / 3
-PREVIEW_BAR_LINE_H = 0.002
+PREVIEW_BAR_LINE_H = PREVIEW_LANE_W / 20
 PREVIEW_BAR_LINE_ALPHA = 0.8
 
 PREVIEW_COVER_ALPHA = 1.0
@@ -35,13 +33,18 @@ PREVIEW_COVER_ALPHA = 1.0
 PREVIEW_Y_MIN = -1 + PREVIEW_MARGIN_Y
 PREVIEW_Y_MAX = 1 - PREVIEW_MARGIN_Y
 
-PREVIEW_BAR_EXTEND_W = 3 * PREVIEW_LANE_W
+PREVIEW_BAR_EXTEND_W = 4.5 * PREVIEW_LANE_W
+
+PREVIEW_TEXT_H = 0.11
+PREVIEW_TEXT_W = 3.5 * PREVIEW_LANE_W - 2 * PREVIEW_TEXT_MARGIN_X
 
 
 @level_data
 class PreviewData:
     max_time: float
     max_beat: float
+    note_counts_by_col: Array[int, Dim[1000]]
+    min_timescale_group: int
 
 
 @level_data
@@ -64,7 +67,7 @@ def time_to_preview_col(time: float) -> int:
     return floor(time / PREVIEW_COLUMN_SECS)
 
 
-def time_to_preview_y(time: float, col: int | None = None) -> float:
+def time_to_preview_y(time: float, col: int) -> float:
     if col is None:
         col = time_to_preview_col(time)
     return lerp(PREVIEW_Y_MIN, PREVIEW_Y_MAX, (time - col * PREVIEW_COLUMN_SECS) / PREVIEW_COLUMN_SECS)
@@ -319,7 +322,8 @@ def layout_preview_sim_line(
 
 def layout_preview_bar_line(
     time: float,
-    extend: Literal["left", "right", "both", "none", "left_only", "right_only"] = "none",
+    extend: Literal["left", "right", "both", "none", "left_only", "right_only"],
+    extend_scale: float = 1.0,
 ) -> Quad:
     col = time_to_preview_col(time)
     left_lane = -6
@@ -328,21 +332,21 @@ def layout_preview_bar_line(
     right_x = lane_to_preview_x(right_lane, col)
     match extend:
         case "left":
-            left_x -= PREVIEW_BAR_EXTEND_W
+            left_x -= PREVIEW_BAR_EXTEND_W * extend_scale
         case "right":
-            right_x += PREVIEW_BAR_EXTEND_W
+            right_x += PREVIEW_BAR_EXTEND_W * extend_scale
         case "both":
-            left_x -= PREVIEW_BAR_EXTEND_W
-            right_x += PREVIEW_BAR_EXTEND_W
+            left_x -= PREVIEW_BAR_EXTEND_W * extend_scale
+            right_x += PREVIEW_BAR_EXTEND_W * extend_scale
         case "left_only":
-            right_x = left_x
-            left_x -= PREVIEW_BAR_EXTEND_W
+            right_x = left_x - PREVIEW_LANE_W * 0.5
+            left_x = right_x - PREVIEW_BAR_EXTEND_W * extend_scale
         case "right_only":
-            left_x = right_x
-            right_x += PREVIEW_BAR_EXTEND_W
+            left_x = right_x + PREVIEW_LANE_W * 0.5
+            right_x = left_x + PREVIEW_BAR_EXTEND_W * extend_scale
         case _:
             pass
-    y = time_to_preview_y(time)
+    y = time_to_preview_y(time, col)
     return Quad(
         bl=Vec2(left_x, y - PREVIEW_BAR_LINE_H),
         br=Vec2(right_x, y - PREVIEW_BAR_LINE_H),
@@ -360,40 +364,54 @@ def print_at_time(
     color: PrintColor,
     side: Literal["left", "right"],
 ):
+    col = time_to_preview_col(time)
+    y = time_to_preview_y(time, col)
     print_number(
         value=value,
         fmt=fmt,
         decimal_places=decimal_places,
         anchor=Vec2(
             lane_to_preview_x(
-                -7 if side == "left" else 7,
-                time_to_preview_col(time),
+                -6 if side == "left" else 6,
+                col,
             )
-            + (-PREVIEW_TEXT_MARGIN_X if side == "left" else PREVIEW_TEXT_MARGIN_X),
-            time_to_preview_y(time) + PREVIEW_TEXT_MARGIN_Y,
+            + (
+                PREVIEW_TEXT_MARGIN_X - PREVIEW_BAR_EXTEND_W
+                if side == "left"
+                else PREVIEW_BAR_EXTEND_W - PREVIEW_TEXT_MARGIN_X
+            ),
+            y + PREVIEW_TEXT_MARGIN_Y,
         ),
-        pivot=Vec2(1 if side == "left" else 0, 0),
+        pivot=Vec2(0 if side == "left" else 1, 0),
         dimensions=Vec2(PREVIEW_TEXT_W, PREVIEW_TEXT_H),
         color=color,
-        horizontal_align=HorizontalAlign.RIGHT if side == "left" else HorizontalAlign.LEFT,
+        horizontal_align=HorizontalAlign.LEFT if side == "left" else HorizontalAlign.RIGHT,
         background=False,
     )
 
 
-def print_at_bottom(
+def print_at_col_top(
     value: float,
     col: int,
     *,
-    fmt: PrintFormat = PrintFormat.TIME,
-    decimal_places: int = 0,
-    color: PrintColor = PrintColor.CYAN,
+    fmt: PrintFormat,
+    decimal_places: int = -1,
+    color: PrintColor,
+    side: Literal["left", "right"],
 ):
     print_number(
         value=value,
         fmt=fmt,
         decimal_places=decimal_places,
-        anchor=Vec2(lane_to_preview_x(0, col), PREVIEW_Y_MIN - PREVIEW_TEXT_MARGIN_Y),
-        pivot=Vec2(0.5, 1),
+        anchor=Vec2(
+            lane_to_preview_x(
+                -6 if side == "left" else 6,
+                col,
+            )
+            + (-PREVIEW_TEXT_MARGIN_X if side == "left" else PREVIEW_TEXT_MARGIN_X),
+            PREVIEW_Y_MAX + PREVIEW_TEXT_MARGIN_Y + 0.008,
+        ),
+        pivot=Vec2(0.5, 0),
         dimensions=Vec2(PREVIEW_TEXT_W, PREVIEW_TEXT_H),
         color=color,
         horizontal_align=HorizontalAlign.CENTER,
