@@ -117,6 +117,8 @@ class PreviewBaseNote(PreviewArchetype):
     def render(self):
         if abs(self.lane) > 12:
             return
+        if not self.is_scored:
+            return
         draw_note(self.kind, self.lane, self.size, self.direction, self.target_time)
 
 
