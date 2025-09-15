@@ -79,7 +79,9 @@ class TimeToScaledTime(Record):
                 case _:
                     assert_never(self.last_ease)
             skip_scaled_time = change.timescale_skip * 60 / beat_to_bpm(change.beat)
-            if time <= next_time:
+            if time == next_time:
+                return next_scaled_time + skip_scaled_time
+            if time < next_time:
                 if abs(next_time - self.last_time) < 1e-6:
                     return self.last_scaled_time
                 match self.last_ease:
