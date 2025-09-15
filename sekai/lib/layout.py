@@ -468,11 +468,14 @@ def layout_sim_line(
     if left_lane > right_lane:
         left_lane, right_lane = right_lane, left_lane
         left_travel, right_travel = right_travel, left_travel
+    ml = perspective_vec(left_lane, 1, left_travel)
+    mr = perspective_vec(right_lane, 1, right_travel)
+    ort = (mr - ml).orthogonal().normalize()
     return Quad(
-        bl=perspective_vec(left_lane, 1 - NOTE_H, left_travel),
-        br=perspective_vec(right_lane, 1 - NOTE_H, right_travel),
-        tl=perspective_vec(left_lane, 1 + NOTE_H, left_travel),
-        tr=perspective_vec(right_lane, 1 + NOTE_H, right_travel),
+        bl=ml + ort * NOTE_H * Layout.h_scale * left_travel,
+        br=mr + ort * NOTE_H * Layout.h_scale * right_travel,
+        tl=ml - ort * NOTE_H * Layout.h_scale * left_travel,
+        tr=mr - ort * NOTE_H * Layout.h_scale * right_travel,
     )
 
 
