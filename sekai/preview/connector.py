@@ -1,3 +1,4 @@
+from math import ceil
 from typing import assert_never
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, entity_data, imported
@@ -16,7 +17,12 @@ from sekai.lib.connector import (
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import get_alpha
 from sekai.preview import note
-from sekai.preview.layout import layout_preview_slide_connector_segment, time_to_preview_col, time_to_preview_y
+from sekai.preview.layout import (
+    PREVIEW_COLUMN_SECS,
+    layout_preview_slide_connector_segment,
+    time_to_preview_col,
+    time_to_preview_y,
+)
 
 
 class PreviewConnector(PreviewArchetype):
@@ -85,6 +91,9 @@ def draw_connector(
     segment_tail_target_time: float,
     segment_tail_alpha: float,
 ):
+    if head_target_time == tail_target_time:
+        return
+
     normal_sprite = Sprite(-1)
     match kind:
         case (
@@ -150,7 +159,10 @@ def draw_connector(
         case EaseType.NONE | EaseType.LINEAR if head_alpha == tail_alpha:
             segment_count = 1
         case _:
-            segment_count = get_connector_quality_option(kind)
+            segment_count = ceil(
+                get_connector_quality_option(kind)
+                * max(8 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time), 2 * abs(head_alpha - tail_alpha))
+            )
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 
