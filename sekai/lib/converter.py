@@ -150,7 +150,9 @@ class PJSekaiExtendedLevelData:
         return iter(self.connector_entities)
 
 
-def convert_pjsekai_extended_level_data(data: ExternalLevelData) -> LevelData:
+def convert_pjsekai_extended_level_data(data: ExternalLevelData) -> LevelData | None:
+    if not any(e.archetype == "TimeScaleGroup" for e in data.entities):
+        return None
     pjsekai_data = PJSekaiExtendedLevelData(data.entities)
     bpm_changes = convert_bpm_changes(pjsekai_data)
     timescale_groups_by_index, timescale_entities = convert_timescale_groups(pjsekai_data)

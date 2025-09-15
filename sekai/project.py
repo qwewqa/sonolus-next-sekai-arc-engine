@@ -29,6 +29,6 @@ engine = Engine(
 project = Project(
     engine=engine,
     converters={
-        "chcy-pjsekai-extended": convert_pjsekai_extended_level_data,
+        None: convert_pjsekai_extended_level_data,
     },
 )
