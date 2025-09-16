@@ -54,7 +54,7 @@ class PreviewLayout:
 
 
 def init_preview_layout():
-    PreviewLayout.column_count = ceil(PreviewData.max_time / PREVIEW_COLUMN_SECS)
+    PreviewLayout.column_count = time_to_preview_col(PreviewData.max_time) + 1
     PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * 12
 
     canvas().update(
