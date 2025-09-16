@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from math import ceil, floor, pi
+from math import floor, pi
 from typing import Literal, assert_never
 
 from sonolus.script.array import Array, Dim
