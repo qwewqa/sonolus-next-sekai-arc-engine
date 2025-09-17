@@ -35,8 +35,9 @@ AVOID_DURATION = 2
 END_DURATION = 1.5
 
 
+MARGIN = 0.1
 LANE = 1.5
-SIZE = 1.5
+SIZE = 1.5 - MARGIN
 
 
 def tap_phase(t: PhaseTime):
@@ -626,7 +627,7 @@ def damage_phase(t: PhaseTime):
     dmg_note = TutorialNoteInfo.of(
         kind=NoteKind.DAMAGE,
         lane=0,
-        size=2,
+        size=2 - MARGIN,
     )
 
     if intro:
