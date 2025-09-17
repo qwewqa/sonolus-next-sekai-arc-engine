@@ -123,8 +123,9 @@ class WatchBaseNote(WatchArchetype):
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
-            schedule_note_sfx(self.kind, Judgment.PERFECT, self.target_time)
-            schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
+            if self.is_scored:
+                schedule_note_sfx(self.kind, Judgment.PERFECT, self.target_time)
+                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
 
         self.result.target_time = self.target_time
 
@@ -151,7 +152,7 @@ class WatchBaseNote(WatchArchetype):
             return
         if time() < self.target_time:
             return
-        if not is_replay() or self.played_hit_effects:
+        if (not is_replay() or self.played_hit_effects) and self.is_scored:
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
 
     @property
