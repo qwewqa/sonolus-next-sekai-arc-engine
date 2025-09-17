@@ -82,12 +82,24 @@ class Skin:
     flick_arrow_up4: Sprite = sprite("Sekai Flick Arrow Red Up 4")
     flick_arrow_up5: Sprite = sprite("Sekai Flick Arrow Red Up 5")
     flick_arrow_up6: Sprite = sprite("Sekai Flick Arrow Red Up 6")
-    flick_arrow_left1: Sprite = sprite("Sekai Flick Arrow Red Left 1")
-    flick_arrow_left2: Sprite = sprite("Sekai Flick Arrow Red Left 2")
-    flick_arrow_left3: Sprite = sprite("Sekai Flick Arrow Red Left 3")
-    flick_arrow_left4: Sprite = sprite("Sekai Flick Arrow Red Left 4")
-    flick_arrow_left5: Sprite = sprite("Sekai Flick Arrow Red Left 5")
-    flick_arrow_left6: Sprite = sprite("Sekai Flick Arrow Red Left 6")
+    flick_arrow_up_left1: Sprite = sprite("Sekai Flick Arrow Red Up Left 1")
+    flick_arrow_up_left2: Sprite = sprite("Sekai Flick Arrow Red Up Left 2")
+    flick_arrow_up_left3: Sprite = sprite("Sekai Flick Arrow Red Up Left 3")
+    flick_arrow_up_left4: Sprite = sprite("Sekai Flick Arrow Red Up Left 4")
+    flick_arrow_up_left5: Sprite = sprite("Sekai Flick Arrow Red Up Left 5")
+    flick_arrow_up_left6: Sprite = sprite("Sekai Flick Arrow Red Up Left 6")
+    flick_arrow_down1: Sprite = sprite("Sekai Flick Arrow Red Down 1")
+    flick_arrow_down2: Sprite = sprite("Sekai Flick Arrow Red Down 2")
+    flick_arrow_down3: Sprite = sprite("Sekai Flick Arrow Red Down 3")
+    flick_arrow_down4: Sprite = sprite("Sekai Flick Arrow Red Down 4")
+    flick_arrow_down5: Sprite = sprite("Sekai Flick Arrow Red Down 5")
+    flick_arrow_down6: Sprite = sprite("Sekai Flick Arrow Red Down 6")
+    flick_arrow_down_left1: Sprite = sprite("Sekai Flick Arrow Red Down Left 1")
+    flick_arrow_down_left2: Sprite = sprite("Sekai Flick Arrow Red Down Left 2")
+    flick_arrow_down_left3: Sprite = sprite("Sekai Flick Arrow Red Down Left 3")
+    flick_arrow_down_left4: Sprite = sprite("Sekai Flick Arrow Red Down Left 4")
+    flick_arrow_down_left5: Sprite = sprite("Sekai Flick Arrow Red Down Left 5")
+    flick_arrow_down_left6: Sprite = sprite("Sekai Flick Arrow Red Down Left 6")
     flick_arrow_fallback: StandardSprite.DIRECTIONAL_MARKER_RED
 
     critical_arrow_up1: Sprite = sprite("Sekai Flick Arrow Yellow Up 1")
@@ -96,12 +108,24 @@ class Skin:
     critical_arrow_up4: Sprite = sprite("Sekai Flick Arrow Yellow Up 4")
     critical_arrow_up5: Sprite = sprite("Sekai Flick Arrow Yellow Up 5")
     critical_arrow_up6: Sprite = sprite("Sekai Flick Arrow Yellow Up 6")
-    critical_arrow_left1: Sprite = sprite("Sekai Flick Arrow Yellow Left 1")
-    critical_arrow_left2: Sprite = sprite("Sekai Flick Arrow Yellow Left 2")
-    critical_arrow_left3: Sprite = sprite("Sekai Flick Arrow Yellow Left 3")
-    critical_arrow_left4: Sprite = sprite("Sekai Flick Arrow Yellow Left 4")
-    critical_arrow_left5: Sprite = sprite("Sekai Flick Arrow Yellow Left 5")
-    critical_arrow_left6: Sprite = sprite("Sekai Flick Arrow Yellow Left 6")
+    critical_arrow_up_left1: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 1")
+    critical_arrow_up_left2: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 2")
+    critical_arrow_up_left3: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 3")
+    critical_arrow_up_left4: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 4")
+    critical_arrow_up_left5: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 5")
+    critical_arrow_up_left6: Sprite = sprite("Sekai Flick Arrow Yellow Up Left 6")
+    critical_arrow_down1: Sprite = sprite("Sekai Flick Arrow Yellow Down 1")
+    critical_arrow_down2: Sprite = sprite("Sekai Flick Arrow Yellow Down 2")
+    critical_arrow_down3: Sprite = sprite("Sekai Flick Arrow Yellow Down 3")
+    critical_arrow_down4: Sprite = sprite("Sekai Flick Arrow Yellow Down 4")
+    critical_arrow_down5: Sprite = sprite("Sekai Flick Arrow Yellow Down 5")
+    critical_arrow_down6: Sprite = sprite("Sekai Flick Arrow Yellow Down 6")
+    critical_arrow_down_left1: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 1")
+    critical_arrow_down_left2: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 2")
+    critical_arrow_down_left3: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 3")
+    critical_arrow_down_left4: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 4")
+    critical_arrow_down_left5: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 5")
+    critical_arrow_down_left6: Sprite = sprite("Sekai Flick Arrow Yellow Down Left 6")
     critical_arrow_fallback: StandardSprite.DIRECTIONAL_MARKER_YELLOW
 
     normal_trace_note_left: Sprite = sprite("Sekai Trace Note Green Left")
@@ -163,7 +187,9 @@ class BodySprites(Record):
 
 class ArrowSprites(Record):
     up: Array[Sprite, Dim[6]]
-    left: Array[Sprite, Dim[6]]
+    up_left: Array[Sprite, Dim[6]]
+    down: Array[Sprite, Dim[6]]
+    down_left: Array[Sprite, Dim[6]]
     fallback: Sprite
 
     def _get_index_from_size(self, size: float) -> int:
@@ -173,12 +199,14 @@ class ArrowSprites(Record):
         result = +Sprite
         index = self._get_index_from_size(size)
         match direction:
-            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
+            case FlickDirection.UP_OMNI:
                 result @= self.up[index]
-            case (
-                FlickDirection.UP_LEFT | FlickDirection.UP_RIGHT | FlickDirection.DOWN_LEFT | FlickDirection.DOWN_RIGHT
-            ):
-                result @= self.left[index]
+            case FlickDirection.DOWN_OMNI:
+                result @= self.down[index]
+            case FlickDirection.UP_LEFT | FlickDirection.UP_RIGHT:
+                result @= self.up_left[index]
+            case FlickDirection.DOWN_LEFT | FlickDirection.DOWN_RIGHT:
+                result @= self.down_left[index]
             case _:
                 assert_never(direction)
         return result
@@ -277,13 +305,29 @@ normal_arrow_sprites = ArrowSprites(
         Skin.flick_arrow_up5,
         Skin.flick_arrow_up6,
     ),
-    left=Array(
-        Skin.flick_arrow_left1,
-        Skin.flick_arrow_left2,
-        Skin.flick_arrow_left3,
-        Skin.flick_arrow_left4,
-        Skin.flick_arrow_left5,
-        Skin.flick_arrow_left6,
+    up_left=Array(
+        Skin.flick_arrow_up_left1,
+        Skin.flick_arrow_up_left2,
+        Skin.flick_arrow_up_left3,
+        Skin.flick_arrow_up_left4,
+        Skin.flick_arrow_up_left5,
+        Skin.flick_arrow_up_left6,
+    ),
+    down=Array(
+        Skin.flick_arrow_down1,
+        Skin.flick_arrow_down2,
+        Skin.flick_arrow_down3,
+        Skin.flick_arrow_down4,
+        Skin.flick_arrow_down5,
+        Skin.flick_arrow_down6,
+    ),
+    down_left=Array(
+        Skin.flick_arrow_down_left1,
+        Skin.flick_arrow_down_left2,
+        Skin.flick_arrow_down_left3,
+        Skin.flick_arrow_down_left4,
+        Skin.flick_arrow_down_left5,
+        Skin.flick_arrow_down_left6,
     ),
     fallback=Skin.flick_arrow_fallback,
 )
@@ -296,13 +340,29 @@ critical_arrow_sprites = ArrowSprites(
         Skin.critical_arrow_up5,
         Skin.critical_arrow_up6,
     ),
-    left=Array(
-        Skin.critical_arrow_left1,
-        Skin.critical_arrow_left2,
-        Skin.critical_arrow_left3,
-        Skin.critical_arrow_left4,
-        Skin.critical_arrow_left5,
-        Skin.critical_arrow_left6,
+    up_left=Array(
+        Skin.critical_arrow_up_left1,
+        Skin.critical_arrow_up_left2,
+        Skin.critical_arrow_up_left3,
+        Skin.critical_arrow_up_left4,
+        Skin.critical_arrow_up_left5,
+        Skin.critical_arrow_up_left6,
+    ),
+    down=Array(
+        Skin.critical_arrow_down1,
+        Skin.critical_arrow_down2,
+        Skin.critical_arrow_down3,
+        Skin.critical_arrow_down4,
+        Skin.critical_arrow_down5,
+        Skin.critical_arrow_down6,
+    ),
+    down_left=Array(
+        Skin.critical_arrow_down_left1,
+        Skin.critical_arrow_down_left2,
+        Skin.critical_arrow_down_left3,
+        Skin.critical_arrow_down_left4,
+        Skin.critical_arrow_down_left5,
+        Skin.critical_arrow_down_left6,
     ),
     fallback=Skin.critical_arrow_fallback,
 )

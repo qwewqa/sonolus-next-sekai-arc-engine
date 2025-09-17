@@ -318,9 +318,6 @@ def layout_flick_arrow(
         tl=base_tl,
         tr=base_tr,
     ).translate(offset)
-    if is_down:
-        swap(result.bl, result.tl)
-        swap(result.br, result.tr)
     if reverse:
         swap(result.bl, result.br)
         swap(result.tl, result.tr)

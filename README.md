@@ -54,24 +54,48 @@
 | `Sekai Flick Arrow Red Up 4`                  |
 | `Sekai Flick Arrow Red Up 5`                  |
 | `Sekai Flick Arrow Red Up 6`                  |
-| `Sekai Flick Arrow Red Left 1`                |
-| `Sekai Flick Arrow Red Left 2`                |
-| `Sekai Flick Arrow Red Left 3`                |
-| `Sekai Flick Arrow Red Left 4`                |
-| `Sekai Flick Arrow Red Left 5`                |
-| `Sekai Flick Arrow Red Left 6`                |
+| `Sekai Flick Arrow Red Up Left 1`             |
+| `Sekai Flick Arrow Red Up Left 2`             |
+| `Sekai Flick Arrow Red Up Left 3`             |
+| `Sekai Flick Arrow Red Up Left 4`             |
+| `Sekai Flick Arrow Red Up Left 5`             |
+| `Sekai Flick Arrow Red Up Left 6`             |
+| `Sekai Flick Arrow Red Down 1`                |
+| `Sekai Flick Arrow Red Down 2`                |
+| `Sekai Flick Arrow Red Down 3`                |
+| `Sekai Flick Arrow Red Down 4`                |
+| `Sekai Flick Arrow Red Down 5`                |
+| `Sekai Flick Arrow Red Down 6`                |
+| `Sekai Flick Arrow Red Down Left 1`           |
+| `Sekai Flick Arrow Red Down Left 2`           |
+| `Sekai Flick Arrow Red Down Left 3`           |
+| `Sekai Flick Arrow Red Down Left 4`           |
+| `Sekai Flick Arrow Red Down Left 5`           |
+| `Sekai Flick Arrow Red Down Left 6`           |
 | `Sekai Flick Arrow Yellow Up 1`               |
 | `Sekai Flick Arrow Yellow Up 2`               |
 | `Sekai Flick Arrow Yellow Up 3`               |
 | `Sekai Flick Arrow Yellow Up 4`               |
 | `Sekai Flick Arrow Yellow Up 5`               |
 | `Sekai Flick Arrow Yellow Up 6`               |
-| `Sekai Flick Arrow Yellow Left 1`             |
-| `Sekai Flick Arrow Yellow Left 2`             |
-| `Sekai Flick Arrow Yellow Left 3`             |
-| `Sekai Flick Arrow Yellow Left 4`             |
-| `Sekai Flick Arrow Yellow Left 5`             |
-| `Sekai Flick Arrow Yellow Left 6`             |
+| `Sekai Flick Arrow Yellow Up Left 1`          |
+| `Sekai Flick Arrow Yellow Up Left 2`          |
+| `Sekai Flick Arrow Yellow Up Left 3`          |
+| `Sekai Flick Arrow Yellow Up Left 4`          |
+| `Sekai Flick Arrow Yellow Up Left 5`          |
+| `Sekai Flick Arrow Yellow Up Left 6`          |
+| `Sekai Flick Arrow Yellow Down 1`             |
+| `Sekai Flick Arrow Yellow Down 2`             |
+| `Sekai Flick Arrow Yellow Down 3`             |
+| `Sekai Flick Arrow Yellow Down 4`             |
+| `Sekai Flick Arrow Yellow Down 5`             |
+| `Sekai Flick Arrow Yellow Down 6`             |
+| `Sekai Flick Arrow Yellow Down Left 1`        |
+| `Sekai Flick Arrow Yellow Down Left 2`        |
+| `Sekai Flick Arrow Yellow Down Left 3`        |
+| `Sekai Flick Arrow Yellow Down Left 4`        |
+| `Sekai Flick Arrow Yellow Down Left 5`        |
+| `Sekai Flick Arrow Yellow Down Left 6`        |
 | `Sekai Trace Note Green Left`                 |
 | `Sekai Trace Note Green Middle`               |
 | `Sekai Trace Note Green Right`                |
