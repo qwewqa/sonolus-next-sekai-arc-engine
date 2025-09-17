@@ -105,6 +105,8 @@
 | `Sekai Trace Note Red Left`                   |
 | `Sekai Trace Note Red Middle`                 |
 | `Sekai Trace Note Red Right`                  |
+| `Sekai Trace Diamond Green`                   |
+| `Sekai Trace Diamond Yellow`                  |
 | `Sekai Trace Diamond Red`                     |
 | `Sekai Guide Green`                           |
 | `Sekai Guide Yellow`                          |

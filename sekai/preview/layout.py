@@ -192,22 +192,16 @@ def layout_preview_tick(lane: float, col: int, y: float) -> Rect:
 def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirection, col: int, y: float) -> Rect:
     match direction:
         case FlickDirection.UP_OMNI:
-            is_down = False
             reverse = False
         case FlickDirection.DOWN_OMNI:
-            is_down = True
             reverse = False
         case FlickDirection.UP_LEFT:
-            is_down = False
             reverse = False
         case FlickDirection.UP_RIGHT:
-            is_down = False
             reverse = True
         case FlickDirection.DOWN_LEFT:
-            is_down = True
             reverse = False
         case FlickDirection.DOWN_RIGHT:
-            is_down = True
             reverse = True
         case _:
             assert_never(direction)
@@ -218,8 +212,6 @@ def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirecti
         b=y,
         t=y + 2 * w * PREVIEW_LANE_W,
     )
-    if is_down:
-        result.t, result.b = result.b, result.t
     if reverse:
         result.l, result.r = result.r, result.l
     return result

@@ -26,15 +26,17 @@ from sekai.lib.skin import (
     critical_note_body_sprites,
     critical_tick_sprites,
     critical_trace_note_body_sprites,
+    critical_trace_tick_sprites,
     damage_note_body_sprites,
     flick_note_body_sprites,
-    flick_tick_sprites,
     normal_arrow_sprites,
     normal_note_body_sprites,
     normal_tick_sprites,
     normal_trace_note_body_sprites,
+    normal_trace_tick_sprites,
     slide_note_body_sprites,
     trace_flick_note_body_sprites,
+    trace_flick_tick_sprites,
     trace_slide_note_body_sprites,
 )
 from sekai.play.note import derive_note_archetypes
@@ -232,14 +234,23 @@ def draw_note_arrow(
 
 def draw_note_tick(kind: NoteKind, lane: float, target_time: float, col: int, y: float):
     match kind:
-        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE | NoteKind.NORM_TICK:
+        case NoteKind.NORM_TICK:
             _draw_tick(normal_tick_sprites, lane, target_time, col, y)
-        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE | NoteKind.CRIT_TICK:
+        case NoteKind.CRIT_TICK:
             _draw_tick(critical_tick_sprites, lane, target_time, col, y)
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+            _draw_tick(normal_trace_tick_sprites, lane, target_time, col, y)
+        case (
+            NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            _draw_tick(critical_trace_tick_sprites, lane, target_time, col, y)
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
-            _draw_tick(flick_tick_sprites, lane, target_time, col, y)
-        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
-            _draw_tick(critical_tick_sprites, lane, target_time, col, y)
+            _draw_tick(trace_flick_tick_sprites, lane, target_time, col, y)
         case (
             NoteKind.NORM_TAP
             | NoteKind.CRIT_TAP

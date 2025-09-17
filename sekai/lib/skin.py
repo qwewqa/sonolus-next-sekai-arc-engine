@@ -132,11 +132,15 @@ class Skin:
     normal_trace_note_middle: Sprite = sprite("Sekai Trace Note Green Middle")
     normal_trace_note_right: Sprite = sprite("Sekai Trace Note Green Right")
     normal_trace_note_secondary_fallback: StandardSprite.NOTE_HEAD_GREEN
+    normal_trace_tick_note: Sprite = sprite("Sekai Trace Diamond Green")
+    normal_trace_tick_note_fallback: StandardSprite.NOTE_TICK_GREEN
 
     critical_trace_note_left: Sprite = sprite("Sekai Trace Note Yellow Left")
     critical_trace_note_middle: Sprite = sprite("Sekai Trace Note Yellow Middle")
     critical_trace_note_right: Sprite = sprite("Sekai Trace Note Yellow Right")
     critical_trace_note_fallback: StandardSprite.NOTE_HEAD_YELLOW
+    critical_trace_tick_note: Sprite = sprite("Sekai Trace Diamond Yellow")
+    critical_trace_tick_note_fallback: StandardSprite.NOTE_TICK_YELLOW
 
     trace_flick_note_left: Sprite = sprite("Sekai Trace Note Red Left")
     trace_flick_note_middle: Sprite = sprite("Sekai Trace Note Red Middle")
@@ -213,7 +217,7 @@ class ArrowSprites(Record):
 
     @property
     def custom_available(self):
-        return self.up[0].is_available
+        return self.up_left[0].is_available
 
 
 class TickSprites(Record):
@@ -376,7 +380,15 @@ critical_tick_sprites = TickSprites(
     normal=Skin.critical_slide_tick_note,
     fallback=Skin.critical_slide_tick_note_fallback,
 )
-flick_tick_sprites = TickSprites(
+normal_trace_tick_sprites = TickSprites(
+    normal=Skin.normal_trace_tick_note,
+    fallback=Skin.normal_trace_tick_note_fallback,
+)
+critical_trace_tick_sprites = TickSprites(
+    normal=Skin.critical_trace_tick_note,
+    fallback=Skin.critical_trace_tick_note_fallback,
+)
+trace_flick_tick_sprites = TickSprites(
     normal=Skin.trace_flick_tick_note,
     fallback=Skin.trace_flick_tick_note_fallback,
 )
