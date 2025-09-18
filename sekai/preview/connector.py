@@ -157,12 +157,11 @@ def draw_connector(
 
     match ease_type:
         case EaseType.NONE | EaseType.LINEAR if head_alpha == tail_alpha:
-            segment_count = 1
+            quality_dist_scale = 0
         case _:
-            segment_count = ceil(
-                get_connector_quality_option(kind)
-                * max(8 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time), 2 * abs(head_alpha - tail_alpha))
-            )
+            quality_dist_scale = 100 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time)
+    quality_alpha_scale = 30 * abs(head_alpha - tail_alpha)
+    segment_count = max(1, ceil(get_connector_quality_option(kind) * max(quality_dist_scale, quality_alpha_scale)))
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 

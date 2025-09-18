@@ -49,8 +49,6 @@ from sekai.lib.skin import (
     yellow_guide_sprites,
 )
 
-CONNECTOR_QUALITY_SCALE = 3.0
-
 CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
 CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
 
@@ -355,7 +353,7 @@ def draw_connector(
         change_scale = max(change_scale, y_change)
     change_scale = max(change_scale, abs(start_alpha - end_alpha) * 2)
     quality = get_connector_quality_option(kind)
-    segment_count = min(max(1, ceil(quality * change_scale * CONNECTOR_QUALITY_SCALE)), quality)
+    segment_count = min(max(1, ceil(quality * change_scale * 30)), quality * 30)
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 

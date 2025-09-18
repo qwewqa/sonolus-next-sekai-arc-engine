@@ -158,18 +158,20 @@ class Options:
     slide_quality: int = slider_option(
         name="Slide Quality",
         scope="Sekai",
-        default=10,
-        min=1,
-        max=50,
-        step=1,
+        default=1,
+        min=0.1,
+        max=2,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
     )
     guide_quality: int = slider_option(
         name="Guide Quality",
         scope="Sekai",
-        default=10,
-        min=1,
-        max=50,
-        step=1,
+        default=1,
+        min=0.1,
+        max=2,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
     )
     note_margin: float = slider_option(
         name="Note Margin",
@@ -179,14 +181,20 @@ class Options:
         max=0.2,
         step=0.01,
     )
-    fade_out: bool = toggle_option(
-        name="Fade Out",
+    alternative_approach_curve: bool = toggle_option(
+        name="Alternative Approach Curve",
+        advanced=True,
+        default=False,
+        scope="Sekai",
+    )
+    disable_timescale: bool = toggle_option(
+        name="Disable Timescale",
         standard=True,
         advanced=True,
         default=False,
     )
-    disable_timescale: bool = toggle_option(
-        name="Disable Timescale",
+    fade_out: bool = toggle_option(
+        name="Fade Out",
         standard=True,
         advanced=True,
         default=False,
@@ -202,12 +210,6 @@ class Options:
         standard=True,
         advanced=True,
         default=False,
-    )
-    alternative_approach_curve: bool = toggle_option(
-        name="Alternative Approach Curve",
-        advanced=True,
-        default=False,
-        scope="Sekai",
     )
     all_flicks: bool = toggle_option(
         name="Oops All Flicks",
