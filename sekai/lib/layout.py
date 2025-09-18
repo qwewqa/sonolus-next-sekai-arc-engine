@@ -77,12 +77,12 @@ def init_layout():
     Layout.scaled_note_h = NOTE_H * Layout.h_scale
 
     if Options.stage_cover:
-        Layout.progress_start = Options.stage_cover
+        Layout.progress_start = inverse_approach(lerp(approach(0), 1.0, Options.stage_cover))
     else:
         Layout.progress_start = 0.0
 
     if Options.hidden:
-        Layout.progress_cutoff = 1 - Options.hidden
+        Layout.progress_cutoff = inverse_approach(lerp(1.0, approach(0), Options.hidden))
     else:
         Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
 
@@ -97,6 +97,20 @@ def approach(progress: float) -> float:
         d = 1 / lerp(d_0, d_1, progress) if progress < 1 else 1 / d_1 + v_1 * (progress - 1)
         return remap(1 / d_0, 1 / d_1, APPROACH_SCALE, 1, d)
     return APPROACH_SCALE ** (1 - progress)
+
+
+def inverse_approach(approach_value: float) -> float:
+    if Options.alternative_approach_curve:
+        d_0 = 1 / APPROACH_SCALE
+        d_1 = 2.5
+        v_1 = (d_0 - d_1) / d_1**2
+        d = remap(APPROACH_SCALE, 1, 1 / d_0, 1 / d_1, approach_value)
+        if d <= 1 / d_1:
+            return (1 / d - d_0) / (d_1 - d_0)
+        else:
+            return 1 + (d - 1 / d_1) / v_1
+    else:
+        return 1 - log(approach_value) / log(APPROACH_SCALE)
 
 
 def progress_to(to_time: float, now: float) -> float:
@@ -173,7 +187,7 @@ def layout_lane(lane: float, size: float) -> Quad:
 
 
 def layout_stage_cover() -> Quad:
-    b = approach(Options.stage_cover)
+    b = lerp(approach(0), 1.0, Options.stage_cover)
     return perspective_rect(
         l=-6,
         r=6,
@@ -184,7 +198,7 @@ def layout_stage_cover() -> Quad:
 
 def layout_hidden_cover() -> Quad:
     b = 1 - NOTE_H
-    t = min(b, max(approach(1 - Options.hidden), approach(Options.stage_cover)))
+    t = min(b, max(lerp(1.0, approach(0), Options.hidden), lerp(approach(0), 1.0, Options.stage_cover)))
     return perspective_rect(
         l=-6,
         r=6,
