@@ -334,26 +334,28 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, eased_end_frac))
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
-    start_screen_center = transformed_vec_at(start_lane, start_travel)
-    end_screen_center = transformed_vec_at(end_lane, end_travel)
-    x_change = (
-        max(
-            abs((start_lane - start_size) - (end_lane - end_size)),
-            abs((start_lane + start_size) - (end_lane + end_size)),
-        )
-        * max(start_travel, end_travel)
-        * Layout.w_scale
-    )
-    y_change = abs(start_screen_center.y - end_screen_center.y)
-    change_scale = (x_change * y_change) ** 0.5
-    if ease_type == EaseType.LINEAR:
-        # Linear still curves due to the approach curve, but less, so we need fewer segments.
-        change_scale /= 2
+
+    total_offset = 0
+    for sl, el in (
+        (start_lane - start_size, end_lane - end_size),
+        (start_lane + start_size, end_lane + end_size),
+    ):
+        start_ref = transformed_vec_at(sl, start_travel)
+        end_ref = transformed_vec_at(el, end_travel)
+        for r in (0.25, 0.5, 0.75):
+            frac = lerp(start_frac, end_frac, r)
+            progress = lerp(start_progress, end_progress, r)
+            travel = approach(progress)
+            lane = lerp(sl, el, ease(ease_type, frac))
+            pos = transformed_vec_at(lane, travel)
+            ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
+            total_offset += (pos - ref_pos).magnitude
+    curve_change_scale = total_offset**0.5 * 1.5
+    alpha_change_scale = abs(start_alpha - end_alpha) * 2
     if Options.fade_out:
-        change_scale = max(change_scale, y_change)
-    change_scale = max(change_scale, abs(start_alpha - end_alpha) * 2)
+        alpha_change_scale = max(alpha_change_scale, abs(get_alpha(head_target_time) - get_alpha(tail_target_time)) * 2)
     quality = get_connector_quality_option(kind)
-    segment_count = min(max(1, ceil(quality * change_scale * 30)), quality * 30)
+    segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 
