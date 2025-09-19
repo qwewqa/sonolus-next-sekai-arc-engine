@@ -1,7 +1,7 @@
 [project]
-name = "pysekai"
+name = "next-sekai"
 version = "0.1.0"
-description = "Next Sekai Sonolus engine"
+description = "Next SEKAI Sonolus engine"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

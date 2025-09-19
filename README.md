@@ -1,12 +1,18 @@
-# PySekai
+# Next SEKAI Sonolus Engine
 
-(WIP) A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
+A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
+
+## Official Resources
+
+Server: https://coconut.sonolus.com/next-sekai/  
+Editor: https://next-sekai-editor.sonolus.com/  
 
 ## Quick Dev Setup
-1. Install [uv](https://docs.astral.sh/uv/)
-2. Run `uv sync`
-3. Add test chart files (chcy packed scp files) to `resources/`
-4. Run `sonolus-py dev`
+1. Install [uv](https://docs.astral.sh/uv/).
+2. Run `uv sync`.
+3. Add resources (full exported scp files) such as skins and levels to the `/resources` folder.
+4. [Ensure your venv is activated](https://docs.astral.sh/uv/pip/environments/#using-a-virtual-environment).
+5. Run `sonolus-py dev`.
 
 ## Custom Resources
 

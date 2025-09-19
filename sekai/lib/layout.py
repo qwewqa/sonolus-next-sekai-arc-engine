@@ -2,11 +2,10 @@ from enum import IntEnum
 from math import ceil, floor, log, pi
 from typing import assert_never
 
-from sonolus.script.easing import ease_in_sine
 from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
-from sonolus.script.runtime import aspect_ratio, is_tutorial, screen, time
+from sonolus.script.runtime import aspect_ratio, screen
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
@@ -122,13 +121,6 @@ def preempt_time() -> float:
 
 
 def get_alpha(target_time: float, now: float | None = None) -> float:
-    if is_tutorial():
-        return 1.0
-    if Options.fade_out:
-        if now is None:
-            now = time()
-        progress = unlerp(Layout.progress_start, 1.0, progress_to(target_time, now))
-        return 1.0 - ease_in_sine(progress * 1.75)
     return 1.0
 
 
@@ -205,10 +197,6 @@ def layout_hidden_cover() -> Quad:
         t=t,
         b=b,
     )
-
-
-def layout_background_dim() -> Rect:
-    return screen()
 
 
 def layout_fallback_judge_line() -> Quad:

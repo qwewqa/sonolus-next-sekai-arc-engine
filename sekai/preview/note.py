@@ -16,7 +16,7 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.layout import FlickDirection
-from sekai.lib.note import NoteKind, flip_direction, get_attach_params, map_note_kind, mirror_direction
+from sekai.lib.note import NoteKind, get_attach_params, map_note_kind, mirror_flick_direction
 from sekai.lib.options import Options
 from sekai.lib.skin import (
     ArrowSprites,
@@ -81,9 +81,7 @@ class PreviewBaseNote(PreviewArchetype):
 
         if Options.mirror:
             self.lane *= -1
-            self.direction = mirror_direction(self.direction)
-        if Options.flip_flicks:
-            self.direction = flip_direction(self.direction)
+            self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
 

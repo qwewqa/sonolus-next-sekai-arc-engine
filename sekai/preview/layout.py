@@ -90,15 +90,6 @@ def layout_preview_lane(lane: float, size: float, col: int) -> Rect:
     return layout_preview_lane_by_edges(lane - size, lane + size, col)
 
 
-def layout_preview_background_dim() -> Rect:
-    return Rect(
-        l=screen().l,
-        r=PreviewLayout.column_width * PreviewLayout.column_count + 1,
-        b=-1,
-        t=1,
-    )
-
-
 def layout_preview_bottom_cover() -> Rect:
     return Rect(
         l=screen().l,

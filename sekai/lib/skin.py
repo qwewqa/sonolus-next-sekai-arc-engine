@@ -18,7 +18,6 @@ class Skin:
     stage_right_border: StandardSprite.STAGE_RIGHT_BORDER
 
     sekai_stage: Sprite = sprite("Sekai Stage")
-    sekai_stage_surface: Sprite = sprite("Sekai Stage Surface")
 
     sim_line: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
 
@@ -131,7 +130,7 @@ class Skin:
     normal_trace_note_left: Sprite = sprite("Sekai Trace Note Green Left")
     normal_trace_note_middle: Sprite = sprite("Sekai Trace Note Green Middle")
     normal_trace_note_right: Sprite = sprite("Sekai Trace Note Green Right")
-    normal_trace_note_secondary_fallback: StandardSprite.NOTE_HEAD_GREEN
+    normal_trace_note_fallback: StandardSprite.NOTE_HEAD_GREEN
     normal_trace_tick_note: Sprite = sprite("Sekai Trace Diamond Green")
     normal_trace_tick_note_fallback: StandardSprite.NOTE_TICK_GREEN
 
@@ -145,6 +144,7 @@ class Skin:
     trace_flick_note_left: Sprite = sprite("Sekai Trace Note Red Left")
     trace_flick_note_middle: Sprite = sprite("Sekai Trace Note Red Middle")
     trace_flick_note_right: Sprite = sprite("Sekai Trace Note Red Right")
+    trace_flick_note_fallback: StandardSprite.NOTE_HEAD_RED
     trace_flick_tick_note: Sprite = sprite("Sekai Trace Diamond Red")
     trace_flick_tick_note_fallback: StandardSprite.NOTE_TICK_RED
 
@@ -169,8 +169,6 @@ class Skin:
     damage_note_middle: Sprite = sprite("Sekai Trace Note Purple Middle")
     damage_note_right: Sprite = sprite("Sekai Trace Note Purple Right")
     damage_note_fallback: StandardSprite.NOTE_HEAD_PURPLE
-
-    background_dim: Sprite = sprite("Sekai Black Background")
 
     beat_line: StandardSprite.GRID_NEUTRAL
     bpm_change_line: StandardSprite.GRID_PURPLE
@@ -277,7 +275,7 @@ normal_trace_note_body_sprites = BodySprites(
     left=Skin.normal_trace_note_left,
     middle=Skin.normal_trace_note_middle,
     right=Skin.normal_trace_note_right,
-    fallback=Skin.normal_trace_note_secondary_fallback,
+    fallback=Skin.normal_trace_note_fallback,
 )
 critical_trace_note_body_sprites = BodySprites(
     left=Skin.critical_trace_note_left,
@@ -289,7 +287,7 @@ trace_flick_note_body_sprites = BodySprites(
     left=Skin.trace_flick_note_left,
     middle=Skin.trace_flick_note_middle,
     right=Skin.trace_flick_note_right,
-    fallback=Skin.trace_flick_tick_note_fallback,
+    fallback=Skin.trace_flick_note_fallback,
 )
 trace_slide_note_body_sprites = normal_trace_note_body_sprites
 

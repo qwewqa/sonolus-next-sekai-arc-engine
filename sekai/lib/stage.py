@@ -1,7 +1,6 @@
 from sekai.lib.effect import SFX_DISTANCE, Effects
-from sekai.lib.layer import LAYER_BACKGROUND_COVER, LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
+from sekai.lib.layer import LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
 from sekai.lib.layout import (
-    layout_background_dim,
     layout_fallback_judge_line,
     layout_hidden_cover,
     layout_lane,
@@ -17,7 +16,6 @@ from sekai.lib.skin import Skin
 def draw_stage_and_accessories():
     draw_stage()
     draw_stage_cover()
-    draw_background_dim()
 
 
 def draw_stage():
@@ -32,7 +30,6 @@ def draw_stage():
 def draw_sekai_stage():
     layout = layout_sekai_stage()
     Skin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
-    Skin.sekai_stage_surface.draw(layout, z=get_z(LAYER_STAGE, etc=-1), a=Options.lane_alpha)
 
 
 def draw_fallback_stage():
@@ -56,18 +53,6 @@ def draw_stage_cover():
     if Options.hidden > 0:
         layout = layout_hidden_cover()
         Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
-
-
-def draw_background_dim():
-    if Options.background_brightness >= 1.0:
-        return
-
-    sprite = +Skin.background_dim
-    if not sprite.is_available:
-        sprite @= Skin.cover
-
-    layout = layout_background_dim()
-    sprite.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=1 - Options.background_brightness)
 
 
 def play_lane_hit_effects(lane: float):

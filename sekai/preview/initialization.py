@@ -14,7 +14,7 @@ from sekai.preview.layout import (
     layout_preview_bar_line,
     print_at_col_top,
 )
-from sekai.preview.stage import draw_preview_background_dim, draw_preview_cover, draw_preview_stage
+from sekai.preview.stage import draw_preview_cover, draw_preview_stage
 
 
 class PreviewInitialization(PreviewArchetype):
@@ -27,7 +27,6 @@ class PreviewInitialization(PreviewArchetype):
 
     def render(self):
         draw_preview_stage()
-        draw_preview_background_dim()
         draw_preview_cover()
         print_preview_col_head_text()
         draw_beat_lines()

@@ -31,7 +31,6 @@ from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
 from sekai.lib.note import (
     NoteKind,
     draw_note,
-    flip_direction,
     get_attach_params,
     get_leniency,
     get_note_bucket,
@@ -41,7 +40,7 @@ from sekai.lib.note import (
     has_tap_input,
     is_head,
     map_note_kind,
-    mirror_direction,
+    mirror_flick_direction,
     play_note_hit_effects,
     schedule_note_auto_sfx,
 )
@@ -102,9 +101,7 @@ class BaseNote(PlayArchetype):
 
         if Options.mirror:
             self.lane *= -1
-            self.direction = mirror_direction(self.direction)
-        if Options.flip_flicks:
-            self.direction = flip_direction(self.direction)
+            self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)

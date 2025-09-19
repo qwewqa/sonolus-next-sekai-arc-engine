@@ -114,7 +114,7 @@ class Buckets:
     normal_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
             body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_secondary_fallback,
+            body_fallback=Skin.normal_trace_note_fallback,
             tick=Skin.normal_trace_tick_note,
         ),
         unit=StandardText.MILLISECOND_UNIT,
@@ -188,7 +188,7 @@ class Buckets:
         sprites=create_bucket_sprites(
             connector=Skin.normal_slide_connector_active,
             body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_secondary_fallback,
+            body_fallback=Skin.normal_trace_note_fallback,
             body_pos="left",
             tick=Skin.normal_trace_tick_note,
         ),
@@ -269,7 +269,7 @@ class Buckets:
         sprites=create_bucket_sprites(
             connector=Skin.normal_slide_connector_active,
             body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_secondary_fallback,
+            body_fallback=Skin.normal_trace_note_fallback,
             body_pos="right",
             tick=Skin.normal_trace_tick_note,
         ),

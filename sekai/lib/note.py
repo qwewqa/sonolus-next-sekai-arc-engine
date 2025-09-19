@@ -185,99 +185,7 @@ def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
 
 
 def map_note_kind(kind: NoteKind) -> NoteKind:
-    if Options.all_flicks:
-        kind = map_note_kind_all_flicks(kind)
-    if Options.no_flicks:
-        kind = map_note_kind_no_flicks(kind)
     return kind
-
-
-def map_note_kind_all_flicks(kind: NoteKind) -> NoteKind:
-    match kind:
-        case NoteKind.NORM_TAP | NoteKind.NORM_FLICK:
-            return NoteKind.NORM_FLICK
-        case NoteKind.CRIT_TAP | NoteKind.CRIT_FLICK:
-            return NoteKind.CRIT_FLICK
-        case NoteKind.NORM_TRACE | NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_RELEASE | NoteKind.NORM_TICK:
-            return NoteKind.NORM_TRACE_FLICK
-        case NoteKind.CRIT_TRACE | NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_RELEASE | NoteKind.CRIT_TICK:
-            return NoteKind.CRIT_TRACE_FLICK
-        case NoteKind.NORM_HEAD_TAP | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_HEAD_RELEASE:
-            return NoteKind.NORM_HEAD_FLICK
-        case NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_HEAD_TRACE_FLICK:
-            return NoteKind.NORM_HEAD_TRACE_FLICK
-        case NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_HEAD_RELEASE:
-            return NoteKind.CRIT_HEAD_FLICK
-        case NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_HEAD_TRACE_FLICK:
-            return NoteKind.CRIT_HEAD_TRACE_FLICK
-        case NoteKind.NORM_TAIL_TAP | NoteKind.NORM_TAIL_FLICK | NoteKind.NORM_TAIL_RELEASE:
-            return NoteKind.NORM_TAIL_FLICK
-        case NoteKind.CRIT_TAIL_TAP | NoteKind.CRIT_TAIL_FLICK | NoteKind.CRIT_TAIL_RELEASE:
-            return NoteKind.CRIT_TAIL_FLICK
-        case NoteKind.NORM_TAIL_TRACE | NoteKind.NORM_TAIL_TRACE_FLICK:
-            return NoteKind.NORM_TAIL_TRACE_FLICK
-        case NoteKind.CRIT_TAIL_TRACE | NoteKind.CRIT_TAIL_TRACE_FLICK:
-            return NoteKind.CRIT_TAIL_TRACE_FLICK
-        case NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
-            return kind
-        case _:
-            assert_never(kind)
-
-
-def map_note_kind_no_flicks(kind: NoteKind) -> NoteKind:
-    match kind:
-        case NoteKind.NORM_FLICK:
-            return NoteKind.NORM_TAP
-        case NoteKind.CRIT_FLICK:
-            return NoteKind.CRIT_TAP
-        case NoteKind.NORM_TRACE_FLICK:
-            return NoteKind.NORM_TRACE
-        case NoteKind.CRIT_TRACE_FLICK:
-            return NoteKind.CRIT_TRACE
-        case NoteKind.NORM_HEAD_FLICK:
-            return NoteKind.NORM_HEAD_TAP
-        case NoteKind.CRIT_HEAD_FLICK:
-            return NoteKind.CRIT_HEAD_TAP
-        case NoteKind.NORM_HEAD_TRACE_FLICK:
-            return NoteKind.NORM_HEAD_TRACE
-        case NoteKind.CRIT_HEAD_TRACE_FLICK:
-            return NoteKind.CRIT_HEAD_TRACE
-        case NoteKind.NORM_TAIL_FLICK:
-            return NoteKind.NORM_TAIL_TRACE
-        case NoteKind.CRIT_TAIL_FLICK:
-            return NoteKind.CRIT_TAIL_TRACE
-        case NoteKind.NORM_TAIL_TRACE_FLICK:
-            return NoteKind.NORM_TAIL_TRACE
-        case NoteKind.CRIT_TAIL_TRACE_FLICK:
-            return NoteKind.CRIT_TAIL_TRACE
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            return kind
-        case _:
-            assert_never(kind)
 
 
 def get_note_life(kind: NoteKind) -> ArchetypeLife:
@@ -330,7 +238,7 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
     return result
 
 
-def mirror_direction(direction: FlickDirection) -> FlickDirection:
+def mirror_flick_direction(direction: FlickDirection) -> FlickDirection:
     match direction:
         case FlickDirection.UP_OMNI:
             return FlickDirection.UP_OMNI
@@ -344,24 +252,6 @@ def mirror_direction(direction: FlickDirection) -> FlickDirection:
             return FlickDirection.DOWN_RIGHT
         case FlickDirection.DOWN_RIGHT:
             return FlickDirection.DOWN_LEFT
-        case _:
-            assert_never(direction)
-
-
-def flip_direction(direction: FlickDirection) -> FlickDirection:
-    match direction:
-        case FlickDirection.UP_OMNI:
-            return FlickDirection.DOWN_OMNI
-        case FlickDirection.DOWN_OMNI:
-            return FlickDirection.UP_OMNI
-        case FlickDirection.UP_LEFT:
-            return FlickDirection.DOWN_LEFT
-        case FlickDirection.UP_RIGHT:
-            return FlickDirection.DOWN_RIGHT
-        case FlickDirection.DOWN_LEFT:
-            return FlickDirection.UP_LEFT
-        case FlickDirection.DOWN_RIGHT:
-            return FlickDirection.UP_RIGHT
         case _:
             assert_never(direction)
 
@@ -1026,8 +916,6 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= EMPTY_JUDGMENT_WINDOW
         case _:
             assert_never(kind)
-    if Options.easy:
-        result *= 2.0
     return result
 
 
@@ -1102,8 +990,6 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
 
 
 def get_leniency(kind: NoteKind) -> float:
-    if Options.easy:
-        return 12.0 if kind != NoteKind.DAMAGE else 0.0
     match kind:
         case NoteKind.NORM_TAP | NoteKind.CRIT_TAP:
             return 0.75

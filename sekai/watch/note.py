@@ -21,13 +21,12 @@ from sekai.lib.layout import FlickDirection, progress_to
 from sekai.lib.note import (
     NoteKind,
     draw_note,
-    flip_direction,
     get_attach_params,
     get_note_bucket,
     get_visual_spawn_time,
     is_head,
     map_note_kind,
-    mirror_direction,
+    mirror_flick_direction,
     play_note_hit_effects,
     schedule_note_auto_sfx,
     schedule_note_sfx,
@@ -77,9 +76,7 @@ class WatchBaseNote(WatchArchetype):
 
         if Options.mirror:
             self.lane *= -1
-            self.direction = mirror_direction(self.direction)
-        if Options.flip_flicks:
-            self.direction = flip_direction(self.direction)
+            self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
 

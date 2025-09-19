@@ -102,15 +102,6 @@ class Options:
         step=0.05,
         unit=StandardText.PERCENTAGE_UNIT,
     )
-    lane_alpha: float = slider_option(
-        name=StandardText.LANE_ALPHA,
-        scope="Sekai",
-        default=1,
-        min=0,
-        max=1,
-        step=0.05,
-        unit=StandardText.PERCENTAGE_UNIT,
-    )
     stage_cover: float = slider_option(
         name=StandardText.STAGE_COVER_VERTICAL,
         advanced=True,
@@ -131,15 +122,6 @@ class Options:
         step=0.01,
         unit=StandardText.PERCENTAGE_UNIT,
     )
-    background_brightness: float = slider_option(
-        name="Background brightness",
-        scope="Sekai",
-        default=1,
-        min=0,
-        max=1,
-        step=0.05,
-        unit=StandardText.PERCENTAGE_UNIT,
-    )
     lock_stage_aspect_ratio: bool = toggle_option(
         name=StandardText.STAGE_ASPECTRATIO_LOCK,
         scope="Sekai",
@@ -157,25 +139,25 @@ class Options:
     )
     slide_quality: int = slider_option(
         name="Slide Quality",
-        scope="Sekai",
+        scope="Next Sekai",
         default=1,
-        min=0.2,
+        min=0.5,
         max=2,
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
     guide_quality: int = slider_option(
         name="Guide Quality",
-        scope="Sekai",
+        scope="Next Sekai",
         default=1,
-        min=0.2,
+        min=0.5,
         max=2,
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
     note_margin: float = slider_option(
         name="Note Margin",
-        scope="Sekai",
+        scope="Next Sekai",
         default=0.0,
         min=0.0,
         max=0.2,
@@ -185,41 +167,11 @@ class Options:
         name="Alternative Approach Curve",
         advanced=True,
         default=False,
-        scope="Sekai",
+        scope="Next Sekai",
     )
     disable_timescale: bool = toggle_option(
         name="Disable Timescale",
         standard=True,
         advanced=True,
         default=False,
-    )
-    fade_out: bool = toggle_option(
-        name="Fade Out",
-        standard=True,
-        advanced=True,
-        default=False,
-    )
-    easy: bool = toggle_option(
-        name=StandardText.EASY,
-        standard=True,
-        advanced=True,
-        default=False,
-    )
-    flip_flicks: bool = toggle_option(
-        name="Flip Flicks",
-        standard=True,
-        advanced=True,
-        default=False,
-    )
-    all_flicks: bool = toggle_option(
-        name="Oops All Flicks",
-        advanced=True,
-        default=False,
-        scope="Sekai",
-    )
-    no_flicks: bool = toggle_option(
-        name="Oops No Flicks",
-        advanced=True,
-        default=False,
-        scope="Sekai",
     )
