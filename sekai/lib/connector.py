@@ -350,8 +350,10 @@ def draw_connector(
             pos = transformed_vec_at(lane, travel)
             ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
             total_offset += (pos - ref_pos).magnitude
-    curve_change_scale = total_offset**0.5 * 1.5
-    alpha_change_scale = abs(start_alpha - end_alpha) * 2
+    start_pos_y = transformed_vec_at(start_lane, start_travel).y
+    end_pos_y = transformed_vec_at(end_lane, end_travel).y
+    curve_change_scale = total_offset**0.4 * 1.6
+    alpha_change_scale = abs(start_alpha - end_alpha) ** 0.6 * abs(start_pos_y - end_pos_y) ** 0.6 * 4
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
@@ -391,7 +393,7 @@ def draw_connector(
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(a_modifier))
+                normal_sprite.draw(layout, z=z + 1 / 256, a=base_a * ease_out_cubic(a_modifier))
                 active_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
             else:
                 active_sprite.draw(layout, z=z, a=base_a)
