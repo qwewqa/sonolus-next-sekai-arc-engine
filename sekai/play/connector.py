@@ -160,7 +160,7 @@ class Connector(PlayArchetype):
                 visual_state = ConnectorVisualState.WAITING
             if visual_state != self.last_visual_state:
                 self.last_visual_state = visual_state
-                Streams.connector_visual_states[self.index][time()] = visual_state
+                Streams.connector_visual_states[self.index][offset_adjusted_time()] = visual_state
             draw_connector(
                 kind=self.kind,
                 visual_state=visual_state,
@@ -249,7 +249,7 @@ class SlideManager(PlayArchetype):
             destroy_looped_particle(self.circular_particle)
             destroy_looped_particle(self.linear_particle)
             destroy_looped_sfx(self.sfx)
-            connector_effect_kind_stream[time()] = ConnectorKind.NONE
+            connector_effect_kind_stream[offset_adjusted_time()] = ConnectorKind.NONE
             self.last_effect_kind = ConnectorKind.NONE
             self.despawn = True
             return
@@ -285,7 +285,7 @@ class SlideManager(PlayArchetype):
                 )
                 update_connector_sfx(self.sfx, info.connector_kind, replace)
                 if self.last_effect_kind != info.connector_kind:
-                    connector_effect_kind_stream[time()] = info.connector_kind
+                    connector_effect_kind_stream[offset_adjusted_time()] = info.connector_kind
                     self.last_effect_kind = info.connector_kind
                 if time() >= self.next_trail_spawn_time:
                     self.next_trail_spawn_time = max(
@@ -307,7 +307,7 @@ class SlideManager(PlayArchetype):
                 destroy_looped_particle(self.circular_particle)
                 destroy_looped_particle(self.linear_particle)
                 if self.last_effect_kind != ConnectorKind.NONE:
-                    connector_effect_kind_stream[time()] = ConnectorKind.NONE
+                    connector_effect_kind_stream[offset_adjusted_time()] = ConnectorKind.NONE
                     self.last_effect_kind = ConnectorKind.NONE
 
     @property

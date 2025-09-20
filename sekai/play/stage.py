@@ -2,7 +2,7 @@ from sonolus.script.archetype import PlayArchetype, callback
 from sonolus.script.array import Dim
 from sonolus.script.containers import VarArray
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import time, touches
+from sonolus.script.runtime import offset_adjusted_time, touches
 
 from sekai.lib import archetype_names
 from sekai.lib.layout import layout_hitbox
@@ -44,7 +44,7 @@ class Stage(PlayArchetype):
                     if not empty_lanes.is_full():
                         empty_lanes.append(rounded_lane)
         if len(empty_lanes) > 0:
-            Streams.empty_input_lanes[time()] = empty_lanes
+            Streams.empty_input_lanes[offset_adjusted_time()] = empty_lanes
 
     def update_parallel(self):
         draw_stage_and_accessories()

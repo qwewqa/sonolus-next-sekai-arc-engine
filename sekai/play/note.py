@@ -248,7 +248,7 @@ class BaseNote(PlayArchetype):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
-        self.end_time = time()
+        self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
 
     def handle_tap_input(self):
