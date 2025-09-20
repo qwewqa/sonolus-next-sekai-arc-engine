@@ -331,25 +331,33 @@ def draw_connector(
     start_lane = lerp(head_lane, tail_lane, eased_start_frac)
     end_lane = lerp(head_lane, tail_lane, eased_end_frac)
     start_size = max(1e-3, lerp(head_size, tail_size, eased_start_frac))  # Lightweight rendering needs >0 size.
+    end_size = max(1e-3, lerp(head_size, tail_size, eased_end_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
 
-    total_offset = 0
-    lane_diff_l = abs((head_lane - head_size) - (tail_lane - tail_size))
-    lane_diff_r = abs((head_lane + head_size) - (tail_lane + tail_size))
-    lane_diff = max(lane_diff_l, lane_diff_r)
-    for r in (0.2, 0.4, 0.6, 0.8):
-        frac = lerp(start_frac, end_frac, r)
-        progress = lerp(start_progress, end_progress, r)
-        travel = approach(progress)
-        ease_diff = abs(ease(ease_type, frac) - lerp(eased_start_frac, eased_end_frac, r))
-        total_offset += lane_diff * ease_diff * travel
+    pos_offset = 0
+    for sl, el, hl, tl in (
+        (start_lane - start_size, end_lane - end_size, head_lane - head_size, tail_lane - tail_size),
+        (start_lane + start_size, end_lane + end_size, head_lane + head_size, tail_lane + tail_size),
+    ):
+        start_ref = transformed_vec_at(sl, start_travel)
+        end_ref = transformed_vec_at(el, end_travel)
+        pos_offset_this_side = 0
+        for r in (0.25, 0.5, 0.75):
+            frac = lerp(start_frac, end_frac, r)
+            progress = lerp(start_progress, end_progress, r)
+            travel = approach(progress)
+            lane = lerp(hl, tl, ease(ease_type, frac))
+            pos = transformed_vec_at(lane, travel)
+            ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
+            pos_offset_this_side += abs(pos.x - ref_pos.x)
+        pos_offset = max(pos_offset, pos_offset_this_side)
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
-    curve_change_scale = total_offset**0.4 * 1.2
+    curve_change_scale = pos_offset**0.4 * 1.6
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 2,
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
     )
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
