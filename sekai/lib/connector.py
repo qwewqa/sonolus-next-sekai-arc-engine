@@ -163,7 +163,7 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
 def get_active_connector_z_offset(kind: ActiveConnectorKind) -> int:
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            return 1
+            return 10
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
             return 0
         case _:
@@ -398,7 +398,7 @@ def draw_connector(
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z + 1 / 256, a=base_a * ease_out_cubic(a_modifier))
+                normal_sprite.draw(layout, z=z + 1 / 128, a=base_a * ease_out_cubic(a_modifier))
                 active_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
             else:
                 active_sprite.draw(layout, z=z, a=base_a)
