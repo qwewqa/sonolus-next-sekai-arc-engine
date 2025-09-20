@@ -352,8 +352,12 @@ def draw_connector(
             total_offset += (pos - ref_pos).magnitude
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
-    curve_change_scale = total_offset**0.4 * 1.6
-    alpha_change_scale = abs(start_alpha - end_alpha) ** 0.6 * abs(start_pos_y - end_pos_y) ** 0.6 * 4
+    curve_change_scale = total_offset**0.4 * 2
+    alpha_change_scale = (
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8
+        * abs(start_pos_y - end_pos_y) ** 0.8
+        * 6
+    )
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
