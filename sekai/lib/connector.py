@@ -505,6 +505,8 @@ def spawn_connector_slot_particles(
     lane: float,
     size: float,
 ):
+    if not Options.note_effect_enabled:
+        return
     particle = +Particle
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
