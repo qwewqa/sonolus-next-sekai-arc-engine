@@ -45,7 +45,7 @@ class Particles:
     critical_note_directional: StandardParticle.NOTE_LINEAR_ALTERNATIVE_YELLOW
 
     critical_trace_note_circular: Particle = particle("Sekai Trace Note Circular Yellow")
-    critical_trace_note_linear: Particle = particle("Sekai Trace Note Circular Yellow")
+    critical_trace_note_linear: Particle = particle("Sekai Trace Note Linear Yellow")
 
     normal_slide_tick_note: StandardParticle.NOTE_CIRCULAR_ALTERNATIVE_GREEN
 
@@ -122,7 +122,7 @@ trace_note_particles = NoteParticleSet(
     slot_linear=EMPTY_PARTICLE,
 )
 trace_flick_note_particles = NoteParticleSet(
-    circular=Particles.flick_note_circular,
+    circular=EMPTY_PARTICLE,
     circular_fallback=EMPTY_PARTICLE,
     linear=Particles.flick_note_linear,
     directional=Particles.flick_note_directional,
@@ -177,8 +177,8 @@ critical_trace_note_particles = NoteParticleSet(
     slot_linear=EMPTY_PARTICLE,
 )
 critical_trace_flick_note_particles = NoteParticleSet(
-    circular=Particles.critical_flick_note_circular,
-    circular_fallback=Particles.critical_note_circular,
+    circular=EMPTY_PARTICLE,
+    circular_fallback=EMPTY_PARTICLE,
     linear=Particles.critical_flick_note_linear,
     linear_fallback=Particles.critical_note_linear,
     directional=Particles.critical_note_directional,

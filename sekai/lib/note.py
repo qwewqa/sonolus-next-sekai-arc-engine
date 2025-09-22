@@ -581,8 +581,11 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
             | NoteKind.NORM_HEAD_RELEASE
             | NoteKind.NORM_TAIL_TAP
             | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_RELEASE
             | NoteKind.CRIT_HEAD_TAP
             | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_RELEASE
         ):
             match judgment:
                 case Judgment.PERFECT:
@@ -624,7 +627,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
                 result @= first_available_effect(Effects.normal_tick, Effects.normal_perfect)
             else:
                 result @= EMPTY_EFFECT
-        case NoteKind.CRIT_TAP | NoteKind.CRIT_RELEASE | NoteKind.CRIT_TAIL_TAP | NoteKind.CRIT_TAIL_RELEASE:
+        case NoteKind.CRIT_TAP:
             if judgment != Judgment.MISS:
                 result @= first_available_effect(Effects.critical_tap, Effects.normal_perfect)
             else:
@@ -668,49 +671,47 @@ def get_note_slot_sprite(kind: NoteKind) -> Sprite:
     match kind:
         case NoteKind.NORM_TAP:
             result @= Skin.normal_slot
-        case (
-            NoteKind.NORM_FLICK
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-        ):
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
             result @= Skin.flick_slot
         case (
-            NoteKind.NORM_TRACE
-            | NoteKind.NORM_RELEASE
+            NoteKind.NORM_RELEASE
             | NoteKind.NORM_HEAD_TAP
-            | NoteKind.NORM_HEAD_TRACE
             | NoteKind.NORM_HEAD_RELEASE
             | NoteKind.NORM_TAIL_TAP
-            | NoteKind.NORM_TAIL_TRACE
             | NoteKind.NORM_TAIL_RELEASE
         ):
             result @= Skin.slide_slot
         case NoteKind.CRIT_TAP:
             result @= Skin.critical_slot
-        case (
-            NoteKind.CRIT_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-        ):
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
             result @= Skin.critical_flick_slot
         case (
-            NoteKind.CRIT_TRACE
-            | NoteKind.CRIT_RELEASE
+            NoteKind.CRIT_RELEASE
             | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TRACE
             | NoteKind.CRIT_HEAD_RELEASE
             | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TRACE
             | NoteKind.CRIT_TAIL_RELEASE
         ):
             result @= Skin.critical_slide_slot
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.DAMAGE
+            | NoteKind.ANCHOR
+        ):
             result @= Sprite(-1)
         case _:
             assert_never(kind)

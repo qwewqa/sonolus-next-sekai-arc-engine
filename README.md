@@ -141,25 +141,26 @@ Editor: https://next-sekai-editor.sonolus.com/
 
 ### Particle Effects
 
-| Name                                        |
-|---------------------------------------------|
-| `Sekai Note Lane Linear`                    |
-| `Sekai Critical Lane Linear`                |
-| `Sekai Critical Flick Lane Linear`          |
-| `Sekai Slot Linear Tap Cyan`                |
-| `Sekai Slot Linear Slide Tap Green`         |
-| `Sekai Slot Linear Alternative Red`         |
-| `Sekai Slot Linear Tap Yellow`              |
-| `Sekai Slot Linear Slide Tap Yellow`        |
-| `Sekai Slot Linear Alternative Yellow`      |
-| `Sekai Trace Note Circular Green`           |
-| `Sekai Trace Note Linear Green`             |
-| `Sekai Critical Slide Circular Yellow`      |
-| `Sekai Critical Slide Linear Yellow`        |
-| `Sekai Critical Flick Circular Yellow`      |
-| `Sekai Critical Flick Linear Yellow`        |
-| `Sekai Trace Note Circular Yellow`          |
-| `Sekai Normal Slide Trail Linear`           |
-| `Sekai Slot Linear Slide Green`             |
-| `Sekai Critical Slide Trail Linear`         |
-| `Sekai Slot Linear Slide Yellow`            |
+| Name                                   |
+|----------------------------------------|
+| `Sekai Note Lane Linear`               |
+| `Sekai Critical Lane Linear`           |
+| `Sekai Critical Flick Lane Linear`     |
+| `Sekai Slot Linear Tap Cyan`           |
+| `Sekai Slot Linear Slide Tap Green`    |
+| `Sekai Slot Linear Alternative Red`    |
+| `Sekai Slot Linear Tap Yellow`         |
+| `Sekai Slot Linear Slide Tap Yellow`   |
+| `Sekai Slot Linear Alternative Yellow` |
+| `Sekai Trace Note Circular Green`      |
+| `Sekai Trace Note Linear Green`        |
+| `Sekai Critical Slide Circular Yellow` |
+| `Sekai Critical Slide Linear Yellow`   |
+| `Sekai Critical Flick Circular Yellow` |
+| `Sekai Critical Flick Linear Yellow`   |
+| `Sekai Trace Note Circular Yellow`     |
+| `Sekai Trace Note Linear Yellow`       |
+| `Sekai Normal Slide Trail Linear`      |
+| `Sekai Slot Linear Slide Green`        |
+| `Sekai Critical Slide Trail Linear`    |
+| `Sekai Slot Linear Slide Yellow`       |
