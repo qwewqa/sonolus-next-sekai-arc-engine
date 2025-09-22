@@ -567,6 +567,8 @@ def schedule_connector_sfx(
     start_time: float,
     end_time: float,
 ):
+    if not Options.sfx_enabled:
+        return
     effect = +Effect
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
