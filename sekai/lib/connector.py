@@ -2,6 +2,7 @@ from enum import IntEnum
 from math import ceil, cos, pi
 from typing import Literal, assert_never
 
+from sonolus.script.archetype import EntityRef
 from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp_clamped
@@ -10,6 +11,7 @@ from sonolus.script.quad import QuadLike, Rect
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
+from sonolus.script.timing import beat_to_time
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
@@ -48,6 +50,7 @@ from sekai.lib.skin import (
     red_guide_sprites,
     yellow_guide_sprites,
 )
+from sekai.lib.timescale import iter_timescale_changes_in_group_after_time_inclusive
 
 CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
 CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
@@ -566,6 +569,7 @@ def update_connector_sfx(
 
 def schedule_connector_sfx(
     kind: ActiveConnectorKind,
+    timescale_group: int | EntityRef,
     start_time: float,
     end_time: float,
 ):
@@ -579,7 +583,19 @@ def schedule_connector_sfx(
             effect @= Effects.critical_hold
         case _:
             assert_never(kind)
-    schedule_looped_sfx(effect, start_time, end_time)
+    last_start_time = start_time
+    hide = False
+    for group in iter_timescale_changes_in_group_after_time_inclusive(timescale_group, start_time):
+        group_time = beat_to_time(group.beat)
+        if group_time >= end_time:
+            break
+        if hide and not group.hide_notes:
+            last_start_time = group_time
+        elif not hide and group.hide_notes and group_time > last_start_time:
+            schedule_looped_sfx(effect, last_start_time, group_time)
+        hide = group.hide_notes
+    if not hide and end_time > last_start_time:
+        schedule_looped_sfx(effect, last_start_time, end_time)
 
 
 def replace_looped_particle(handle: ParticleHandle, particle: Particle, layout: QuadLike, duration: float):

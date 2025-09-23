@@ -27,6 +27,7 @@ from sekai.lib.ease import EaseType
 from sekai.lib.note import draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
+from sekai.lib.timescale import group_hide_notes
 from sekai.watch import note
 
 
@@ -80,6 +81,10 @@ class WatchConnector(WatchArchetype):
             self.active_connector_info.visual_lane = visual_lane
             self.active_connector_info.visual_size = visual_size
             self.active_connector_info.connector_kind = self.kind
+        if group_hide_notes(self.segment_head.timescale_group):
+            self.active_connector_info.connector_kind = ConnectorKind.NONE
+
+    def update_parallel(self):
         if time() < self.visual_active_interval.end:
             head = self.head
             tail = self.tail
@@ -91,6 +96,8 @@ class WatchConnector(WatchArchetype):
                 visual_state = ConnectorVisualState.WAITING
             else:
                 visual_state = ConnectorVisualState.ACTIVE
+            if group_hide_notes(segment_head.timescale_group):
+                return
             draw_connector(
                 kind=self.kind,
                 visual_state=visual_state,
@@ -139,7 +146,9 @@ class WatchConnector(WatchArchetype):
                             | ConnectorKind.ACTIVE_FAKE_NORMAL
                             | ConnectorKind.ACTIVE_FAKE_CRITICAL
                         ):
-                            schedule_connector_sfx(last_sfx_kind, last_time, next_time)
+                            schedule_connector_sfx(
+                                last_sfx_kind, self.segment_head.timescale_group, last_time, next_time
+                            )
                         case (
                             ConnectorKind.NONE
                             | ConnectorKind.GUIDE_NEUTRAL
@@ -164,7 +173,12 @@ class WatchConnector(WatchArchetype):
                     | ConnectorKind.ACTIVE_FAKE_NORMAL
                     | ConnectorKind.ACTIVE_FAKE_CRITICAL
                 ):
-                    schedule_connector_sfx(self.kind, self.segment_head.target_time, self.segment_tail.target_time)
+                    schedule_connector_sfx(
+                        self.kind,
+                        self.segment_head.timescale_group,
+                        self.segment_head.target_time,
+                        self.segment_tail.target_time,
+                    )
                 case (
                     ConnectorKind.NONE
                     | ConnectorKind.GUIDE_NEUTRAL
@@ -238,12 +252,6 @@ class WatchSlideManager(WatchArchetype):
         if time() < self.active_head.target_time:
             return
         info = self.active_head.active_connector_info
-        draw_slide_note_head(
-            self.active_head.kind,
-            info.visual_lane,
-            info.visual_size,
-            self.active_head.target_time,
-        )
         connector_kind = (
             Streams.connector_effect_kinds[self.active_head.index].get_previous_inclusive(time())
             if is_replay()
@@ -288,6 +296,21 @@ class WatchSlideManager(WatchArchetype):
             case _:
                 destroy_looped_particle(self.circular_particle)
                 destroy_looped_particle(self.linear_particle)
+        match info.connector_kind:
+            case (
+                ConnectorKind.ACTIVE_NORMAL
+                | ConnectorKind.ACTIVE_CRITICAL
+                | ConnectorKind.ACTIVE_FAKE_NORMAL
+                | ConnectorKind.ACTIVE_FAKE_CRITICAL
+            ):
+                draw_slide_note_head(
+                    self.active_head.kind,
+                    info.visual_lane,
+                    info.visual_size,
+                    self.active_head.target_time,
+                )
+            case _:
+                pass
 
     def terminate(self):
         destroy_looped_particle(self.circular_particle)

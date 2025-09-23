@@ -31,6 +31,7 @@ from sekai.lib.ease import EaseType
 from sekai.lib.note import draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
+from sekai.lib.timescale import group_hide_notes
 from sekai.play import note
 
 CONNECTOR_LENIENCY = 1
@@ -74,7 +75,7 @@ class Connector(PlayArchetype):
         self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
         self.last_visual_state = ConnectorVisualState.WAITING
 
-        if self.head_ref.index == self.active_head_ref.index:
+        if Options.auto_sfx and self.head_ref.index == self.segment_head_ref.index:
             match self.kind:
                 case (
                     ConnectorKind.ACTIVE_NORMAL
@@ -82,8 +83,12 @@ class Connector(PlayArchetype):
                     | ConnectorKind.ACTIVE_FAKE_NORMAL
                     | ConnectorKind.ACTIVE_FAKE_CRITICAL
                 ):
-                    if Options.auto_sfx:
-                        schedule_connector_sfx(self.kind, self.active_head.target_time, self.active_tail.target_time)
+                    schedule_connector_sfx(
+                        self.kind,
+                        self.segment_head.timescale_group,
+                        self.segment_head.target_time,
+                        self.segment_tail.target_time,
+                    )
                 case (
                     ConnectorKind.NONE
                     | ConnectorKind.GUIDE_NEUTRAL
@@ -138,6 +143,8 @@ class Connector(PlayArchetype):
                 self.active_connector_info.visual_lane = visual_lane
                 self.active_connector_info.visual_size = visual_size
                 self.active_connector_info.connector_kind = self.kind
+            if group_hide_notes(self.segment_head.timescale_group):
+                self.active_connector_info.connector_kind = ConnectorKind.NONE
 
     def update_parallel(self):
         if time() < self.visual_active_interval.end:
@@ -161,6 +168,8 @@ class Connector(PlayArchetype):
             if visual_state != self.last_visual_state:
                 self.last_visual_state = visual_state
                 Streams.connector_visual_states[self.index][offset_adjusted_time()] = visual_state
+            if group_hide_notes(segment_head.timescale_group):
+                return
             draw_connector(
                 kind=self.kind,
                 visual_state=visual_state,
@@ -256,12 +265,6 @@ class SlideManager(PlayArchetype):
         if time() < self.active_head.target_time:
             return
         info = self.active_head.active_connector_info
-        draw_slide_note_head(
-            self.active_head.kind,
-            info.visual_lane,
-            info.visual_size,
-            self.active_head.target_time,
-        )
         match info.connector_kind:
             case (
                 ConnectorKind.ACTIVE_NORMAL
@@ -309,6 +312,21 @@ class SlideManager(PlayArchetype):
                 if self.last_effect_kind != ConnectorKind.NONE:
                     connector_effect_kind_stream[offset_adjusted_time()] = ConnectorKind.NONE
                     self.last_effect_kind = ConnectorKind.NONE
+        match info.connector_kind:
+            case (
+                ConnectorKind.ACTIVE_NORMAL
+                | ConnectorKind.ACTIVE_CRITICAL
+                | ConnectorKind.ACTIVE_FAKE_NORMAL
+                | ConnectorKind.ACTIVE_FAKE_CRITICAL
+            ):
+                draw_slide_note_head(
+                    self.active_head.kind,
+                    info.visual_lane,
+                    info.visual_size,
+                    self.active_head.target_time,
+                )
+            case _:
+                pass
 
     @property
     def active_head(self) -> note.BaseNote:

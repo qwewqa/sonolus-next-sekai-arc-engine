@@ -21,6 +21,7 @@ class TimescaleChangeLike(Protocol):
     timescale: float
     timescale_skip: float
     timescale_ease: TimescaleEase
+    hide_notes: bool
     next_ref: EntityRef
 
     @classmethod
@@ -33,9 +34,11 @@ class TimescaleChangeLike(Protocol):
 class TimescaleGroupLike(Protocol):
     first_ref: EntityRef
     time_to_scaled_time: TimeToScaledTime
+    time_to_last_change_index: TimeToLastChangeIndex
     scaled_time_to_first_time: ScaledTimeToFirstTime
     scaled_time_to_first_time_2: ScaledTimeToFirstTime
     current_scaled_time: float
+    hide_notes: bool
 
     @classmethod
     def at(cls, index: int) -> TimescaleGroupLike: ...
@@ -101,6 +104,34 @@ class TimeToScaledTime(Record):
             self.last_ease = change.timescale_ease
             self.next_change_index = change.next_ref.index
         return self.last_scaled_time + (time - self.last_time) * self.last_timescale
+
+
+class TimeToLastChangeIndex(Record):
+    last_time: float
+    first_change_index: int
+    current_change_index: int
+    next_change_index: int
+
+    def init(self, next_index: int):
+        self.first_change_index = next_index
+        self.reset()
+
+    def reset(self):
+        self.last_time = MIN_START_TIME
+        self.current_change_index = 0
+        self.next_change_index = self.first_change_index
+
+    def get(self, time: float) -> int:
+        if time < self.last_time:
+            self.reset()
+        for change in iter_timescale_changes(self.next_change_index):
+            next_time = beat_to_time(change.beat)
+            if time < next_time:
+                return self.current_change_index
+            self.last_time = next_time
+            self.current_change_index = change.index
+            self.next_change_index = change.next_ref.index
+        return self.current_change_index
 
 
 class ScaledTimeToFirstTime(Record):
@@ -217,9 +248,36 @@ def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:
 def group_scaled_time(group: int | EntityRef):
     if isinstance(group, EntityRef):
         group = group.index
-    if group == 0 or Options.disable_timescale:
+    if group <= 0 or Options.disable_timescale:
         return runtime.time()
     return timescale_group_archetype().at(group).current_scaled_time
+
+
+def group_hide_notes(group: int | EntityRef) -> bool:
+    if isinstance(group, EntityRef):
+        group = group.index
+    if group <= 0:
+        return False
+    return timescale_group_archetype().at(group).hide_notes
+
+
+def iter_timescale_changes_in_group_after_time_inclusive(
+    group: int | EntityRef,
+    time: float,
+) -> Iterator[TimescaleChangeLike]:
+    if isinstance(group, EntityRef):
+        group = group.index
+    if group <= 0 or Options.disable_timescale:
+        return
+    group_entity = timescale_group_archetype().at(group)
+    next_index = group_entity.time_to_last_change_index.get(time)
+    while next_index > 0:
+        change = timescale_change_archetype().at(next_index)
+        change_time = beat_to_time(change.beat)
+        next_index = change.next_ref.index
+        if change_time < time:
+            continue
+        yield change
 
 
 def group_time_to_scaled_time(
