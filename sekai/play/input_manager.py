@@ -152,9 +152,15 @@ def preassign_releases():
         hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
         for release_i in active_release_indexes:
             touch = touches()[release_i]
+            if current.active_head_ref.index > 0:
+                active_connector_info = current.active_head_ref.get().active_connector_info
+                connector_hitbox = active_connector_info.get_hitbox(get_leniency(current.kind))
+                ignore_lockout = not any(not t.ended and connector_hitbox.contains_point(t.position) for t in touches())
+            else:
+                ignore_lockout = False
             if (
                 hitbox_layout.contains_point(touch.position)
-                and is_allowed_release(touch, current.target_time)
+                and (ignore_lockout or is_allowed_release(touch, current.target_time))
                 and touch.time in current.unadjusted_input_interval
             ):
                 disallow_empty(touch)

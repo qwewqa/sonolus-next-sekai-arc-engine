@@ -162,7 +162,12 @@ class BaseNote(PlayArchetype):
         if self.is_scored and time() in self.input_interval and self.captured_touch_id == 0:
             if has_tap_input(self.kind):
                 NoteMemory.active_tap_input_notes.append(self.ref())
-            elif has_release_input(self.kind):
+            elif has_release_input(self.kind) and (
+                self.active_head_ref.index <= 0
+                or self.active_head_ref.get().is_despawned
+                or self.active_head_ref.get().captured_touch_id != 0
+                or not self.active_head_ref.get().is_scored
+            ):
                 NoteMemory.active_release_input_notes.append(self.ref())
 
     def touch(self):
