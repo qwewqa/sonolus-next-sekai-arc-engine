@@ -21,6 +21,8 @@ def draw_sim_line(
         return
     if left_progress > Layout.progress_cutoff and right_progress > Layout.progress_cutoff:
         return
+    if (left_progress < 1 < right_progress) or (left_progress > 1 > right_progress):
+        return
 
     adj_left_progress = clamp(left_progress, Layout.progress_start, Layout.progress_cutoff)
     adj_right_progress = clamp(right_progress, Layout.progress_start, Layout.progress_cutoff)
