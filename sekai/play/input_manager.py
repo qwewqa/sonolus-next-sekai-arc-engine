@@ -116,6 +116,7 @@ def preassign_taps():
                 if not is_head(current.kind):
                     disallow_release(touch, current.target_time + SLIDE_END_LOCKOUT_DURATION)
                 current.captured_touch_id = touch.id
+                current.captured_touch_time = touch.time
                 available_tap_indexes.remove(tap_i)
                 break
 
@@ -165,5 +166,6 @@ def preassign_releases():
             ):
                 disallow_empty(touch)
                 current.captured_touch_id = touch.id
+                current.captured_touch_time = touch.time  # Unused currently, but set for consistency
                 active_release_indexes.remove(release_i)
                 break

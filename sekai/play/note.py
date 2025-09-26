@@ -79,6 +79,7 @@ class BaseNote(PlayArchetype):
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
     captured_touch_id: int = shared_memory()
+    captured_touch_time: float = shared_memory()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
 
@@ -468,7 +469,7 @@ class BaseNote(PlayArchetype):
 
     def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
         return (
-            touch.start_time >= self.unadjusted_input_interval.start
+            touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
         )
