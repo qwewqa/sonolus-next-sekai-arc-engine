@@ -116,7 +116,7 @@ def preassign_taps():
                 if not is_head(current.kind):
                     disallow_release(touch, current.target_time + SLIDE_END_LOCKOUT_DURATION)
                 current.captured_touch_id = touch.id
-                current.captured_touch_time = touch.time
+                current.captured_touch_time = min(touch.time, touch.start_time)
                 available_tap_indexes.remove(tap_i)
                 break
 
