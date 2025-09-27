@@ -242,7 +242,8 @@ def layout_lane(lane: float, size: float) -> Quad:
 
 
 def layout_lane_effect(lane: float, size: float) -> Iterator[Quad]:
-    return arc(perspective_rect(l=lane - size, r=lane + size, t=LANE_T, b=LANE_B))
+    # Top needs to be offset due to precision issues
+    return arc(perspective_rect(l=lane - size, r=lane + size, t=LANE_T + 0.05, b=LANE_B))
 
 
 def layout_stage_cover() -> Iterator[Quad]:
@@ -431,11 +432,11 @@ def layout_linear_effect(lane: float, shear: float) -> Quad:
     )
 
 
-def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
+def layout_circular_effect(lane: float, w: float, h: float, y_offset: float = 0.0) -> Quad:
     w *= Options.note_effect_size
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
-    t = 1 + h
-    b = 1 - h
+    t = 1 + h + y_offset
+    b = 1 - h + y_offset
     return arc_adjust_quad(
         transform_quad(
             Quad(

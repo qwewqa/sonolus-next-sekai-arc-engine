@@ -453,7 +453,7 @@ def update_circular_connector_particle(
 ):
     if not Options.note_effect_enabled:
         return
-    layout = layout_circular_effect(lane, w=3.5, h=2.1)
+    layout = layout_circular_effect(lane, w=3.5, h=2.1, y_offset=0.1)
     if replace or handle.id == 0:
         particle = +Particle(-1)
         match kind:
