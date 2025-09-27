@@ -199,7 +199,7 @@ def get_connector_alpha_option(kind: ConnectorKind) -> float:
             assert_never(kind)
 
 
-def get_connector_quality_option(kind: ConnectorKind) -> int:
+def get_connector_quality_option(kind: ConnectorKind) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
