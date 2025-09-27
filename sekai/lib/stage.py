@@ -1,11 +1,10 @@
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layer import LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
 from sekai.lib.layout import (
-    layout_fallback_judge_line,
     layout_hidden_cover,
+    layout_judge_line,
     layout_lane,
     layout_lane_by_edges,
-    layout_sekai_stage,
     layout_stage_cover,
 )
 from sekai.lib.options import Options
@@ -21,18 +20,6 @@ def draw_stage_and_accessories():
 def draw_stage():
     if not Options.show_lane:
         return
-    if Skin.sekai_stage.is_available:
-        draw_sekai_stage()
-    else:
-        draw_fallback_stage()
-
-
-def draw_sekai_stage():
-    layout = layout_sekai_stage()
-    Skin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
-
-
-def draw_fallback_stage():
     layout = layout_lane_by_edges(-6.5, -6)
     Skin.stage_left_border.draw(layout, z=get_z(LAYER_STAGE))
     layout = layout_lane_by_edges(6, 6.5)
@@ -42,17 +29,17 @@ def draw_fallback_stage():
         layout = layout_lane(lane, 1)
         Skin.lane.draw(layout, z=get_z(LAYER_STAGE))
 
-    layout = layout_fallback_judge_line()
-    Skin.judgment_line.draw(layout, z=get_z(LAYER_JUDGMENT_LINE))
+    for segment in layout_judge_line():
+        Skin.judgment_line.draw(segment, z=get_z(LAYER_JUDGMENT_LINE))
 
 
 def draw_stage_cover():
     if Options.stage_cover > 0:
-        layout = layout_stage_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
+        for segment in layout_stage_cover():
+            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=0.8)
     if Options.hidden > 0:
-        layout = layout_hidden_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
+        for segment in layout_hidden_cover():
+            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=0.8)
 
 
 def play_lane_hit_effects(lane: float):

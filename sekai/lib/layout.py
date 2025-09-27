@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from enum import IntEnum
 from math import ceil, floor, log, pi
 from typing import assert_never
@@ -12,12 +13,10 @@ from sonolus.script.vec import Vec2
 from sekai.lib.options import Options
 
 LANE_T = 47 / 850
-LANE_B = 1176 / 850
+LANE_B = 1176 / 850 + 0.4
 
-LANE_HITBOX_L = -6
-LANE_HITBOX_R = 6
-LANE_HITBOX_T = (803 / 850) * 0.6
-LANE_HITBOX_B = 1.5
+LANE_HITBOX_T = 0.1
+LANE_HITBOX_B = 4
 
 NOTE_H = 75 / 850 / 2
 NOTE_EDGE_W = 0.25
@@ -32,6 +31,8 @@ APPROACH_SCALE = 1.06**-45
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
 DEFAULT_APPROACH_CUTOFF = 2.5
 DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
+
+ARC_FACTOR = 1
 
 
 class FlickDirection(IntEnum):
@@ -52,6 +53,7 @@ class Layout:
     progress_start: float
     progress_cutoff: float
     flick_speed_threshold: float
+    vp: Vec2
 
 
 def init_layout():
@@ -86,6 +88,8 @@ def init_layout():
         Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
 
     Layout.flick_speed_threshold = 2 * Layout.w_scale
+
+    Layout.vp = transform_vec(Vec2(0, 0))
 
 
 def approach(progress: float) -> float:
@@ -124,6 +128,69 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
     return 1.0
 
 
+def arc_adjust_vec(v: Vec2):
+    vp = Layout.vp
+    r = vp.y - v.y
+    theta = (v.x - vp.x) / r * ARC_FACTOR
+    theta = clamp(theta, -pi / 2, pi / 2)
+    direction = Vec2(0, -1).rotate(theta)
+    return vp + direction * r
+
+
+def vec_to_angle_from_down(v: Vec2) -> float:
+    vp = Layout.vp
+    return (v - vp).angle - Vec2(0, -1).angle
+
+
+def vec_to_lane(v: Vec2) -> float:
+    vp = Layout.vp
+    angle = vec_to_angle_from_down(v)
+    lane_angle = ARC_FACTOR * Layout.w_scale / (vp.y - perspective_vec(0, 1).y)
+    return angle / lane_angle
+
+
+def arc_adjust_quad(q: QuadLike) -> Quad:
+    return Quad(
+        bl=arc_adjust_vec(q.bl),
+        br=arc_adjust_vec(q.br),
+        tl=arc_adjust_vec(q.tl),
+        tr=arc_adjust_vec(q.tr),
+    )
+
+
+def get_arc_n(q: QuadLike) -> int:
+    vp = transform_vec(Vec2(0, 0))
+    r = vp.y - q.br.y
+    w_scale = (q.br.x - q.bl.x) * 20
+    h_adj_w_scale = w_scale / r * 0.5
+    return ceil(min(w_scale, h_adj_w_scale) * Options.arc_quality)
+
+
+def h_segment(q: QuadLike, n: int | None = None) -> Iterator[Quad]:
+    if n is None:
+        n = get_arc_n(q)
+    for i in range(n):
+        l_frac = i / n
+        r_frac = (i + 1) / n
+        yield Quad(
+            bl=lerp(q.bl, q.br, l_frac),
+            br=lerp(q.bl, q.br, r_frac),
+            tl=lerp(q.tl, q.tr, l_frac),
+            tr=lerp(q.tl, q.tr, r_frac),
+        )
+
+
+def arc(q: QuadLike, n: int | None = None) -> Iterator[Quad]:
+    for segment in h_segment(q, n):
+        yield arc_adjust_quad(segment)
+
+
+def get_center_and_angle_at_judge_line(lane: float) -> tuple[Vec2, float]:
+    a = arc_adjust_vec(perspective_vec(lane, 1))
+    b = arc_adjust_vec(perspective_vec(lane, 0.5))
+    return a, (b - a).angle - pi / 2
+
+
 def transform_vec(v: Vec2) -> Vec2:
     return Vec2(
         v.x * Layout.w_scale,
@@ -142,10 +209,6 @@ def transform_quad(q: QuadLike) -> Quad:
 
 def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
     return transform_vec(Vec2(lane * travel, travel))
-
-
-def touch_x_to_lane(x: float) -> float:
-    return x / Layout.w_scale
 
 
 def perspective_vec(x: float, y: float, travel: float = 1.0) -> Vec2:
@@ -171,36 +234,44 @@ def layout_sekai_stage() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_T, b=LANE_B)
+    return arc_adjust_quad(perspective_rect(l=l, r=r, t=LANE_T, b=LANE_B))
 
 
 def layout_lane(lane: float, size: float) -> Quad:
     return layout_lane_by_edges(lane - size, lane + size)
 
 
-def layout_stage_cover() -> Quad:
+def layout_lane_effect(lane: float, size: float) -> Iterator[Quad]:
+    return arc(perspective_rect(l=lane - size, r=lane + size, t=LANE_T, b=LANE_B))
+
+
+def layout_stage_cover() -> Iterator[Quad]:
     b = lerp(approach(0), 1.0, Options.stage_cover)
-    return perspective_rect(
-        l=-6,
-        r=6,
-        t=LANE_T,
-        b=b,
+    return arc(
+        perspective_rect(
+            l=-6,
+            r=6,
+            t=LANE_T,
+            b=b,
+        )
     )
 
 
-def layout_hidden_cover() -> Quad:
+def layout_hidden_cover() -> Iterator[Quad]:
     b = 1 - NOTE_H
     t = min(b, max(lerp(1.0, approach(0), Options.hidden), lerp(approach(0), 1.0, Options.stage_cover)))
-    return perspective_rect(
-        l=-6,
-        r=6,
-        t=t,
-        b=b,
+    return arc(
+        perspective_rect(
+            l=-6,
+            r=6,
+            t=t,
+            b=b,
+        )
     )
 
 
-def layout_fallback_judge_line() -> Quad:
-    return perspective_rect(l=-6, r=6, t=1 - NOTE_H, b=1 + NOTE_H)
+def layout_judge_line() -> Iterator[Quad]:
+    return arc(perspective_rect(l=-6, r=6, t=1 - NOTE_H, b=1 + NOTE_H), n=12)
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
@@ -219,7 +290,7 @@ def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
 
 def layout_note_body_slices_by_edges(
     l: float, r: float, h: float, edge_w: float, travel: float
-) -> tuple[Quad, Quad, Quad]:
+) -> tuple[Quad, Iterator[Quad], Quad]:
     m = (l + r) / 2
     if r < l:
         # Make the note 0 width; shouldn't normally happen, but in case, we want to handle it gracefully
@@ -227,13 +298,13 @@ def layout_note_body_slices_by_edges(
     ml = min(l + edge_w, m)
     mr = max(r - edge_w, m)
     return (
-        layout_note_body_by_edges(l=l, r=ml, h=h, travel=travel),
-        layout_note_body_by_edges(l=ml, r=mr, h=h, travel=travel),
-        layout_note_body_by_edges(l=mr, r=r, h=h, travel=travel),
+        arc_adjust_quad(layout_note_body_by_edges(l=l, r=ml, h=h, travel=travel)),
+        arc(layout_note_body_by_edges(l=ml, r=mr, h=h, travel=travel)),
+        arc_adjust_quad(layout_note_body_by_edges(l=mr, r=r, h=h, travel=travel)),
     )
 
 
-def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
+def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Iterator[Quad], Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
@@ -244,15 +315,17 @@ def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Q
 
 
 def layout_regular_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
-    return layout_note_body_by_edges(
-        l=lane - size + Options.note_margin,
-        r=lane + size - Options.note_margin,
-        h=NOTE_H,
-        travel=travel,
+    return arc_adjust_quad(
+        layout_note_body_by_edges(
+            l=lane - size + Options.note_margin,
+            r=lane + size - Options.note_margin,
+            h=NOTE_H,
+            travel=travel,
+        )
     )
 
 
-def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
+def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Iterator[Quad], Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
@@ -263,17 +336,27 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
 
 
 def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
-    return layout_note_body_by_edges(
-        l=lane - size + Options.note_margin,
-        r=lane + size - Options.note_margin,
-        h=NOTE_H / 2,  # For fallback, we need to halve the height manually engine-side
-        travel=travel,
+    return arc_adjust_quad(
+        layout_note_body_by_edges(
+            l=lane - size + Options.note_margin,
+            r=lane + size - Options.note_margin,
+            h=NOTE_H / 2,  # For fallback, we need to halve the height manually engine-side
+            travel=travel,
+        )
     )
 
 
-def layout_tick(lane: float, travel: float) -> Rect:
+def layout_tick(lane: float, travel: float) -> Quad:
     center = transform_vec(Vec2(lane, 1) * travel)
-    return Rect.from_center(center, Vec2(Layout.scaled_note_h, Layout.scaled_note_h) * -2 * travel)
+    l = arc_adjust_vec(center - Vec2(Layout.scaled_note_h, 0) * travel)
+    r = arc_adjust_vec(center + Vec2(Layout.scaled_note_h, 0) * travel)
+    ort = -(r - l).orthogonal() / 2
+    return Quad(
+        bl=l - ort,
+        br=r - ort,
+        tl=l + ort,
+        tr=r + ort,
+    )
 
 
 def layout_flick_arrow(
@@ -307,13 +390,17 @@ def layout_flick_arrow(
         case _:
             assert_never(direction)
     w = clamp(size, 0, 3) / 2
-    base_bl = transform_vec(Vec2(lane - w, 1) * travel)
-    base_br = transform_vec(Vec2(lane + w, 1) * travel)
+    base_bl = arc_adjust_vec(transform_vec(Vec2(lane - w, 1) * travel))
+    base_br = arc_adjust_vec(transform_vec(Vec2(lane + w, 1) * travel))
     up = (base_br - base_bl).rotate(pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
     offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
+    offset = (
+        Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale).rotate(up.angle - pi / 2)
+        * offset_scale
+        * travel
+    )
     result = Quad(
         bl=base_bl,
         br=base_br,
@@ -360,11 +447,22 @@ def layout_flick_arrow_fallback(
             assert_never(direction)
 
     w = clamp(size / 2, 1, 2)
+    l = arc_adjust_vec(transform_vec(Vec2(lane - w, 1) * travel))
+    r = arc_adjust_vec(transform_vec(Vec2(lane + w, 1) * travel))
+    ort = -(r - l).orthogonal() / 2
     offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale) * offset_scale * travel
+    offset = (
+        Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale).rotate(ort.angle + pi / 2)
+        * offset_scale
+        * travel
+    )
     return (
-        Rect(l=-1, r=1, t=1, b=-1)
-        .as_quad()
+        Quad(
+            bl=l - ort,
+            br=r - ort,
+            tl=l + ort,
+            tr=r + ort,
+        )
         .rotate(rotation)
         .scale(Vec2(w, w) * Layout.w_scale * travel)
         .translate(transform_vec(Vec2(lane, 1) * travel))
@@ -373,34 +471,37 @@ def layout_flick_arrow_fallback(
 
 
 def layout_slot_effect(lane: float) -> Quad:
-    return perspective_rect(
-        l=lane - 0.5,
-        r=lane + 0.5,
-        b=1 + NOTE_H,
-        t=1 - NOTE_H,
+    return arc_adjust_quad(
+        perspective_rect(
+            l=lane - 0.5,
+            r=lane + 0.5,
+            b=1 + NOTE_H,
+            t=1 - NOTE_H,
+        )
     )
 
 
-def layout_slot_glow_effect(lane: float, size: float, height: float) -> Quad:
-    s = 1 + 0.25 * Options.slot_effect_size
-    h = 4.25 * Layout.w_scale * Options.slot_effect_size
-    l_min = transform_vec(Vec2(lane - size, 1))
-    r_min = transform_vec(Vec2(lane + size, 1))
-    l_max = (l_min + Vec2(0, h)) * Vec2(s, 1)
-    r_max = (r_min + Vec2(0, h)) * Vec2(s, 1)
-    return Quad(
-        bl=l_min,
-        br=r_min,
-        tl=lerp(l_min, l_max, height),
-        tr=lerp(r_min, r_max, height),
+def layout_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
+    h = 2 * Layout.w_scale * Options.slot_effect_size
+    l_min = perspective_vec(lane - size, 1)
+    r_min = perspective_vec(lane + size, 1)
+    l_max = perspective_vec(lane - size, 1 - h)
+    r_max = perspective_vec(lane + size, 1 - h)
+    return arc(
+        Quad(
+            bl=l_min,
+            br=r_min,
+            tl=lerp(l_min, l_max, height),
+            tr=lerp(r_min, r_max, height),
+        )
     )
 
 
 def layout_linear_effect(lane: float, shear: float) -> Quad:
     w = Options.note_effect_size
-    bl = transform_vec(Vec2(lane - w, 1))
-    br = transform_vec(Vec2(lane + w, 1))
-    up = (br - bl).rotate(pi / 2) + (shear + 0.125 * lane) * (br - bl) / 2
+    bl = arc_adjust_vec(transform_vec(Vec2(lane - w, 1)))
+    br = arc_adjust_vec(transform_vec(Vec2(lane + w, 1)))
+    up = (br - bl).rotate(pi / 2) + shear * (br - bl) / 2
     return Quad(
         bl=bl,
         br=br,
@@ -414,25 +515,31 @@ def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
     t = 1 + h
     b = 1 - h
-    return transform_quad(
-        Quad(
-            bl=Vec2(lane * b - w, b),
-            br=Vec2(lane * b + w, b),
-            tl=Vec2(lane * t - w, t),
-            tr=Vec2(lane * t + w, t),
+    return arc_adjust_quad(
+        transform_quad(
+            Quad(
+                bl=Vec2(lane * b - w, b),
+                br=Vec2(lane * b + w, b),
+                tl=Vec2(lane * t - w, t),
+                tr=Vec2(lane * t + w, t),
+            )
         )
     )
 
 
-def layout_tick_effect(lane: float) -> Rect:
+def layout_tick_effect(lane: float) -> Quad:
     w = 4 * Layout.w_scale * Options.note_effect_size
     h = w
-    center = transform_vec(Vec2(lane, 1))
-    return Rect(
-        l=center.x - w,
-        r=center.x + w,
-        t=center.y + h,
-        b=center.y - h,
+    center, angle = get_center_and_angle_at_judge_line(lane)
+    return (
+        Rect(
+            l=center.x - w,
+            r=center.x + w,
+            t=center.y + h,
+            b=center.y - h,
+        )
+        .as_quad()
+        .rotate_centered(angle)
     )
 
 
@@ -443,18 +550,22 @@ def layout_slide_connector_segment(
     end_lane: float,
     end_size: float,
     end_travel: float,
-) -> Quad:
+    n: int,
+) -> Iterator[Quad]:
     if start_travel < end_travel:
         start_lane, end_lane = end_lane, start_lane
         start_size, end_size = end_size, start_size
         start_travel, end_travel = end_travel, start_travel
-    return transform_quad(
-        Quad(
-            bl=Vec2(start_lane - start_size, 1) * start_travel,
-            br=Vec2(start_lane + start_size, 1) * start_travel,
-            tl=Vec2(end_lane - end_size, 1) * end_travel,
-            tr=Vec2(end_lane + end_size, 1) * end_travel,
-        )
+    return arc(
+        transform_quad(
+            Quad(
+                bl=Vec2(start_lane - start_size, 1) * start_travel,
+                br=Vec2(start_lane + start_size, 1) * start_travel,
+                tl=Vec2(end_lane - end_size, 1) * end_travel,
+                tr=Vec2(end_lane + end_size, 1) * end_travel,
+            )
+        ),
+        n,
     )
 
 
@@ -463,28 +574,28 @@ def layout_sim_line(
     left_travel: float,
     right_lane: float,
     right_travel: float,
-) -> Quad:
+) -> Iterator[Quad]:
     if left_lane > right_lane:
         left_lane, right_lane = right_lane, left_lane
         left_travel, right_travel = right_travel, left_travel
     ml = perspective_vec(left_lane, 1, left_travel)
     mr = perspective_vec(right_lane, 1, right_travel)
     ort = (mr - ml).orthogonal().normalize()
-    return Quad(
-        bl=ml + ort * NOTE_H * Layout.h_scale * left_travel,
-        br=mr + ort * NOTE_H * Layout.h_scale * right_travel,
-        tl=ml - ort * NOTE_H * Layout.h_scale * left_travel,
-        tr=mr - ort * NOTE_H * Layout.h_scale * right_travel,
+    return arc(
+        Quad(
+            bl=ml + ort * NOTE_H * Layout.h_scale * left_travel,
+            br=mr + ort * NOTE_H * Layout.h_scale * right_travel,
+            tl=ml - ort * NOTE_H * Layout.h_scale * left_travel,
+            tr=mr - ort * NOTE_H * Layout.h_scale * right_travel,
+        )
     )
 
 
 def layout_hitbox(
     l: float,
     r: float,
-) -> Rect:
-    bl = transform_vec(Vec2(l, LANE_HITBOX_B))
-    tr = transform_vec(Vec2(r, LANE_HITBOX_T))
-    return Rect(l=bl.x, r=tr.x, b=bl.y, t=tr.y)
+) -> Quad:
+    return arc_adjust_quad(perspective_rect(l=l, r=r, t=LANE_HITBOX_T, b=LANE_HITBOX_B))
 
 
 def iter_slot_lanes(lane: float, size: float):

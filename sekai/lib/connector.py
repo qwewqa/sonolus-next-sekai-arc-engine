@@ -7,7 +7,7 @@ from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
-from sonolus.script.quad import QuadLike, Rect
+from sonolus.script.quad import Quad, QuadLike
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
@@ -373,6 +373,8 @@ def draw_connector(
     last_alpha = start_alpha
     last_target_time = lerp(head_target_time, tail_target_time, start_frac)
 
+    arc_n = ceil(quality * Options.arc_quality * max(start_size, end_size) * 2)
+
     for i in range(1, segment_count + 1):
         next_frac = lerp(start_frac, end_frac, i / segment_count)
         next_progress = lerp(start_progress, end_progress, i / segment_count)
@@ -396,17 +398,21 @@ def draw_connector(
             end_lane=next_lane,
             end_size=next_size,
             end_travel=next_travel,
+            n=arc_n,
         )
 
-        if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
-            if Options.connector_animation:
-                a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z + 1 / 128, a=base_a * ease_out_cubic(a_modifier))
-                active_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
+        for segment in layout:
+            if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
+                if Options.connector_animation:
+                    a_modifier = (cos(2 * pi * time()) + 1) / 2
+                    normal_sprite.draw(segment, z=z + 1 / 128, a=base_a * ease_out_cubic(a_modifier))
+                    active_sprite.draw(segment, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
+                else:
+                    active_sprite.draw(segment, z=z, a=base_a)
             else:
-                active_sprite.draw(layout, z=z, a=base_a)
-        else:
-            normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5))
+                normal_sprite.draw(
+                    segment, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
+                )
 
         last_travel = next_travel
         last_lane = next_lane
@@ -426,13 +432,13 @@ class ActiveConnectorInfo(Record):
     active_start_time: float
     connector_kind: ConnectorKind
 
-    def get_hitbox(self, leniency: float) -> Rect:
+    def get_hitbox(self, leniency: float) -> Quad:
         return layout_hitbox(
             self.input_lane - self.input_size - leniency,
             self.input_lane + self.input_size + leniency,
         )
 
-    def get_prev_hitbox(self, leniency: float) -> Rect:
+    def get_prev_hitbox(self, leniency: float) -> Quad:
         return layout_hitbox(
             self.prev_input_lane - self.prev_input_size - leniency,
             self.prev_input_lane + self.prev_input_size + leniency,
@@ -541,7 +547,8 @@ def draw_connector_slot_glow_effect(
     layout = layout_slot_glow_effect(lane, size, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.3, time())
-    sprite.draw(layout, z=z, a=a)
+    for segment in layout:
+        sprite.draw(segment, z=z, a=a)
 
 
 def update_connector_sfx(

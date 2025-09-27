@@ -19,7 +19,7 @@ from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
-from sonolus.script.quad import Rect
+from sonolus.script.quad import Quad
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
@@ -289,7 +289,7 @@ class BaseNote(PlayArchetype):
         for touch in touches():
             if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
                 continue
-            if not self.check_direction_matches(touch.angle):
+            if not self.check_direction_matches(hitbox, touch.angle):
                 continue
             input_manager.disallow_empty(touch)
             self.judge(touch.time)
@@ -314,7 +314,7 @@ class BaseNote(PlayArchetype):
             for touch in touches():
                 if not self.check_touch_touch_is_eligible_for_early_tail_flick(hitbox, prev_hitbox, touch):
                     continue
-                if not self.check_direction_matches(touch.angle):
+                if not self.check_direction_matches(hitbox, touch.angle):
                     continue
                 input_manager.disallow_empty(touch)
                 self.judge(touch.time)
@@ -331,7 +331,7 @@ class BaseNote(PlayArchetype):
                 # Trace flick eligibility since no tap is needed for tail flicks.
                 if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
                     continue
-                if not self.check_direction_matches(touch.angle):
+                if not self.check_direction_matches(hitbox, touch.angle):
                     continue
                 input_manager.disallow_empty(touch)
                 self.judge(touch.time)
@@ -376,7 +376,7 @@ class BaseNote(PlayArchetype):
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
-            if self.check_direction_matches(touch.angle):
+            if self.check_direction_matches(hitbox, touch.angle):
                 has_correct_direction_touch = True
         if not has_touch:
             return
@@ -467,14 +467,14 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
+    def check_touch_touch_is_eligible_for_flick(self, hitbox: Quad, touch: Touch) -> bool:
         return (
             touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
         )
 
-    def check_touch_touch_is_eligible_for_early_tail_flick(self, hitbox: Rect, prev_hitbox: Rect, touch: Touch) -> bool:
+    def check_touch_touch_is_eligible_for_early_tail_flick(self, hitbox: Quad, prev_hitbox: Quad, touch: Touch) -> bool:
         return (
             touch.time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
@@ -482,18 +482,18 @@ class BaseNote(PlayArchetype):
             and (hitbox.contains_point(touch.prev_position) or prev_hitbox.contains_point(touch.prev_position))
         )
 
-    def check_touch_is_eligible_for_trace(self, hitbox: Rect, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_trace(self, hitbox: Quad, touch: Touch) -> bool:
         # Note that this does not check the time, since time may not be updated if the touch is stationary.
         return hitbox.contains_point(touch.position)
 
-    def check_touch_is_eligible_for_trace_flick(self, hitbox: Rect, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_trace_flick(self, hitbox: Quad, touch: Touch) -> bool:
         return (
             touch.time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
         )
 
-    def check_direction_matches(self, angle: float) -> bool:
+    def check_direction_matches(self, hitbox: Quad, angle: float) -> bool:
         leniency = pi / 2
         match self.direction:
             case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
@@ -508,6 +508,7 @@ class BaseNote(PlayArchetype):
                 target_angle = -pi / 2 + 1
             case _:
                 assert_never(self.direction)
+        target_angle += (hitbox.br - hitbox.bl).angle
         angle_diff = abs((angle - target_angle + pi) % (2 * pi) - pi)
         return angle_diff <= leniency
 
@@ -574,7 +575,7 @@ class BaseNote(PlayArchetype):
         self.despawn = True
         self.should_play_hit_effects = True
 
-    def get_full_hitbox(self) -> Rect:
+    def get_full_hitbox(self) -> Quad:
         leniency = get_leniency(self.kind)
         return layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
 

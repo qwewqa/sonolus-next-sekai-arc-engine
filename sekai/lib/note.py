@@ -47,7 +47,7 @@ from sekai.lib.layout import (
     layout_circular_effect,
     layout_flick_arrow,
     layout_flick_arrow_fallback,
-    layout_lane,
+    layout_lane_effect,
     layout_linear_effect,
     layout_regular_note_body,
     layout_regular_note_body_fallback,
@@ -456,7 +456,8 @@ def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: f
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
+        for middle_segment in middle_layout:
+            sprites.middle.draw(middle_segment, z=z, a=a)
         sprites.right.draw(right_layout, z=z, a=a)
     else:
         layout = layout_regular_note_body_fallback(lane, size, travel)
@@ -469,7 +470,8 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: flo
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
+        for middle_segment in middle_layout:
+            sprites.middle.draw(middle_segment, z=z, a=a)
         sprites.right.draw(right_layout, z=z, a=a)
     else:
         layout = layout_regular_note_body_fallback(lane, size, travel)
@@ -482,7 +484,8 @@ def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: floa
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
+        for middle_segment in middle_layout:
+            sprites.middle.draw(middle_segment, z=z, a=a)
         sprites.right.draw(right_layout, z=z, a=a)
     else:
         layout = layout_slim_note_body_fallback(lane, size, travel)
@@ -812,11 +815,12 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
                 layout = layout_linear_effect(slot_lane, shear=0)
                 particles.slot_linear.spawn(layout, duration=0.5)
     if Options.lane_effect_enabled:
-        layout = layout_lane(lane, size)
-        if particles.lane.is_available:
-            particles.lane.spawn(layout, duration=1)
-        elif particles.lane_basic.is_available:
-            particles.lane_basic.spawn(layout, duration=0.3)
+        layout = layout_lane_effect(lane, size)
+        for segment in layout:
+            if particles.lane.is_available:
+                particles.lane.spawn(segment, duration=1)
+            elif particles.lane_basic.is_available:
+                particles.lane_basic.spawn(segment, duration=0.3)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time())
 

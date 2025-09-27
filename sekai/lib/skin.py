@@ -50,12 +50,12 @@ class Skin:
     critical_slide_tick_note: Sprite = sprite("Sekai Diamond Yellow")
     critical_slide_tick_note_fallback: StandardSprite.NOTE_TICK_YELLOW
 
-    normal_slide_connector_normal: Sprite = sprite("Sekai Active Slide Connection Green")
-    normal_slide_connector_active: Sprite = sprite("Sekai Active Slide Connection Green Active")
+    normal_slide_connector_normal: Sprite = sprite("Sekai Slide Connection Green")
+    normal_slide_connector_active: Sprite = sprite("Sekai Slide Connection Green Active")
     normal_slide_connector_fallback: StandardSprite.NOTE_CONNECTION_GREEN_SEAMLESS
 
-    critical_slide_connector_normal: Sprite = sprite("Sekai Active Slide Connection Yellow")
-    critical_slide_connector_active: Sprite = sprite("Sekai Active Slide Connection Yellow Active")
+    critical_slide_connector_normal: Sprite = sprite("Sekai Slide Connection Yellow")
+    critical_slide_connector_active: Sprite = sprite("Sekai Slide Connection Yellow Active")
     critical_slide_connector_fallback: StandardSprite.NOTE_CONNECTION_YELLOW_SEAMLESS
 
     normal_slot: Sprite = sprite("Sekai Slot Cyan")

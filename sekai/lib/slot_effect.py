@@ -25,7 +25,8 @@ def draw_slot_glow_effect(
     layout = layout_slot_glow_effect(lane, size, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
     a = lerp(1, 0, progress)
-    sprite.draw(layout, z=z, a=a)
+    for segment in layout:
+        sprite.draw(segment, z=z, a=a)
 
 
 def draw_slot_effect(

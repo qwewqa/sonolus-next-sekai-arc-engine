@@ -52,4 +52,5 @@ def draw_sim_line(
         )
         * fade_alpha
     )
-    Skin.sim_line.draw(layout, z=z, a=a)
+    for segment in layout:
+        Skin.sim_line.draw(segment, z=z, a=a)

@@ -68,7 +68,7 @@ class Options:
     slide_alpha: float = slider_option(
         name="Slide Alpha",
         scope="Sekai",
-        default=1,
+        default=0.8,
         min=0,
         max=1,
         step=0.05,
@@ -148,6 +148,15 @@ class Options:
     )
     guide_quality: float = slider_option(
         name="Guide Quality",
+        scope="Next Sekai",
+        default=1,
+        min=0.5,
+        max=2,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    arc_quality: float = slider_option(
+        name="Arc Quality",
         scope="Next Sekai",
         default=1,
         min=0.5,
