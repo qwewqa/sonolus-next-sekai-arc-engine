@@ -137,7 +137,7 @@ class Options:
         scope="Sekai",
         default=True,
     )
-    slide_quality: int = slider_option(
+    slide_quality: float = slider_option(
         name="Slide Quality",
         scope="Next Sekai",
         default=1,
@@ -146,7 +146,7 @@ class Options:
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
-    guide_quality: int = slider_option(
+    guide_quality: float = slider_option(
         name="Guide Quality",
         scope="Next Sekai",
         default=1,
