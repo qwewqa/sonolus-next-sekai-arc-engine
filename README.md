@@ -2,18 +2,13 @@
 
 A variant of the [Next SEKAI engine](https://github.com/Next-SEKAI/sonolus-next-sekai-engine)
 
-## Official Resources
-
-Server: https://coconut.sonolus.com/next-sekai/  
-Editor: https://next-sekai-editor.sonolus.com/
-
 ## Quick Dev Setup
 
 1. Install [uv](https://docs.astral.sh/uv/).
 2. Run `uv sync`.
 3. Add resources (full exported scp files) such as skins and levels to the `/resources` folder.
 4. [Ensure your venv is activated](https://docs.astral.sh/uv/pip/environments/#using-a-virtual-environment).
-5. Run `sonolus-py dev`.
+5. Run `sonolus-py dev -O2`.
 
 ## Custom Resources
 
