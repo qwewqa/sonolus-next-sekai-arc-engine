@@ -314,17 +314,6 @@ def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Q
     )
 
 
-def layout_regular_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
-    return arc_adjust_quad(
-        layout_note_body_by_edges(
-            l=lane - size + Options.note_margin,
-            r=lane + size - Options.note_margin,
-            h=NOTE_H,
-            travel=travel,
-        )
-    )
-
-
 def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Iterator[Quad], Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
@@ -332,17 +321,6 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
         h=NOTE_H,  # Height is handled by the sprite rather than being changed here
         edge_w=NOTE_SLIM_EDGE_W,
         travel=travel,
-    )
-
-
-def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
-    return arc_adjust_quad(
-        layout_note_body_by_edges(
-            l=lane - size + Options.note_margin,
-            r=lane + size - Options.note_margin,
-            h=NOTE_H / 2,  # For fallback, we need to halve the height manually engine-side
-            travel=travel,
-        )
     )
 
 
@@ -411,63 +389,6 @@ def layout_flick_arrow(
         swap(result.bl, result.br)
         swap(result.tl, result.tr)
     return result
-
-
-def layout_flick_arrow_fallback(
-    lane: float, size: float, direction: FlickDirection, travel: float, animation_progress: float
-) -> Quad:
-    match direction:
-        case FlickDirection.UP_OMNI:
-            rotation = 0
-            animation_top_x_offset = 0
-            is_down = False
-        case FlickDirection.DOWN_OMNI:
-            rotation = pi
-            animation_top_x_offset = 0
-            is_down = True
-        case FlickDirection.UP_LEFT:
-            rotation = pi / 6
-            animation_top_x_offset = -1
-            is_down = False
-        case FlickDirection.UP_RIGHT:
-            rotation = -pi / 6
-            animation_top_x_offset = 1
-            is_down = False
-        case FlickDirection.DOWN_LEFT:
-            rotation = pi * 5 / 6
-            animation_top_x_offset = 1
-            is_down = True
-            lane -= 0.25  # Note: backwards from the regular skin due to how the sprites are designed
-        case FlickDirection.DOWN_RIGHT:
-            rotation = -pi * 5 / 6
-            animation_top_x_offset = -1
-            is_down = True
-            lane += 0.25
-        case _:
-            assert_never(direction)
-
-    w = clamp(size / 2, 1, 2)
-    l = arc_adjust_vec(transform_vec(Vec2(lane - w, 1) * travel))
-    r = arc_adjust_vec(transform_vec(Vec2(lane + w, 1) * travel))
-    ort = -(r - l).orthogonal() / 2
-    offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = (
-        Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale).rotate(ort.angle + pi / 2)
-        * offset_scale
-        * travel
-    )
-    return (
-        Quad(
-            bl=l - ort,
-            br=r - ort,
-            tl=l + ort,
-            tr=r + ort,
-        )
-        .rotate(rotation)
-        .scale(Vec2(w, w) * Layout.w_scale * travel)
-        .translate(transform_vec(Vec2(lane, 1) * travel))
-        .translate(offset)
-    )
 
 
 def layout_slot_effect(lane: float) -> Quad:
