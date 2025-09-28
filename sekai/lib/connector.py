@@ -12,6 +12,7 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
+from sonolus.script.vec import Vec2
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
@@ -373,11 +374,9 @@ def draw_connector(
     last_alpha = start_alpha
     last_target_time = lerp(head_target_time, tail_target_time, start_frac)
 
-    arc_n = ceil(quality * Options.arc_quality * max(start_size, end_size) * 2)
-
-    for i in range(1, segment_count + 1):
-        next_frac = lerp(start_frac, end_frac, i / segment_count)
-        next_progress = lerp(start_progress, end_progress, i / segment_count)
+    for v_segment_i in range(1, segment_count + 1):
+        next_frac = lerp(start_frac, end_frac, v_segment_i / segment_count)
+        next_progress = lerp(start_progress, end_progress, v_segment_i / segment_count)
         next_travel = approach(next_progress)
         next_lane = lerp(head_lane, tail_lane, ease(ease_type, next_frac))
         next_size = max(1e-3, lerp(head_size, tail_size, ease(ease_type, next_frac)))
@@ -391,17 +390,69 @@ def draw_connector(
             * get_connector_alpha_option(kind)
         )
 
-        layout = layout_slide_connector_segment(
+        start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * 1.5))
+        end_arc_n = max(1, ceil(quality * Options.arc_quality * next_size * 1.5))
+        subsegment_n = abs(start_arc_n - end_arc_n) + 1
+        arc_n = max(start_arc_n, end_arc_n)
+
+        start_layout = layout_slide_connector_segment(
             start_lane=last_lane,
             start_size=last_size,
             start_travel=last_travel,
             end_lane=next_lane,
             end_size=next_size,
             end_travel=next_travel,
-            n=arc_n,
+            n=start_arc_n,
+        )
+        end_layout = layout_slide_connector_segment(
+            start_lane=last_lane,
+            start_size=last_size,
+            start_travel=last_travel,
+            end_lane=next_lane,
+            end_size=next_size,
+            end_travel=next_travel,
+            n=end_arc_n,
         )
 
-        for segment in layout:
+        cutoff_l = +Vec2
+        cutoff_r = +Vec2
+        for h_segment_i in range(arc_n):
+            segment_bl = +Vec2
+            segment_br = +Vec2
+            segment_tr = +Vec2
+            segment_tl = +Vec2
+            if h_segment_i < start_arc_n:
+                start_segment = next(start_layout)
+                segment_bl @= start_segment.bl  # Overridden at h_segment_i == start_arc_n - 1
+                segment_br @= start_segment.br
+                if h_segment_i == start_arc_n - 1 and start_arc_n < end_arc_n:
+                    cutoff_l @= start_segment.bl
+                    cutoff_r @= start_segment.br
+            if h_segment_i >= start_arc_n - 1 and start_arc_n < end_arc_n:
+                cutoff_i = h_segment_i - start_arc_n + 1
+                cutoff_start_frac = cutoff_i / subsegment_n
+                cutoff_end_frac = (cutoff_i + 1) / subsegment_n
+                segment_bl @= lerp(cutoff_l, cutoff_r, cutoff_start_frac)
+                segment_br @= lerp(cutoff_l, cutoff_r, cutoff_end_frac)
+            if h_segment_i < end_arc_n:
+                end_segment = next(end_layout)
+                segment_tl @= end_segment.tl
+                segment_tr @= end_segment.tr
+                if h_segment_i == end_arc_n - 1 and end_arc_n < start_arc_n:
+                    cutoff_l @= end_segment.tl
+                    cutoff_r @= end_segment.tr
+            if h_segment_i >= end_arc_n - 1 and end_arc_n < start_arc_n:
+                cutoff_i = h_segment_i - end_arc_n + 1
+                cutoff_start_frac = cutoff_i / subsegment_n
+                cutoff_end_frac = (cutoff_i + 1) / subsegment_n
+                segment_tl @= lerp(cutoff_l, cutoff_r, cutoff_start_frac)
+                segment_tr @= lerp(cutoff_l, cutoff_r, cutoff_end_frac)
+            segment = Quad(
+                bl=segment_bl,
+                br=segment_br,
+                tr=segment_tr,
+                tl=segment_tl,
+            )
             if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
                 if Options.connector_animation:
                     a_modifier = (cos(2 * pi * time()) + 1) / 2
@@ -413,7 +464,6 @@ def draw_connector(
                 normal_sprite.draw(
                     segment, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
                 )
-
         last_travel = next_travel
         last_lane = next_lane
         last_size = next_size
