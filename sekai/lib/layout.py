@@ -30,6 +30,8 @@ APPROACH_SCALE = 1.06**-45
 # Value above 1 where we cut off drawing sprites. Doesn't really matter as long as it's high enough,
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
 DEFAULT_APPROACH_CUTOFF = 2.5
+# Lower than for notes since there's no flick arrow to worry about, but it's performance sensitive.
+CONNECTOR_APPROACH_CUTOFF = 1.5
 DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 ARC_FACTOR = 1
@@ -158,17 +160,19 @@ def arc_adjust_quad(q: QuadLike) -> Quad:
     )
 
 
-def get_arc_n(q: QuadLike) -> int:
+def get_arc_n(bl: Vec2, br: Vec2, quality: float | None = None) -> int:
+    if quality is None:
+        quality = Options.arc_quality
     vp = transform_vec(Vec2(0, 0))
-    r = vp.y - q.br.y
-    w_scale = (q.br.x - q.bl.x) * 20
+    r = vp.y - br.y
+    w_scale = (br.x - bl.x) * 20
     h_adj_w_scale = w_scale / r * 0.5
-    return ceil(min(w_scale, h_adj_w_scale) * Options.arc_quality)
+    return ceil(min(w_scale, h_adj_w_scale) * quality)
 
 
 def h_segment(q: QuadLike, n: int | None = None) -> Iterator[Quad]:
     if n is None:
-        n = get_arc_n(q)
+        n = get_arc_n(q.bl, q.br)
     for i in range(n):
         l_frac = i / n
         r_frac = (i + 1) / n

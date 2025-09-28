@@ -12,7 +12,6 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
-from sonolus.script.vec import Vec2
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
@@ -23,6 +22,7 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.layout import (
+    CONNECTOR_APPROACH_CUTOFF,
     Layout,
     approach,
     get_alpha,
@@ -234,10 +234,12 @@ def draw_connector(
     head_size: float,
     head_progress: float,
     head_target_time: float,
+    head_is_segment_head: bool,
     tail_lane: float,
     tail_size: float,
     tail_progress: float,
     tail_target_time: float,
+    tail_is_segment_tail: bool,
     segment_head_target_time: float,
     segment_head_lane: float,
     segment_head_alpha: float,
@@ -321,10 +323,15 @@ def draw_connector(
     if time() >= head_target_time:
         head_frac = unlerp_clamped(head_target_time, tail_target_time, time())
         head_progress = remap(head_frac, 1.0, 1.0, tail_progress, 0.0)
-        start_progress = clamp(1.0, Layout.progress_start, Layout.progress_cutoff)  # Accounts for hidden
+        start_progress = clamp(
+            1.0, Layout.progress_start, min(Layout.progress_cutoff, CONNECTOR_APPROACH_CUTOFF)
+        )  # Accounts for hidden
+        head_is_segment_head = True  # Treat it as if it is since it's visible
     else:
-        start_progress = clamp(head_progress, Layout.progress_start, Layout.progress_cutoff)
-    end_progress = clamp(tail_progress, Layout.progress_start, Layout.progress_cutoff)
+        start_progress = clamp(
+            head_progress, Layout.progress_start, min(Layout.progress_cutoff, CONNECTOR_APPROACH_CUTOFF)
+        )
+    end_progress = clamp(tail_progress, Layout.progress_start, min(Layout.progress_cutoff, CONNECTOR_APPROACH_CUTOFF))
     start_frac = unlerp_clamped(head_progress, tail_progress, start_progress)
     end_frac = unlerp_clamped(head_progress, tail_progress, end_progress)
 
@@ -390,9 +397,16 @@ def draw_connector(
             * get_connector_alpha_option(kind)
         )
 
-        start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * 1.5))
-        end_arc_n = max(1, ceil(quality * Options.arc_quality * next_size * 1.5))
-        subsegment_n = abs(start_arc_n - end_arc_n) + 1
+        start_arc_factor = 0.8
+        end_arc_factor = 0.8
+        if v_segment_i == 1 and (head_is_segment_head or abs(start_progress - Layout.progress_start) < 1e-3):
+            start_arc_factor = 1.5
+        if v_segment_i == segment_count and (tail_is_segment_tail or abs(end_progress - Layout.progress_cutoff) < 1e-3):
+            end_arc_factor = 1.5
+        start_arc_factor *= Options.arc_quality
+        end_arc_factor *= Options.arc_quality
+        start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * start_arc_factor))
+        end_arc_n = max(1, ceil(quality * Options.arc_quality * next_size * end_arc_factor))
         arc_n = max(start_arc_n, end_arc_n)
 
         start_layout = layout_slide_connector_segment(
@@ -414,45 +428,53 @@ def draw_connector(
             n=end_arc_n,
         )
 
-        cutoff_l = +Vec2
-        cutoff_r = +Vec2
+        start_segment_i = 0
+        end_segment_i = 0
+        start_segment = +Quad
+        end_segment = +Quad
+        start_subsegment_i = 0
+        end_subsegment_i = 0
+        start_subsegment_n = 0
+        end_subsegment_n = 0
         for h_segment_i in range(arc_n):
-            segment_bl = +Vec2
-            segment_br = +Vec2
-            segment_tr = +Vec2
-            segment_tl = +Vec2
-            if h_segment_i < start_arc_n:
-                start_segment = next(start_layout)
-                segment_bl @= start_segment.bl  # Overridden at h_segment_i == start_arc_n - 1
-                segment_br @= start_segment.br
-                if h_segment_i == start_arc_n - 1 and start_arc_n < end_arc_n:
-                    cutoff_l @= start_segment.bl
-                    cutoff_r @= start_segment.br
-            if h_segment_i >= start_arc_n - 1 and start_arc_n < end_arc_n:
-                cutoff_i = h_segment_i - start_arc_n + 1
-                cutoff_start_frac = cutoff_i / subsegment_n
-                cutoff_end_frac = (cutoff_i + 1) / subsegment_n
-                segment_bl @= lerp(cutoff_l, cutoff_r, cutoff_start_frac)
-                segment_br @= lerp(cutoff_l, cutoff_r, cutoff_end_frac)
-            if h_segment_i < end_arc_n:
-                end_segment = next(end_layout)
-                segment_tl @= end_segment.tl
-                segment_tr @= end_segment.tr
-                if h_segment_i == end_arc_n - 1 and end_arc_n < start_arc_n:
-                    cutoff_l @= end_segment.tl
-                    cutoff_r @= end_segment.tr
-            if h_segment_i >= end_arc_n - 1 and end_arc_n < start_arc_n:
-                cutoff_i = h_segment_i - end_arc_n + 1
-                cutoff_start_frac = cutoff_i / subsegment_n
-                cutoff_end_frac = (cutoff_i + 1) / subsegment_n
-                segment_tl @= lerp(cutoff_l, cutoff_r, cutoff_start_frac)
-                segment_tr @= lerp(cutoff_l, cutoff_r, cutoff_end_frac)
+            if h_segment_i * start_arc_n >= start_segment_i * arc_n:
+                start_segment @= next(start_layout)
+                start_segment_i += 1
+                start_subsegment_i = 0
+                succeeding_h_segment_i = ceil(start_segment_i * arc_n / start_arc_n)
+                # Paranoia about rounding errors
+                if succeeding_h_segment_i * start_arc_n >= (start_segment_i + 1) * arc_n:
+                    succeeding_h_segment_i -= 1
+                elif succeeding_h_segment_i * start_arc_n < start_segment_i * arc_n:
+                    succeeding_h_segment_i += 1
+                start_subsegment_n = succeeding_h_segment_i - h_segment_i
+            else:
+                start_subsegment_i += 1
+            if h_segment_i * end_arc_n >= end_segment_i * arc_n:
+                end_segment @= next(end_layout)
+                end_segment_i += 1
+                end_subsegment_i = 0
+                succeeding_h_segment_i = ceil(end_segment_i * arc_n / end_arc_n)
+                if succeeding_h_segment_i * end_arc_n >= (end_segment_i + 1) * arc_n:
+                    succeeding_h_segment_i -= 1
+                elif succeeding_h_segment_i * end_arc_n < end_segment_i * arc_n:
+                    succeeding_h_segment_i += 1
+                end_subsegment_n = succeeding_h_segment_i - h_segment_i
+            else:
+                end_subsegment_i += 1
+
+            start_segment_l_frac = start_subsegment_i / start_subsegment_n
+            start_segment_r_frac = (start_subsegment_i + 1) / start_subsegment_n
+            end_segment_l_frac = end_subsegment_i / end_subsegment_n
+            end_segment_r_frac = (end_subsegment_i + 1) / end_subsegment_n
+
             segment = Quad(
-                bl=segment_bl,
-                br=segment_br,
-                tr=segment_tr,
-                tl=segment_tl,
+                bl=lerp(start_segment.bl, start_segment.br, start_segment_l_frac),
+                br=lerp(start_segment.bl, start_segment.br, start_segment_r_frac),
+                tl=lerp(end_segment.tl, end_segment.tr, end_segment_l_frac),
+                tr=lerp(end_segment.tl, end_segment.tr, end_segment_r_frac),
             )
+
             if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
                 if Options.connector_animation:
                     a_modifier = (cos(2 * pi * time()) + 1) / 2
