@@ -1,16 +1,16 @@
 from collections.abc import Iterator
 from enum import IntEnum
-from math import atan, ceil, floor, log, pi
+from math import atan, ceil, cos, floor, log, pi, sin
 from typing import assert_never
 
 from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
-from sonolus.script.runtime import aspect_ratio, screen
+from sonolus.script.runtime import aspect_ratio, screen, time
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
-from sekai.lib.options import Options
+from sekai.lib.options import ArcMode, Options
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850 + 0.4
@@ -56,7 +56,6 @@ class Layout:
     progress_cutoff: float
     flick_speed_threshold: float
     vp: Vec2
-    angle_per_lane: float
     min_visible_lane: float
     max_visible_lane: float
 
@@ -95,9 +94,30 @@ def init_layout():
     Layout.flick_speed_threshold = 2 * Layout.w_scale
 
     Layout.vp = transform_vec(Vec2(0, 0))
-    Layout.angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
-    Layout.min_visible_lane = -pi / 2 / Layout.angle_per_lane
-    Layout.max_visible_lane = pi / 2 / Layout.angle_per_lane
+
+    match Options.arc_mode:
+        case ArcMode.DISABLED:
+            Layout.min_visible_lane = -30
+            Layout.max_visible_lane = 30
+        case ArcMode.ARC:
+            angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
+            Layout.min_visible_lane = -pi / 2 / angle_per_lane
+            Layout.max_visible_lane = pi / 2 / angle_per_lane
+        case ArcMode.CONVEX:
+            Layout.min_visible_lane = -18
+            Layout.max_visible_lane = 18
+        case ArcMode.CONCAVE:
+            Layout.min_visible_lane = -18
+            Layout.max_visible_lane = 18
+        case ArcMode.WAVE:
+            Layout.min_visible_lane = -18
+            Layout.max_visible_lane = 18
+        case ArcMode.SWING:
+            angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
+            Layout.min_visible_lane = -pi * 5 / 8 / angle_per_lane
+            Layout.max_visible_lane = pi * 5 / 8 / angle_per_lane
+        case _:
+            assert_never(Options.arc_mode)
 
 
 def approach(progress: float) -> float:
@@ -137,22 +157,45 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
 
 
 def arc_adjust_vec(v: Vec2):
-    vp = Layout.vp
-    r = vp.y - v.y
-    theta = (v.x - vp.x) / r * ARC_FACTOR
-    theta = clamp(theta, -pi / 2, pi / 2)
-    direction = Vec2(0, -1).rotate(theta)
-    return vp + direction * r
-
-
-def vec_to_angle_from_down(v: Vec2) -> float:
-    vp = Layout.vp
-    return (v - vp).angle - Vec2(0, -1).angle
-
-
-def vec_to_lane(v: Vec2) -> float:
-    angle = vec_to_angle_from_down(v)
-    return angle / Layout.angle_per_lane
+    result = +Vec2
+    match Options.arc_mode:
+        case ArcMode.DISABLED:
+            result @= v
+        case ArcMode.ARC:
+            vp = Layout.vp
+            r = vp.y - v.y
+            theta = (v.x - vp.x) / r * ARC_FACTOR
+            theta = clamp(theta, -pi / 2, pi / 2)
+            direction = Vec2(0, -1).rotate(theta)
+            result @= vp + direction * r
+        case ArcMode.CONVEX:
+            vp = Layout.vp
+            h = vp.y - v.y
+            rel_x = (v.x - vp.x) / Layout.w_scale / h
+            y_offset = (0.16 - 0.5 * ((rel_x / 5) ** 2)) * h
+            result @= v + Vec2(0, y_offset)
+        case ArcMode.CONCAVE:
+            vp = Layout.vp
+            h = vp.y - v.y
+            rel_x = (v.x - vp.x) / Layout.w_scale / h
+            y_offset = 0.5 * ((rel_x / 5) ** 2) * h
+            result @= v + Vec2(0, y_offset)
+        case ArcMode.WAVE:
+            vp = Layout.vp
+            h = vp.y - v.y
+            rel_x = (v.x - vp.x) / Layout.w_scale / h
+            y_offset = -Layout.h_scale * 0.05 * (cos(rel_x * 1.5 + time() / 2) + 0.5) * h
+            result @= v + Vec2(0, y_offset)
+        case ArcMode.SWING:
+            vp = Layout.vp
+            r = vp.y - v.y
+            theta = (v.x - vp.x) / r * ARC_FACTOR + sin(time()) * pi / 8
+            theta = clamp(theta, -pi / 2, pi / 2)
+            direction = Vec2(0, -1).rotate(theta)
+            result @= vp + direction * r
+        case _:
+            assert_never(Options.arc_mode)
+    return result
 
 
 def arc_adjust_quad(q: QuadLike) -> Quad:
@@ -165,6 +208,8 @@ def arc_adjust_quad(q: QuadLike) -> Quad:
 
 
 def get_arc_n(bl: Vec2, br: Vec2, quality: float | None = None) -> int:
+    if Options.arc_mode == ArcMode.DISABLED:
+        return 1
     if quality is None:
         quality = Options.arc_quality
     vp = transform_vec(Vec2(0, 0))

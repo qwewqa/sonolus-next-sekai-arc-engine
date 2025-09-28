@@ -1,5 +1,16 @@
-from sonolus.script.options import options, slider_option, toggle_option
+from enum import IntEnum
+
+from sonolus.script.options import options, select_option, slider_option, toggle_option
 from sonolus.script.text import StandardText
+
+
+class ArcMode(IntEnum):
+    DISABLED = 0
+    ARC = 1
+    CONVEX = 2
+    CONCAVE = 3
+    WAVE = 4
+    SWING = 5
 
 
 @options
@@ -157,7 +168,7 @@ class Options:
     )
     arc_quality: float = slider_option(
         name="Arc Quality",
-        scope="Next Sekai",
+        scope="Next Sekai Arc",
         default=1,
         min=0.5,
         max=2,
@@ -183,4 +194,17 @@ class Options:
         standard=True,
         advanced=True,
         default=False,
+    )
+    arc_mode: ArcMode = select_option(
+        name="Arc Mode",
+        scope="Next Sekai Arc",
+        default=ArcMode.ARC,
+        values=[
+            "Disabled",
+            "Arc",
+            "Convex",
+            "Concave",
+            "Wave",
+            "Swing",
+        ],
     )

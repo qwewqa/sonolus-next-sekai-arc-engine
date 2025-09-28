@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import Options
+from sekai.lib.options import ArcMode, Options
 from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ActiveConnectorSprites,
@@ -407,17 +407,24 @@ def draw_connector(
             * get_connector_alpha_option(kind)
         )
 
-        start_arc_factor = 0.8
-        end_arc_factor = 0.8
-        if v_segment_i == 1 and (head_is_segment_head or abs(start_progress - Layout.progress_start) < 1e-3):
-            start_arc_factor = 1.5
-        if v_segment_i == segment_count and (tail_is_segment_tail or abs(end_progress - Layout.progress_cutoff) < 1e-3):
-            end_arc_factor = 1.5
-        start_arc_factor *= Options.arc_quality
-        end_arc_factor *= Options.arc_quality
-        start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * start_arc_factor))
-        end_arc_n = max(1, ceil(quality * Options.arc_quality * next_size * end_arc_factor))
-        arc_n = max(start_arc_n, end_arc_n)
+        if Options.arc_mode == ArcMode.DISABLED:
+            start_arc_n = 1
+            end_arc_n = 1
+            arc_n = 1
+        else:
+            start_arc_factor = 0.8
+            end_arc_factor = 0.8
+            if v_segment_i == 1 and (head_is_segment_head or abs(start_progress - Layout.progress_start) < 1e-3):
+                start_arc_factor = 1.5
+            if v_segment_i == segment_count and (
+                tail_is_segment_tail or abs(end_progress - Layout.progress_cutoff) < 1e-3
+            ):
+                end_arc_factor = 1.5
+            start_arc_factor *= Options.arc_quality
+            end_arc_factor *= Options.arc_quality
+            start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * start_arc_factor))
+            end_arc_n = max(1, ceil(quality * Options.arc_quality * next_size * end_arc_factor))
+            arc_n = max(start_arc_n, end_arc_n)
 
         start_layout = layout_slide_connector_segment(
             start_lane=last_lane,
@@ -535,7 +542,22 @@ def update_circular_connector_particle(
 ):
     if not Options.note_effect_enabled:
         return
-    layout = layout_circular_effect(lane, w=3.5, h=2.1, y_offset=0.1)
+    match Options.arc_mode:
+        case ArcMode.DISABLED:
+            y_offset = 0
+        case ArcMode.ARC:
+            y_offset = 0.1
+        case ArcMode.CONVEX:
+            y_offset = -0.1
+        case ArcMode.CONCAVE:
+            y_offset = 0.1
+        case ArcMode.WAVE:
+            y_offset = 0
+        case ArcMode.SWING:
+            y_offset = 0.1
+        case _:
+            assert_never(Options.arc_mode)
+    layout = layout_circular_effect(lane, w=3.5, h=2.1, y_offset=y_offset)
     if replace or handle.id == 0:
         particle = +Particle(-1)
         match kind:
