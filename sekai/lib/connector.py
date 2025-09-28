@@ -368,7 +368,9 @@ def draw_connector(
     curve_change_scale = pos_offset**0.4 * 1.6
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5
+        * min(abs(start_pos_y - end_pos_y), 1)
+        * 3,
     )
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
@@ -378,6 +380,10 @@ def draw_connector(
     last_travel = start_travel
     last_lane = start_lane
     last_size = start_size
+    last_l = clamp(last_lane - last_size, Layout.min_visible_lane, Layout.max_visible_lane)
+    last_r = clamp(last_lane + last_size, Layout.min_visible_lane, Layout.max_visible_lane)
+    last_lane = (last_l + last_r) / 2
+    last_size = (last_r - last_l) / 2
     last_alpha = start_alpha
     last_target_time = lerp(head_target_time, tail_target_time, start_frac)
 
@@ -387,6 +393,10 @@ def draw_connector(
         next_travel = approach(next_progress)
         next_lane = lerp(head_lane, tail_lane, ease(ease_type, next_frac))
         next_size = max(1e-3, lerp(head_size, tail_size, ease(ease_type, next_frac)))
+        next_l = clamp(next_lane - next_size, Layout.min_visible_lane, Layout.max_visible_lane)
+        next_r = clamp(next_lane + next_size, Layout.min_visible_lane, Layout.max_visible_lane)
+        next_lane = (next_l + next_r) / 2
+        next_size = (next_r - next_l) / 2
         next_alpha = lerp(head_alpha, tail_alpha, next_frac)
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
 

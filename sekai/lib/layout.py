@@ -31,7 +31,7 @@ APPROACH_SCALE = 1.06**-45
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
 DEFAULT_APPROACH_CUTOFF = 2.5
 # Lower than for notes since there's no flick arrow to worry about, but it's performance sensitive.
-CONNECTOR_APPROACH_CUTOFF = 1.5
+CONNECTOR_APPROACH_CUTOFF = 1.4
 DEFAULT_PROGRESS_CUTOFF = 1 - log(DEFAULT_APPROACH_CUTOFF, APPROACH_SCALE)
 
 ARC_FACTOR = 1
@@ -56,6 +56,9 @@ class Layout:
     progress_cutoff: float
     flick_speed_threshold: float
     vp: Vec2
+    angle_per_lane: float
+    min_visible_lane: float
+    max_visible_lane: float
 
 
 def init_layout():
@@ -92,6 +95,9 @@ def init_layout():
     Layout.flick_speed_threshold = 2 * Layout.w_scale
 
     Layout.vp = transform_vec(Vec2(0, 0))
+    Layout.angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
+    Layout.min_visible_lane = -pi / 2 / Layout.angle_per_lane
+    Layout.max_visible_lane = pi / 2 / Layout.angle_per_lane
 
 
 def approach(progress: float) -> float:
@@ -145,10 +151,8 @@ def vec_to_angle_from_down(v: Vec2) -> float:
 
 
 def vec_to_lane(v: Vec2) -> float:
-    vp = Layout.vp
     angle = vec_to_angle_from_down(v)
-    lane_angle = ARC_FACTOR * Layout.w_scale / (vp.y - perspective_vec(0, 1).y)
-    return angle / lane_angle
+    return angle / Layout.angle_per_lane
 
 
 def arc_adjust_quad(q: QuadLike) -> Quad:
