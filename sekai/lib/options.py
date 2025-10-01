@@ -23,6 +23,7 @@ class FlickMod(IntEnum):
     NONE = 0
     MORE_FLICKS = 1
     EVEN_MORE_FLICKS = 2
+    NO_FLICKS = 3
 
 
 class FlickDirectionMod(IntEnum):
@@ -308,6 +309,7 @@ class Options:
             "None",
             "More Flicks",
             "Even More Flicks",
+            "No Flicks",
         ],
         standard=True,
     )

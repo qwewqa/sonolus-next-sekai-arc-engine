@@ -193,6 +193,8 @@ def map_note_kind(kind: NoteKind) -> NoteKind:
             kind = map_more_flicks_note_kind(kind)
         case FlickMod.EVEN_MORE_FLICKS:
             kind = map_even_more_flicks_note_kind(kind)
+        case FlickMod.NO_FLICKS:
+            kind = map_no_flicks_note_kind(kind)
         case _:
             assert_never(Options.flick_mod)
     match Options.trace_mod:
@@ -365,6 +367,82 @@ def map_even_more_flicks_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.NORM_TRACE_FLICK
         case NoteKind.CRIT_TICK:
             return NoteKind.CRIT_TRACE_FLICK
+        case NoteKind.HIDE_TICK:
+            return NoteKind.HIDE_TICK
+        case NoteKind.DAMAGE:
+            return NoteKind.DAMAGE
+        case NoteKind.ANCHOR:
+            return NoteKind.ANCHOR
+        case _:
+            assert_never(kind)
+
+
+def map_no_flicks_note_kind(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TAP:
+            return NoteKind.NORM_TAP
+        case NoteKind.CRIT_TAP:
+            return NoteKind.CRIT_TAP
+        case NoteKind.NORM_FLICK:
+            return NoteKind.NORM_TAP
+        case NoteKind.CRIT_FLICK:
+            return NoteKind.CRIT_TAP
+        case NoteKind.NORM_TRACE:
+            return NoteKind.NORM_TRACE
+        case NoteKind.CRIT_TRACE:
+            return NoteKind.CRIT_TRACE
+        case NoteKind.NORM_TRACE_FLICK:
+            return NoteKind.NORM_TRACE
+        case NoteKind.CRIT_TRACE_FLICK:
+            return NoteKind.CRIT_TRACE
+        case NoteKind.NORM_RELEASE:
+            return NoteKind.NORM_RELEASE
+        case NoteKind.CRIT_RELEASE:
+            return NoteKind.CRIT_RELEASE
+        case NoteKind.NORM_HEAD_TAP:
+            return NoteKind.NORM_HEAD_TAP
+        case NoteKind.CRIT_HEAD_TAP:
+            return NoteKind.CRIT_HEAD_TAP
+        case NoteKind.NORM_HEAD_FLICK:
+            return NoteKind.NORM_HEAD_TAP
+        case NoteKind.CRIT_HEAD_FLICK:
+            return NoteKind.CRIT_HEAD_TAP
+        case NoteKind.NORM_HEAD_TRACE:
+            return NoteKind.NORM_HEAD_TRACE
+        case NoteKind.CRIT_HEAD_TRACE:
+            return NoteKind.CRIT_HEAD_TRACE
+        case NoteKind.NORM_HEAD_TRACE_FLICK:
+            return NoteKind.NORM_HEAD_TRACE
+        case NoteKind.CRIT_HEAD_TRACE_FLICK:
+            return NoteKind.CRIT_HEAD_TRACE
+        case NoteKind.NORM_HEAD_RELEASE:
+            return NoteKind.NORM_HEAD_RELEASE
+        case NoteKind.CRIT_HEAD_RELEASE:
+            return NoteKind.CRIT_HEAD_RELEASE
+        case NoteKind.NORM_TAIL_TAP:
+            return NoteKind.NORM_TAIL_TAP
+        case NoteKind.CRIT_TAIL_TAP:
+            return NoteKind.CRIT_TAIL_TAP
+        case NoteKind.NORM_TAIL_FLICK:
+            return NoteKind.NORM_TAIL_RELEASE
+        case NoteKind.CRIT_TAIL_FLICK:
+            return NoteKind.CRIT_TAIL_RELEASE
+        case NoteKind.NORM_TAIL_TRACE:
+            return NoteKind.NORM_TAIL_TRACE
+        case NoteKind.CRIT_TAIL_TRACE:
+            return NoteKind.CRIT_TAIL_TRACE
+        case NoteKind.NORM_TAIL_TRACE_FLICK:
+            return NoteKind.NORM_TAIL_TRACE
+        case NoteKind.CRIT_TAIL_TRACE_FLICK:
+            return NoteKind.CRIT_TAIL_TRACE
+        case NoteKind.NORM_TAIL_RELEASE:
+            return NoteKind.NORM_TAIL_RELEASE
+        case NoteKind.CRIT_TAIL_RELEASE:
+            return NoteKind.CRIT_TAIL_RELEASE
+        case NoteKind.NORM_TICK:
+            return NoteKind.NORM_TICK
+        case NoteKind.CRIT_TICK:
+            return NoteKind.CRIT_TICK
         case NoteKind.HIDE_TICK:
             return NoteKind.HIDE_TICK
         case NoteKind.DAMAGE:
