@@ -55,6 +55,13 @@ class CriticalMod(IntEnum):
     ALL_NORMAL = 2
 
 
+class FadeMod(IntEnum):
+    NONE = 0
+    FADE_IN = 1
+    FADE_OUT = 2
+    FADE_IN_OUT = 3
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -360,6 +367,18 @@ class Options:
             "None",
             "All Critical",
             "No Critical",
+        ],
+        standard=True,
+    )
+    fade_mod: FadeMod = select_option(
+        name="Fade Mod",
+        scope="Next Sekai Arc",
+        default=FadeMod.NONE,
+        values=[
+            "None",
+            "Fade In",
+            "Fade Out",
+            "Fade In Out",
         ],
         standard=True,
     )

@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import ArcMode, CriticalMod, GuideAlphaCurve, Options
+from sekai.lib.options import ArcMode, CriticalMod, FadeMod, GuideAlphaCurve, Options
 from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ActiveConnectorSprites,
@@ -391,6 +391,8 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, eased_end_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
+    start_target_time = lerp(head_target_time, tail_target_time, start_frac)
+    end_target_time = lerp(head_target_time, tail_target_time, end_frac)
 
     pos_offset = 0
     for sl, el, hl, tl in (
@@ -412,11 +414,19 @@ def draw_connector(
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
     curve_change_scale = pos_offset**0.4 * 1.6
+    alpha_change = abs(start_alpha - end_alpha)
+    match Options.fade_mod:
+        case FadeMod.NONE:
+            pass
+        case FadeMod.FADE_IN | FadeMod.FADE_OUT:
+            alpha_change = max(
+                alpha_change, abs(start_alpha * get_alpha(start_target_time) - end_alpha * get_alpha(end_target_time))
+            )
+        case FadeMod.FADE_IN_OUT:
+            alpha_change = max(start_alpha, end_alpha)
     alpha_change_scale = max(
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5
-        * min(abs(start_pos_y - end_pos_y), 1)
-        * 3,
+        (alpha_change * get_connector_alpha_option(kind)) ** 0.8 * 3,
+        (alpha_change * get_connector_alpha_option(kind)) ** 0.5 * min(abs(start_pos_y - end_pos_y), 1) * 3,
     )
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
@@ -431,7 +441,7 @@ def draw_connector(
     last_lane = (last_l + last_r) / 2
     last_size = (last_r - last_l) / 2
     last_alpha = start_alpha
-    last_target_time = lerp(head_target_time, tail_target_time, start_frac)
+    last_target_time = start_target_time
 
     for v_segment_i in range(1, segment_count + 1):
         next_frac = lerp(start_frac, end_frac, v_segment_i / segment_count)
@@ -447,13 +457,20 @@ def draw_connector(
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
 
         base_a = clamp(
-            apply_guide_alpha_curve(
-                get_alpha((last_target_time + next_target_time) / 2) * (last_alpha + next_alpha) / 2
-            )
+            get_alpha((last_target_time + next_target_time) / 2)
+            * apply_guide_alpha_curve((last_alpha + next_alpha) / 2)
             * get_connector_alpha_option(kind),
             0,
             1,
         )
+
+        if base_a <= 1e-3:
+            last_travel = next_travel
+            last_lane = next_lane
+            last_size = next_size
+            last_alpha = next_alpha
+            last_target_time = next_target_time
+            continue
 
         if Options.arc_mode == ArcMode.DISABLED:
             start_arc_n = 1

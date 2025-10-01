@@ -182,9 +182,8 @@ def draw_connector(
         next_col = time_to_preview_col(next_target_time)
 
         a = clamp(
-            apply_guide_alpha_curve(
-                get_alpha((last_target_time + next_target_time) / 2) * (last_alpha + next_alpha) / 2
-            )
+            get_alpha((last_target_time + next_target_time) / 2)
+            * apply_guide_alpha_curve((last_alpha + next_alpha) / 2)
             * get_connector_alpha_option(kind),
             0,
             1,

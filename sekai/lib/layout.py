@@ -3,14 +3,15 @@ from enum import IntEnum
 from math import atan, ceil, cos, floor, log, pi, sin
 from typing import assert_never
 
+from sonolus.script.easing import ease_in_quad
 from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp, lerp, remap, unlerp
+from sonolus.script.interval import clamp, interp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
-from sonolus.script.runtime import aspect_ratio, screen, time
+from sonolus.script.runtime import aspect_ratio, is_preview, is_tutorial, screen, time
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
-from sekai.lib.options import ArcMode, Options
+from sekai.lib.options import ArcMode, FadeMod, Options
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850 + 0.4
@@ -153,7 +154,30 @@ def preempt_time() -> float:
 
 
 def get_alpha(target_time: float, now: float | None = None) -> float:
-    return 1.0
+    if is_preview() or is_tutorial():
+        return 1.0
+    progress = progress_to(target_time, now if now is not None else time())
+    match Options.fade_mod:
+        case FadeMod.NONE:
+            return 1.0
+        case FadeMod.FADE_IN:
+            return ease_in_quad(
+                unlerp(0.0, 1.0, unlerp(Layout.progress_start, min(1.0, Layout.progress_cutoff), progress))
+            )
+        case FadeMod.FADE_OUT:
+            return ease_in_quad(
+                unlerp(0.7, 0.1, unlerp(Layout.progress_start, min(1.0, Layout.progress_cutoff), progress))
+            )
+        case FadeMod.FADE_IN_OUT:
+            return ease_in_quad(
+                interp(
+                    (0.2, 0.5, 0.8),
+                    (0, 1, 0),
+                    unlerp(Layout.progress_start, min(1.0, Layout.progress_cutoff), progress),
+                )
+            )
+        case _:
+            assert_never(Options.fade_mod)
 
 
 def arc_adjust_vec(v: Vec2):
