@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import ArcMode, Options
+from sekai.lib.options import ArcMode, CriticalMod, Options
 from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ActiveConnectorSprites,
@@ -98,6 +98,39 @@ class ConnectorVisualState(IntEnum):
     WAITING = 0
     INACTIVE = 1
     ACTIVE = 2
+
+
+def map_connector_kind(kind: ConnectorKind) -> ConnectorKind:
+    match Options.critical_mod:
+        case CriticalMod.NONE:
+            pass
+        case CriticalMod.ALL_CRITICAL:
+            kind = map_all_critical_connector_kind(kind)
+        case CriticalMod.ALL_NORMAL:
+            kind = map_all_normal_connector_kind(kind)
+        case _:
+            assert_never(Options.critical_mod)
+    return kind
+
+
+def map_all_critical_connector_kind(kind: ConnectorKind) -> ConnectorKind:
+    match kind:
+        case ConnectorKind.ACTIVE_NORMAL:
+            return ConnectorKind.ACTIVE_CRITICAL
+        case ConnectorKind.ACTIVE_FAKE_NORMAL:
+            return ConnectorKind.ACTIVE_FAKE_CRITICAL
+        case _:
+            return kind
+
+
+def map_all_normal_connector_kind(kind: ConnectorKind) -> ConnectorKind:
+    match kind:
+        case ConnectorKind.ACTIVE_CRITICAL:
+            return ConnectorKind.ACTIVE_NORMAL
+        case ConnectorKind.ACTIVE_FAKE_CRITICAL:
+            return ConnectorKind.ACTIVE_FAKE_NORMAL
+        case _:
+            return kind
 
 
 def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSprites:

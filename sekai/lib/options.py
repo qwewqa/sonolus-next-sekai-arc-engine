@@ -13,6 +13,39 @@ class ArcMode(IntEnum):
     SWING = 5
 
 
+class FlickMod(IntEnum):
+    NONE = 0
+    MORE_FLICKS = 1
+    EVEN_MORE_FLICKS = 2
+
+
+class FlickDirectionMod(IntEnum):
+    NONE = 0
+    MIRRORED = 1
+    FLIPPED = 2
+    ALL_UP = 3
+    ALL_OMNI = 4
+    ALL_UP_OMNI = 5
+    RANDOM = 6
+
+
+class TraceMod(IntEnum):
+    NONE = 0
+    MORE_TRACES = 1
+    EVEN_MORE_TRACES = 2
+
+
+class SlideTailMod(IntEnum):
+    NONE = 0
+    ALL_TRACES = 1
+
+
+class CriticalMod(IntEnum):
+    NONE = 0
+    ALL_CRITICAL = 1
+    ALL_NORMAL = 2
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -189,6 +222,11 @@ class Options:
         default=False,
         scope="Next Sekai",
     )
+    lane_effects_from_judge_line: bool = toggle_option(
+        name="Lane Effects From Judge Line",
+        scope="Next Sekai Arc",
+        default=False,
+    )
     disable_timescale: bool = toggle_option(
         name="Disable Timescale",
         standard=True,
@@ -207,4 +245,82 @@ class Options:
             "Wave",
             "Swing",
         ],
+        standard=True,
+    )
+    judgment_window_size: float = slider_option(
+        name="Judgment Window Size",
+        scope="Next Sekai Arc",
+        default=1,
+        min=0.1,
+        max=2,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+        standard=True,
+    )
+    additional_hitbox_leniency: float = slider_option(
+        name="Additional Hitbox Leniency",
+        scope="Next Sekai Arc",
+        default=0,
+        min=0,
+        max=4,
+        step=0.1,
+        standard=True,
+    )
+    flick_mod: FlickMod = select_option(
+        name="Flick Mod",
+        scope="Next Sekai Arc",
+        default=FlickMod.NONE,
+        values=[
+            "None",
+            "More Flicks",
+            "Even More Flicks",
+        ],
+        standard=True,
+    )
+    flick_direction_mod: FlickDirectionMod = select_option(
+        name="Flick Direction Mod",
+        scope="Next Sekai Arc",
+        default=FlickDirectionMod.NONE,
+        values=[
+            "None",
+            "Mirrored",
+            "Flipped",
+            "All Up",
+            "All Omni",
+            "All Up Omni",
+            "Random",
+        ],
+        standard=True,
+    )
+    trace_mod: TraceMod = select_option(
+        name="Trace Mod",
+        scope="Next Sekai Arc",
+        default=TraceMod.NONE,
+        values=[
+            "None",
+            "More Traces",
+            "Even More Traces",
+        ],
+        standard=True,
+    )
+    slide_tail_mod: SlideTailMod = select_option(
+        name="Slide Tail Mod",
+        scope="Next Sekai Arc",
+        default=SlideTailMod.NONE,
+        values=[
+            "None",
+            "All Traces",
+        ],
+        standard=True,
+    )
+    critical_mod: CriticalMod = select_option(
+        name="Critical Mod",
+        scope="Next Sekai Arc",
+        default=CriticalMod.NONE,
+        values=[
+            "None",
+            "All Critical",
+            "No Critical",
+        ],
+        standard=True,
     )

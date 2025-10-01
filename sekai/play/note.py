@@ -39,12 +39,14 @@ from sekai.lib.note import (
     has_release_input,
     has_tap_input,
     is_head,
+    map_flick_direction,
     map_note_kind,
     mirror_flick_direction,
     play_note_hit_effects,
     schedule_note_auto_sfx,
 )
-from sekai.lib.options import Options
+from sekai.lib.options import FlickDirectionMod, Options
+from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 
@@ -99,6 +101,8 @@ class BaseNote(PlayArchetype):
         self.kind = map_note_kind(cast(NoteKind, self.key))
 
         self.data_init_done = True
+
+        self.direction = map_flick_direction(self.direction, self.index)
 
         if Options.mirror:
             self.lane *= -1
@@ -156,6 +160,10 @@ class BaseNote(PlayArchetype):
 
     def should_spawn(self) -> bool:
         return time() >= self.start_time
+
+    def initialize(self):
+        if Options.flick_direction_mod == FlickDirectionMod.RANDOM:
+            Streams.flick_direction_overrides[self.index] = self.direction
 
     def update_sequential(self):
         if self.despawn:

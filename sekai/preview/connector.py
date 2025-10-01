@@ -13,6 +13,7 @@ from sekai.lib.connector import (
     get_connector_quality_option,
     get_connector_z,
     get_guide_connector_sprites,
+    map_connector_kind,
 )
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import get_alpha
@@ -39,7 +40,7 @@ class PreviewConnector(PreviewArchetype):
     @callback(order=1)  # After note preprocessing is done
     def preprocess(self):
         head = self.head
-        self.kind = self.segment_head.segment_kind
+        self.kind = map_connector_kind(self.segment_head.segment_kind)
         self.ease_type = head.connector_ease
 
     def render(self):
@@ -60,19 +61,19 @@ class PreviewConnector(PreviewArchetype):
         )
 
     @property
-    def head(self):
+    def head(self) -> note.PreviewBaseNote:
         return self.head_ref.get()
 
     @property
-    def tail(self):
+    def tail(self) -> note.PreviewBaseNote:
         return self.tail_ref.get()
 
     @property
-    def segment_head(self):
+    def segment_head(self) -> note.PreviewBaseNote:
         return self.segment_head_ref.get()
 
     @property
-    def segment_tail(self):
+    def segment_tail(self) -> note.PreviewBaseNote:
         return self.segment_tail_ref.get()
 
 

@@ -25,6 +25,7 @@ from sekai.lib.note import (
     get_note_bucket,
     get_visual_spawn_time,
     is_head,
+    map_flick_direction,
     map_note_kind,
     mirror_flick_direction,
     play_note_hit_effects,
@@ -73,6 +74,8 @@ class WatchBaseNote(WatchArchetype):
         self.kind = map_note_kind(cast(NoteKind, self.key))
 
         self.data_init_done = True
+
+        self.direction = map_flick_direction(self.direction, self.index)
 
         if Options.mirror:
             self.lane *= -1

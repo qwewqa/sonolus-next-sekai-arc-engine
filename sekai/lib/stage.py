@@ -5,6 +5,7 @@ from sekai.lib.layout import (
     layout_judge_line,
     layout_lane,
     layout_lane_by_edges,
+    layout_lane_effect,
     layout_stage_cover,
 )
 from sekai.lib.options import Options
@@ -59,5 +60,5 @@ def schedule_lane_sfx(lane: float, target_time: float):
 
 def play_lane_particle(lane: float):
     if Options.lane_effect_enabled:
-        layout = layout_lane(lane, 0.5)
+        layout = next(layout_lane_effect(lane, 0.5, n=1))
         Particles.lane.spawn(layout, duration=0.3)

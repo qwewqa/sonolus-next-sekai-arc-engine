@@ -15,8 +15,8 @@ from sekai.lib.options import ArcMode, Options
 LANE_T = 47 / 850
 LANE_B = 1176 / 850 + 0.4
 
-LANE_HITBOX_T = 0.1
-LANE_HITBOX_B = 4
+LANE_HITBOX_T = 0.2
+LANE_HITBOX_B = 30
 
 NOTE_H = 75 / 850 / 2
 NOTE_EDGE_W = 0.25
@@ -163,7 +163,7 @@ def arc_adjust_vec(v: Vec2):
             result @= v
         case ArcMode.ARC:
             vp = Layout.vp
-            r = vp.y - v.y
+            r = (vp.y - v.y) * 1.05
             theta = (v.x - vp.x) / r * ARC_FACTOR
             theta = clamp(theta, -pi / 2, pi / 2)
             direction = Vec2(0, -1).rotate(theta)
@@ -188,7 +188,7 @@ def arc_adjust_vec(v: Vec2):
             result @= v + Vec2(0, y_offset)
         case ArcMode.SWING:
             vp = Layout.vp
-            r = vp.y - v.y
+            r = vp.y - v.y  # Not increased like in Arc mode so we have more room to swing
             theta = (v.x - vp.x) / r * ARC_FACTOR + sin(time()) * pi / 8
             theta = clamp(theta, -pi / 2, pi / 2)
             direction = Vec2(0, -1).rotate(theta)
@@ -294,9 +294,17 @@ def layout_lane(lane: float, size: float) -> Quad:
     return layout_lane_by_edges(lane - size, lane + size)
 
 
-def layout_lane_effect(lane: float, size: float) -> Iterator[Quad]:
+def layout_lane_effect(lane: float, size: float, n: int | None = None) -> Iterator[Quad]:
     # Top needs to be offset due to precision issues
-    return arc(perspective_rect(l=lane - size, r=lane + size, t=LANE_T + 0.05, b=LANE_B))
+    return arc(
+        perspective_rect(
+            l=lane - size,
+            r=lane + size,
+            t=LANE_T + 0.05,
+            b=1 - NOTE_H if Options.lane_effects_from_judge_line else LANE_B,
+        ),
+        n=n,
+    )
 
 
 def layout_stage_cover() -> Iterator[Quad]:

@@ -20,6 +20,7 @@ from sekai.lib.connector import (
     destroy_looped_sfx,
     draw_connector,
     draw_connector_slot_glow_effect,
+    map_connector_kind,
     schedule_connector_sfx,
     spawn_connector_slot_particles,
     spawn_linear_connector_trail_particle,
@@ -61,7 +62,7 @@ class Connector(PlayArchetype):
     def preprocess(self):
         head = self.head
         tail = self.tail
-        self.kind = self.segment_head.segment_kind
+        self.kind = map_connector_kind(self.segment_head.segment_kind)
         self.ease_type = head.connector_ease
         self.visual_active_interval.start = min(head.target_time, tail.target_time)
         self.visual_active_interval.end = max(head.target_time, tail.target_time)
@@ -206,27 +207,27 @@ class Connector(PlayArchetype):
         )
 
     @property
-    def head(self):
+    def head(self) -> note.BaseNote:
         return self.head_ref.get()
 
     @property
-    def tail(self):
+    def tail(self) -> note.BaseNote:
         return self.tail_ref.get()
 
     @property
-    def segment_head(self):
+    def segment_head(self) -> note.BaseNote:
         return self.segment_head_ref.get()
 
     @property
-    def segment_tail(self):
+    def segment_tail(self) -> note.BaseNote:
         return self.segment_tail_ref.get()
 
     @property
-    def active_head(self):
+    def active_head(self) -> note.BaseNote:
         return self.active_head_ref.get()
 
     @property
-    def active_tail(self):
+    def active_tail(self) -> note.BaseNote:
         return self.active_tail_ref.get()
 
     @property
