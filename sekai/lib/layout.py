@@ -50,6 +50,8 @@ class FlickDirection(IntEnum):
 @level_data
 class Layout:
     t: float
+    field_w: float
+    field_h: float
     w_scale: float
     h_scale: float
     scaled_note_h: float
@@ -72,6 +74,9 @@ def init_layout():
     else:
         field_w = screen().w
         field_h = screen().h
+
+    Layout.field_w = field_w
+    Layout.field_h = field_h
 
     t = field_h * (0.5 + 1.15875 * (47 / 1176))
     b = field_h * (0.5 - 1.15875 * (803 / 1176))
