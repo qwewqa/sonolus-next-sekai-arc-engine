@@ -5,6 +5,7 @@ from sonolus.script.interval import Interval
 from sonolus.script.sprite import Sprite
 from sonolus.script.text import StandardText
 
+from sekai.lib.options import Options
 from sekai.lib.skin import Skin
 
 WINDOW_SCALE = 1000  # Windows are in ms
@@ -311,30 +312,34 @@ class Buckets:
 
 
 def init_buckets():
-    Buckets.normal_tap.window @= TAP_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tap.window @= TAP_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_flick.window @= FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_flick.window @= FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_trace.window @= TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_trace.window @= TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_tap.window @= TAP_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_tap.window @= TAP_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_flick.window @= FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_flick.window @= FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_trace.window @= TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_trace.window @= TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_flick.window @= SLIDE_END_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_flick.window @= SLIDE_END_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_trace.window @= SLIDE_END_TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_trace.window @= SLIDE_END_TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_release.window @= SLIDE_END_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_release.window @= SLIDE_END_CRITICAL_WINDOW * WINDOW_SCALE
+    Buckets.normal_tap.window @= TAP_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_tap.window @= TAP_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_flick.window @= FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_flick.window @= FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_trace.window @= TRACE_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_trace.window @= TRACE_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_head_tap.window @= TAP_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_head_tap.window @= TAP_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_head_flick.window @= FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_head_flick.window @= FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_head_trace.window @= TRACE_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_head_trace.window @= TRACE_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_head_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_head_trace_flick.window @= (
+        TRACE_FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    )
+    Buckets.normal_tail_flick.window @= SLIDE_END_FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_tail_flick.window @= SLIDE_END_FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_tail_trace.window @= SLIDE_END_TRACE_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_tail_trace.window @= SLIDE_END_TRACE_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.normal_tail_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_tail_trace_flick.window @= (
+        TRACE_FLICK_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    )
+    Buckets.normal_tail_release.window @= SLIDE_END_NORMAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
+    Buckets.critical_tail_release.window @= SLIDE_END_CRITICAL_WINDOW * Options.judgment_window_size * WINDOW_SCALE
 
 
 def frames_to_window(
