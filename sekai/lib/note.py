@@ -211,6 +211,10 @@ def map_note_kind(kind: NoteKind) -> NoteKind:
             pass
         case SlideTailMod.ALL_TRACES:
             kind = map_all_trace_slide_tail_note_kind(kind)
+        case SlideTailMod.RELEASE_TRACES:
+            kind = map_release_trace_slide_tail_note_kind(kind)
+        case SlideTailMod.RELEASE_FLICKS:
+            kind = map_release_flick_slide_tail_note_kind(kind)
         case _:
             assert_never(Options.slide_tail_mod)
     match Options.critical_mod:
@@ -627,6 +631,26 @@ def map_all_trace_slide_tail_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.NORM_TAIL_TRACE
         case NoteKind.CRIT_TAIL_RELEASE:
             return NoteKind.CRIT_TAIL_TRACE
+        case _:
+            return kind
+
+
+def map_release_trace_slide_tail_note_kind(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TAIL_RELEASE:
+            return NoteKind.NORM_TAIL_TRACE
+        case NoteKind.CRIT_TAIL_RELEASE:
+            return NoteKind.CRIT_TAIL_TRACE
+        case _:
+            return kind
+
+
+def map_release_flick_slide_tail_note_kind(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TAIL_RELEASE:
+            return NoteKind.NORM_TAIL_FLICK
+        case NoteKind.CRIT_TAIL_RELEASE:
+            return NoteKind.CRIT_TAIL_FLICK
         case _:
             return kind
 

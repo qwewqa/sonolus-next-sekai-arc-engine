@@ -45,6 +45,8 @@ class TraceMod(IntEnum):
 class SlideTailMod(IntEnum):
     NONE = 0
     ALL_TRACES = 1
+    RELEASE_TRACES = 2
+    RELEASE_FLICKS = 3
 
 
 class CriticalMod(IntEnum):
@@ -346,6 +348,7 @@ class Options:
         values=[
             "None",
             "All Traces",
+            "Releases as Traces",
         ],
         standard=True,
     )
