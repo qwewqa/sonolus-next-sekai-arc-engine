@@ -137,8 +137,8 @@ def layout_preview_regular_note_body(lane: float, size: float, col: int, y: floa
     return layout_preview_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=PREVIEW_NOTE_H,
-        edge_w=NOTE_EDGE_W,
+        h=PREVIEW_NOTE_H * Options.note_thickness,
+        edge_w=NOTE_EDGE_W * Options.note_thickness,
         col=col,
         y=y,
     )
@@ -148,7 +148,7 @@ def layout_preview_regular_note_body_fallback(lane: float, size: float, col: int
     return layout_preview_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=PREVIEW_NOTE_H,
+        h=PREVIEW_NOTE_H * Options.note_thickness,
         col=col,
         y=y,
     )
@@ -158,8 +158,8 @@ def layout_preview_slim_note_body(lane: float, size: float, col: int, y: float) 
     return layout_preview_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=PREVIEW_NOTE_H,  # Height is handled by the sprite rather than being changed here
-        edge_w=NOTE_SLIM_EDGE_W,
+        h=PREVIEW_NOTE_H * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
+        edge_w=NOTE_SLIM_EDGE_W * Options.note_thickness,
         col=col,
         y=y,
     )
@@ -169,7 +169,7 @@ def layout_preview_slim_note_body_fallback(lane: float, size: float, col: int, y
     return layout_preview_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=PREVIEW_NOTE_H / 2,  # For fallback, we need to halve the height manually engine-side
+        h=PREVIEW_NOTE_H / 2 * Options.note_thickness,  # For fallback, we need to halve the height manually engine-side
         col=col,
         y=y,
     )
@@ -177,7 +177,7 @@ def layout_preview_slim_note_body_fallback(lane: float, size: float, col: int, y
 
 def layout_preview_tick(lane: float, col: int, y: float) -> Rect:
     center = Vec2(lane_to_preview_x(lane, col), y)
-    return Rect.from_center(center, Vec2(PREVIEW_NOTE_H, PREVIEW_NOTE_H) * 2)
+    return Rect.from_center(center, Vec2(PREVIEW_NOTE_H, PREVIEW_NOTE_H) * 2 * Options.note_thickness)
 
 
 def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirection, col: int, y: float) -> Rect:

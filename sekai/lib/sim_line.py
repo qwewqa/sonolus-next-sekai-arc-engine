@@ -51,6 +51,6 @@ def draw_sim_line(
             get_alpha(right_target_time),
         )
         * fade_alpha
-    )
+    ) * Options.sim_line_alpha
     for segment in layout:
         Skin.sim_line.draw(segment, z=z, a=a)

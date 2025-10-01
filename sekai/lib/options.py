@@ -104,6 +104,15 @@ class Options:
         scope="Sekai",
         default=True,
     )
+    sim_line_alpha: float = slider_option(
+        name=StandardText.SIMLINE_ALPHA,
+        scope="Sekai",
+        default=1.0,
+        min=0,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     connector_animation: bool = toggle_option(
         name=StandardText.CONNECTOR_ANIMATION,
         scope="Sekai",
@@ -215,6 +224,15 @@ class Options:
         min=0.0,
         max=0.2,
         step=0.01,
+    )
+    note_thickness: float = slider_option(
+        name="Note Thickness",
+        scope="Next Sekai",
+        default=1.0,
+        min=0.1,
+        max=2.0,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
     )
     alternative_approach_curve: bool = toggle_option(
         name="Alternative Approach Curve",

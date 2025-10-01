@@ -370,8 +370,8 @@ def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Q
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=NOTE_H,
-        edge_w=NOTE_EDGE_W,
+        h=NOTE_H * Options.note_thickness,
+        edge_w=NOTE_EDGE_W * Options.note_thickness,
         travel=travel,
     )
 
@@ -380,8 +380,8 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=NOTE_H,  # Height is handled by the sprite rather than being changed here
-        edge_w=NOTE_SLIM_EDGE_W,
+        h=NOTE_H * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
+        edge_w=NOTE_SLIM_EDGE_W * Options.note_thickness,
         travel=travel,
     )
 
@@ -396,7 +396,7 @@ def layout_tick(lane: float, travel: float) -> Quad:
         br=r - ort,
         tl=l + ort,
         tr=r + ort,
-    )
+    ).scale_about(Vec2(Options.note_thickness, Options.note_thickness), pivot=arc_adjust_vec(center))
 
 
 def layout_flick_arrow(
