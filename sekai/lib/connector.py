@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import ArcMode, CriticalMod, Options
+from sekai.lib.options import ArcMode, CriticalMod, GuideAlphaCurve, Options
 from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ActiveConnectorSprites,
@@ -259,6 +259,19 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
             assert_never(kind)
 
 
+def apply_guide_alpha_curve(a: float) -> float:
+    match Options.guide_alpha_curve:
+        case GuideAlphaCurve.LINEAR:
+            pass
+        case GuideAlphaCurve.SLOW_ROLLOFF:
+            a = a**0.5 if a < 1 else a
+        case GuideAlphaCurve.FAST_ROLLOFF:
+            a = (a**0.1 + 1.5 * a) / 2.5 if a < 1 else a
+        case _:
+            assert_never(Options.guide_alpha_curve)
+    return a
+
+
 def draw_connector(
     kind: ConnectorKind,
     visual_state: ConnectorVisualState,
@@ -434,9 +447,9 @@ def draw_connector(
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
 
         base_a = clamp(
-            get_alpha((last_target_time + next_target_time) / 2)
-            * (last_alpha + next_alpha)
-            / 2
+            apply_guide_alpha_curve(
+                get_alpha((last_target_time + next_target_time) / 2) * (last_alpha + next_alpha) / 2
+            )
             * get_connector_alpha_option(kind),
             0,
             1,

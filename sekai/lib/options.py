@@ -4,6 +4,12 @@ from sonolus.script.options import options, select_option, slider_option, toggle
 from sonolus.script.text import StandardText
 
 
+class GuideAlphaCurve(IntEnum):
+    LINEAR = 0
+    SLOW_ROLLOFF = 1
+    FAST_ROLLOFF = 2
+
+
 class ArcMode(IntEnum):
     DISABLED = 0
     ARC = 1
@@ -135,6 +141,16 @@ class Options:
         max=1,
         step=0.05,
         unit=StandardText.PERCENTAGE_UNIT,
+    )
+    guide_alpha_curve: GuideAlphaCurve = select_option(
+        name="Guide Alpha Curve",
+        scope="Next Sekai Arc",
+        default=GuideAlphaCurve.LINEAR,
+        values=[
+            "Linear",
+            "Slow Roll-off",
+            "Fast Roll-off",
+        ],
     )
     lane_effect_enabled: bool = toggle_option(
         name=StandardText.LANE_EFFECT,
