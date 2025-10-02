@@ -24,6 +24,7 @@ class FlickMod(IntEnum):
     MORE_FLICKS = 1
     EVEN_MORE_FLICKS = 2
     NO_FLICKS = 3
+    FLICK_TO_TRACE_FLICK = 4
 
 
 class FlickDirectionMod(IntEnum):
@@ -319,6 +320,7 @@ class Options:
             "More Flicks",
             "Even More Flicks",
             "No Flicks",
+            "Flicks to Trace Flicks",
         ],
         standard=True,
     )
@@ -355,7 +357,7 @@ class Options:
         values=[
             "None",
             "All Traces",
-            "Releases as Traces",
+            "Releases to Traces",
         ],
         standard=True,
     )

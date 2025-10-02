@@ -195,6 +195,8 @@ def map_note_kind(kind: NoteKind) -> NoteKind:
             kind = map_even_more_flicks_note_kind(kind)
         case FlickMod.NO_FLICKS:
             kind = map_no_flicks_note_kind(kind)
+        case FlickMod.FLICK_TO_TRACE_FLICK:
+            kind = map_flick_to_trace_flick_note_kind(kind)
         case _:
             assert_never(Options.flick_mod)
     match Options.trace_mod:
@@ -455,6 +457,24 @@ def map_no_flicks_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.ANCHOR
         case _:
             assert_never(kind)
+
+
+def map_flick_to_trace_flick_note_kind(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_FLICK:
+            return NoteKind.NORM_TRACE_FLICK
+        case NoteKind.CRIT_FLICK:
+            return NoteKind.CRIT_TRACE_FLICK
+        case NoteKind.NORM_HEAD_FLICK:
+            return NoteKind.NORM_HEAD_TRACE_FLICK
+        case NoteKind.CRIT_HEAD_FLICK:
+            return NoteKind.CRIT_HEAD_TRACE_FLICK
+        case NoteKind.NORM_TAIL_FLICK:
+            return NoteKind.NORM_TAIL_TRACE_FLICK
+        case NoteKind.CRIT_TAIL_FLICK:
+            return NoteKind.CRIT_TAIL_TRACE_FLICK
+        case _:
+            return kind
 
 
 def map_more_traces_note_kind(kind: NoteKind) -> NoteKind:
