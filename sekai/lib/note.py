@@ -751,6 +751,18 @@ def map_all_normal_note_kind(kind: NoteKind) -> NoteKind:
             return kind
 
 
+def map_monorail_slide_note_kind(kind: NoteKind, is_critical: bool) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TICK:
+            return NoteKind.NORM_TRACE
+        case NoteKind.CRIT_TICK:
+            return NoteKind.CRIT_TRACE
+        case NoteKind.HIDE_TICK:
+            return NoteKind.CRIT_TRACE if is_critical else NoteKind.NORM_TRACE
+        case _:
+            return kind
+
+
 def map_flick_direction(direction: FlickDirection, index: int) -> FlickDirection:
     match Options.flick_direction_mod:
         case FlickDirectionMod.NONE:
@@ -939,13 +951,22 @@ def get_attach_params(
     return lane, size
 
 
-def draw_note(kind: NoteKind, lane: float, size: float, progress: float, direction: FlickDirection, target_time: float):
+def draw_note(
+    kind: NoteKind,
+    lane: float,
+    size: float,
+    progress: float,
+    direction: FlickDirection,
+    target_time: float,
+    hide_tick: bool,
+):
     if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
     draw_note_body(kind, lane, size, travel, target_time)
     draw_note_arrow(kind, lane, size, travel, target_time, direction)
-    draw_note_tick(kind, lane, travel, target_time)
+    if not hide_tick:
+        draw_note_tick(kind, lane, travel, target_time)
 
 
 def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):

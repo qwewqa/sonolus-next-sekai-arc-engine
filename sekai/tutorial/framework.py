@@ -263,6 +263,7 @@ class QueuedTutorialNoteDraw(Record):
             progress=self.progress + self.note.offset,
             direction=self.note.direction,
             target_time=time() + 1 - self.progress - self.note.offset,
+            hide_tick=False,
         )
 
 

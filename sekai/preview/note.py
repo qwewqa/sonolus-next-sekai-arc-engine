@@ -16,8 +16,15 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.layout import FlickDirection
-from sekai.lib.note import NoteKind, get_attach_params, map_flick_direction, map_note_kind, mirror_flick_direction
-from sekai.lib.options import Options
+from sekai.lib.note import (
+    NoteKind,
+    get_attach_params,
+    map_flick_direction,
+    map_monorail_slide_note_kind,
+    map_note_kind,
+    mirror_flick_direction,
+)
+from sekai.lib.options import Options, SlideMod
 from sekai.lib.skin import (
     ArrowSprites,
     BodySprites,
@@ -66,10 +73,13 @@ class PreviewBaseNote(PreviewArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[PreviewBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[PreviewBaseNote] = imported(name="attachTail")
+    next_ref: EntityRef[PreviewBaseNote] = imported(name="next")
+    is_separator: bool = imported(name="isSeparator")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
+    hide_tick: bool = entity_data()
 
     def init_data(self):
         if self.data_init_done:
@@ -89,6 +99,34 @@ class PreviewBaseNote(PreviewArchetype):
 
     def preprocess(self):
         self.init_data()
+
+        segment_kind = self.segment_kind
+        if self.is_attached:
+            prev_note_ref = +self.attach_head_ref
+            next_note_ref = self.attach_head_ref.get().next_ref
+            while next_note_ref.index != self.attach_tail_ref.index:
+                prev_note = prev_note_ref.get()
+                next_note = next_note_ref.get()
+                if next_note.beat >= self.beat:
+                    segment_kind = prev_note.segment_kind
+                    break
+                prev_note_ref @= next_note_ref
+                next_note_ref @= next_note.next_ref
+            else:
+                segment_kind = prev_note_ref.get().segment_kind
+
+        match Options.slide_mod:
+            case SlideMod.NONE:
+                pass
+            case SlideMod.MONORAIL:
+                self.hide_tick = self.kind == NoteKind.HIDE_TICK
+                match segment_kind:
+                    case ConnectorKind.ACTIVE_NORMAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
+                    case ConnectorKind.ACTIVE_CRITICAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
+                    case _:
+                        pass
 
         if self.is_attached:
             attach_head = self.attach_head_ref.get()
@@ -121,15 +159,16 @@ class PreviewBaseNote(PreviewArchetype):
             return
         if not self.is_scored:
             return
-        draw_note(self.kind, self.lane, self.size, self.direction, self.target_time)
+        draw_note(self.kind, self.lane, self.size, self.direction, self.target_time, hide_tick=self.hide_tick)
 
 
-def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):
+def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float, hide_tick: bool):
     col = time_to_preview_col(target_time)
     y = time_to_preview_y(target_time, col)
     draw_note_body(kind, lane, size, target_time, col, y)
     draw_note_arrow(kind, lane, size, target_time, direction, col, y)
-    draw_note_tick(kind, lane, target_time, col, y)
+    if not hide_tick:
+        draw_note_tick(kind, lane, target_time, col, y)
 
 
 def draw_note_body(kind: NoteKind, lane: float, size: float, target_time: float, col: int, y: float):

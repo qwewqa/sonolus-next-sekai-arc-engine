@@ -18,6 +18,7 @@ from sekai.lib.connector import (
 )
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import get_alpha
+from sekai.lib.options import Options, SlideMod
 from sekai.preview import note
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
@@ -38,10 +39,18 @@ class PreviewConnector(PreviewArchetype):
     kind: ConnectorKind = entity_data()
     ease_type: EaseType = entity_data()
 
-    @callback(order=1)  # After note preprocessing is done
+    @callback(order=-1)
     def preprocess(self):
         head = self.head
+        tail = self.tail
+        head.init_data()
+        tail.init_data()
         self.kind = map_connector_kind(self.segment_head.segment_kind)
+        covered_note_ref = head.ref()
+        while covered_note_ref.index != self.tail_ref.index:
+            covered_note: note.PreviewBaseNote = covered_note_ref.get()
+            covered_note.segment_kind = self.kind
+            covered_note_ref @= covered_note.next_ref
         self.ease_type = head.connector_ease
 
     def render(self):
@@ -95,6 +104,24 @@ def draw_connector(
 ):
     if head_target_time == tail_target_time:
         return
+
+    match Options.slide_mod:
+        case SlideMod.NONE:
+            pass
+        case SlideMod.MONORAIL:
+            match kind:
+                case (
+                    ConnectorKind.ACTIVE_NORMAL
+                    | ConnectorKind.ACTIVE_CRITICAL
+                    | ConnectorKind.ACTIVE_FAKE_NORMAL
+                    | ConnectorKind.ACTIVE_FAKE_CRITICAL
+                ):
+                    head_size = 0.4
+                    tail_size = 0.4
+                case _:
+                    pass
+        case _:
+            assert_never(Options.slide_mod)
 
     normal_sprite = Sprite(-1)
     match kind:

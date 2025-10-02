@@ -48,18 +48,25 @@ class WatchConnector(WatchArchetype):
     end_time: float = entity_data()
     visual_active_interval: Interval = entity_data()
 
-    @callback(order=1)
+    @callback(order=-1)
     def preprocess(self):
         head = self.head
         tail = self.tail
+        head.init_data()
+        tail.init_data()
         self.kind = map_connector_kind(self.segment_head.segment_kind)
+        covered_note_ref = head.ref()
+        while covered_note_ref.index != self.tail_ref.index:
+            covered_note: note.WatchBaseNote = covered_note_ref.get()
+            covered_note.segment_kind = self.kind
+            covered_note_ref @= covered_note.next_ref
         self.ease_type = head.connector_ease
         self.visual_active_interval.start = min(head.target_time, tail.target_time)
         self.visual_active_interval.end = max(head.target_time, tail.target_time)
         self.start_time = min(
             self.visual_active_interval.start,
-            head.start_time,
-            tail.start_time,
+            head.visual_start_time,
+            tail.visual_start_time,
         )
         self.end_time = self.visual_active_interval.end
 

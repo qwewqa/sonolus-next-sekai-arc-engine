@@ -14,7 +14,7 @@ from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 class WatchInitialization(WatchArchetype):
     name = archetype_names.INITIALIZATION
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         init_layout()
         init_ui()

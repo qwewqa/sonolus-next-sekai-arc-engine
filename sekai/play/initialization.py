@@ -13,7 +13,7 @@ from sekai.play.stage import Stage
 class Initialization(PlayArchetype):
     name = archetype_names.INITIALIZATION
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         init_layout()
         init_ui()

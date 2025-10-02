@@ -40,12 +40,13 @@ from sekai.lib.note import (
     has_tap_input,
     is_head,
     map_flick_direction,
+    map_monorail_slide_note_kind,
     map_note_kind,
     mirror_flick_direction,
     play_note_hit_effects,
     schedule_note_auto_sfx,
 )
-from sekai.lib.options import FlickDirectionMod, Options
+from sekai.lib.options import FlickDirectionMod, Options, SlideMod
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
@@ -66,7 +67,8 @@ class BaseNote(PlayArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[BaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[BaseNote] = imported(name="attachTail")
-    next_ref: EntityRef[BaseNote] = imported(name="next")  # Only for level data; not used in-game.
+    next_ref: EntityRef[BaseNote] = imported(name="next")
+    is_separator: bool = imported(name="isSeparator")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
@@ -77,6 +79,7 @@ class BaseNote(PlayArchetype):
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()
+    hide_tick: bool = entity_data()
 
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
@@ -109,17 +112,45 @@ class BaseNote(PlayArchetype):
             self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
-        self.judgment_window = get_note_window(self.kind)
-        self.input_interval = self.judgment_window.good + self.target_time + input_offset()
-        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
-            self.start_time = min(self.visual_start_time, self.input_interval.start)
 
     def preprocess(self):
         self.init_data()
+
+        segment_kind = self.segment_kind
+        if self.is_attached:
+            prev_note_ref = +self.attach_head_ref
+            next_note_ref = self.attach_head_ref.get().next_ref
+            while next_note_ref.index != self.attach_tail_ref.index:
+                prev_note = prev_note_ref.get()
+                next_note = next_note_ref.get()
+                if next_note.beat >= self.beat:
+                    segment_kind = prev_note.segment_kind
+                    break
+                prev_note_ref @= next_note_ref
+                next_note_ref @= next_note.next_ref
+            else:
+                segment_kind = prev_note_ref.get().segment_kind
+
+        match Options.slide_mod:
+            case SlideMod.NONE:
+                pass
+            case SlideMod.MONORAIL:
+                self.hide_tick = self.kind == NoteKind.HIDE_TICK
+                match segment_kind:
+                    case ConnectorKind.ACTIVE_NORMAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
+                    case ConnectorKind.ACTIVE_CRITICAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
+                    case _:
+                        pass
+
+        self.judgment_window = get_note_window(self.kind)
+        self.input_interval = self.judgment_window.good + self.target_time + input_offset()
+        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
 
         self.result.bucket = get_note_bucket(self.kind)
 
@@ -143,7 +174,7 @@ class BaseNote(PlayArchetype):
             self.lane = lane
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
-            self.start_time = min(self.visual_start_time, self.input_interval.start)
+        self.start_time = min(self.visual_start_time, self.input_interval.start)
 
         if is_head(self.kind):
             self.active_connector_info.input_lane = self.lane
@@ -258,9 +289,12 @@ class BaseNote(PlayArchetype):
             return
         if group_hide_notes(self.timescale_group):
             return
-        draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
+        draw_note(
+            self.kind, self.lane, self.size, self.progress, self.direction, self.target_time, hide_tick=self.hide_tick
+        )
 
     def terminate(self):
+        self.should_play_hit_effects = self.should_play_hit_effects and not self.hide_tick
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)

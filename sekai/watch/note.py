@@ -26,6 +26,7 @@ from sekai.lib.note import (
     get_visual_spawn_time,
     is_head,
     map_flick_direction,
+    map_monorail_slide_note_kind,
     map_note_kind,
     mirror_flick_direction,
     play_note_hit_effects,
@@ -33,7 +34,7 @@ from sekai.lib.note import (
     schedule_note_sfx,
     schedule_note_slot_effects,
 )
-from sekai.lib.options import Options
+from sekai.lib.options import Options, SlideMod
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
 
@@ -51,6 +52,8 @@ class WatchBaseNote(WatchArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[WatchBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
+    next_ref: EntityRef[WatchBaseNote] = imported(name="next")
+    is_separator: bool = imported(name="isSeparator")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
@@ -58,6 +61,7 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
+    hide_tick: bool = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
 
@@ -91,6 +95,34 @@ class WatchBaseNote(WatchArchetype):
     def preprocess(self):
         self.init_data()
 
+        segment_kind = self.segment_kind
+        if self.is_attached:
+            prev_note_ref = +self.attach_head_ref
+            next_note_ref = self.attach_head_ref.get().next_ref
+            while next_note_ref.index != self.attach_tail_ref.index:
+                prev_note = prev_note_ref.get()
+                next_note = next_note_ref.get()
+                if next_note.beat >= self.beat:
+                    segment_kind = prev_note.segment_kind
+                    break
+                prev_note_ref @= next_note_ref
+                next_note_ref @= next_note.next_ref
+            else:
+                segment_kind = prev_note_ref.get().segment_kind
+
+        match Options.slide_mod:
+            case SlideMod.NONE:
+                pass
+            case SlideMod.MONORAIL:
+                self.hide_tick = self.kind == NoteKind.HIDE_TICK
+                match segment_kind:
+                    case ConnectorKind.ACTIVE_NORMAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
+                    case ConnectorKind.ACTIVE_CRITICAL:
+                        self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
+                    case _:
+                        pass
+
         self.result.bucket = get_note_bucket(self.kind)
 
         if self.is_attached:
@@ -114,7 +146,7 @@ class WatchBaseNote(WatchArchetype):
             self.start_time = self.visual_start_time
 
         if is_replay():
-            if self.played_hit_effects:
+            if self.played_hit_effects and not self.hide_tick:
                 if Options.auto_sfx:
                     schedule_note_auto_sfx(self.kind, self.target_time)
                 else:
@@ -123,7 +155,7 @@ class WatchBaseNote(WatchArchetype):
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
-            if self.is_scored:
+            if self.is_scored and not self.hide_tick:
                 schedule_note_sfx(self.kind, Judgment.PERFECT, self.target_time)
                 schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
 
@@ -147,14 +179,16 @@ class WatchBaseNote(WatchArchetype):
             return
         if group_hide_notes(self.timescale_group):
             return
-        draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
+        draw_note(
+            self.kind, self.lane, self.size, self.progress, self.direction, self.target_time, hide_tick=self.hide_tick
+        )
 
     def terminate(self):
         if is_skip():
             return
         if time() < self.target_time:
             return
-        if (not is_replay() or self.played_hit_effects) and self.is_scored:
+        if (not is_replay() or self.played_hit_effects) and self.is_scored and not self.hide_tick:
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
 
     @property

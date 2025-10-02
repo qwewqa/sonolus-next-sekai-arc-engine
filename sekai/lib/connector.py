@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import ArcMode, CriticalMod, FadeMod, GuideAlphaCurve, Options
+from sekai.lib.options import ArcMode, CriticalMod, FadeMod, GuideAlphaCurve, Options, SlideMod
 from sekai.lib.particle import Particles
 from sekai.lib.skin import (
     ActiveConnectorSprites,
@@ -298,6 +298,24 @@ def draw_connector(
         or head_progress == tail_progress
     ):
         return
+
+    match Options.slide_mod:
+        case SlideMod.NONE:
+            pass
+        case SlideMod.MONORAIL:
+            match kind:
+                case (
+                    ConnectorKind.ACTIVE_NORMAL
+                    | ConnectorKind.ACTIVE_CRITICAL
+                    | ConnectorKind.ACTIVE_FAKE_NORMAL
+                    | ConnectorKind.ACTIVE_FAKE_CRITICAL
+                ):
+                    head_size = 0.4
+                    tail_size = 0.4
+                case _:
+                    pass
+        case _:
+            assert_never(Options.slide_mod)
 
     normal_sprite = Sprite(-1)
     active_sprite = Sprite(-1)

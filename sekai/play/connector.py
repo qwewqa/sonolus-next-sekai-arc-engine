@@ -58,11 +58,18 @@ class Connector(PlayArchetype):
 
     last_visual_state: ConnectorVisualState = entity_memory()
 
-    @callback(order=1)  # After note preprocessing is done
+    @callback(order=-1)
     def preprocess(self):
         head = self.head
         tail = self.tail
+        head.init_data()
+        tail.init_data()
         self.kind = map_connector_kind(self.segment_head.segment_kind)
+        covered_note_ref = head.ref()
+        while covered_note_ref.index != self.tail_ref.index:
+            covered_note: note.BaseNote = covered_note_ref.get()
+            covered_note.segment_kind = self.kind
+            covered_note_ref @= covered_note.next_ref
         self.ease_type = head.connector_ease
         self.visual_active_interval.start = min(head.target_time, tail.target_time)
         self.visual_active_interval.end = max(head.target_time, tail.target_time)
@@ -70,8 +77,8 @@ class Connector(PlayArchetype):
         self.start_time = min(
             self.visual_active_interval.start,
             self.input_active_interval.start,
-            head.start_time,
-            tail.start_time,
+            head.visual_start_time,
+            tail.visual_start_time,
         )
         self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
         self.last_visual_state = ConnectorVisualState.WAITING

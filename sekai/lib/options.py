@@ -63,6 +63,11 @@ class FadeMod(IntEnum):
     FADE_IN_OUT = 3
 
 
+class SlideMod(IntEnum):
+    NONE = 0
+    MONORAIL = 1
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -381,6 +386,16 @@ class Options:
             "Fade In",
             "Fade Out",
             "Fade In Out",
+        ],
+        standard=True,
+    )
+    slide_mod: SlideMod = select_option(
+        name="Slide Mod",
+        scope="Next Sekai Arc",
+        default=SlideMod.NONE,
+        values=[
+            "None",
+            "Monorail",
         ],
         standard=True,
     )
