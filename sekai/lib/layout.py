@@ -11,7 +11,7 @@ from sonolus.script.runtime import aspect_ratio, is_preview, is_tutorial, screen
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
-from sekai.lib.options import ArcMode, FadeMod, Options
+from sekai.lib.options import ArcMode, FadeMod, Options, SlotEffectStyle
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850 + 0.4
@@ -495,6 +495,44 @@ def layout_slot_effect(lane: float) -> Quad:
 
 
 def layout_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
+    result = +Quad
+    match Options.slot_effect_style:
+        case SlotEffectStyle.VERTICAL:
+            for segment in layout_vertical_slot_glow_effect(lane, size, height):
+                result @= segment
+                yield result
+        case SlotEffectStyle.LANE:
+            for segment in layout_lane_slot_glow_effect(lane, size, height):
+                result @= segment
+                yield result
+        case _:
+            assert_never(Options.slot_effect_style)
+
+
+def layout_vertical_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
+    s = 1 + 0.25 * Options.slot_effect_size * Options.slot_effect_spread
+    h = 4.25 * Layout.w_scale * Options.slot_effect_size
+    l_min = perspective_vec(lane - size, 1)
+    r_min = perspective_vec(lane + size, 1)
+    for segment in arc(
+        Quad(
+            bl=l_min,
+            br=r_min,
+            tl=l_min,  # Don't care about the top, so just dummy values
+            tr=r_min,
+        )
+    ):
+        segment_l_max = (segment.bl + Vec2(0, h)) * Vec2(s, 1)
+        segment_r_max = (segment.br + Vec2(0, h)) * Vec2(s, 1)
+        yield Quad(
+            bl=segment.bl,
+            br=segment.br,
+            tl=lerp(segment.bl, segment_l_max, height),
+            tr=lerp(segment.br, segment_r_max, height),
+        )
+
+
+def layout_lane_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
     h = 2 * Layout.w_scale * Options.slot_effect_size
     l_min = perspective_vec(lane - size, 1)
     r_min = perspective_vec(lane + size, 1)
