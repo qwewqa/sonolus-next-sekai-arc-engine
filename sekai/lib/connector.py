@@ -650,7 +650,7 @@ def update_circular_connector_particle(
                 particle @= Particles.critical_slide_connector_circular
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1)
+        replace_looped_particle(handle, particle, layout, duration=1 * Options.effect_duration)
     else:
         update_looped_particle(handle, layout)
 
@@ -673,7 +673,7 @@ def update_linear_connector_particle(
                 particle @= Particles.critical_slide_connector_linear
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1)
+        replace_looped_particle(handle, particle, layout, duration=1 * Options.effect_duration)
     else:
         update_looped_particle(handle, layout)
 
@@ -693,7 +693,7 @@ def spawn_linear_connector_trail_particle(
             particle @= Particles.critical_slide_connector_trail_linear
         case _:
             assert_never(kind)
-    particle.spawn(layout, duration=0.5)
+    particle.spawn(layout, duration=0.5 * Options.effect_duration)
 
 
 def spawn_connector_slot_particles(
@@ -713,7 +713,7 @@ def spawn_connector_slot_particles(
             assert_never(kind)
     for slot_lane in iter_slot_lanes(lane, size):
         layout = layout_linear_effect(slot_lane, shear=0)
-        particle.spawn(layout, duration=0.5)
+        particle.spawn(layout, duration=0.5 * Options.effect_duration)
 
 
 def draw_connector_slot_glow_effect(

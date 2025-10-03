@@ -61,4 +61,4 @@ def schedule_lane_sfx(lane: float, target_time: float):
 def play_lane_particle(lane: float):
     if Options.lane_effect_enabled:
         layout = next(layout_lane_effect(lane, 0.5, n=1))
-        Particles.lane.spawn(layout, duration=0.3)
+        Particles.lane.spawn(layout, duration=0.3 * Options.effect_duration)

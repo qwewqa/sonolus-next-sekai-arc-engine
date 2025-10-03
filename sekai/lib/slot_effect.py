@@ -4,9 +4,15 @@ from sonolus.script.sprite import Sprite
 
 from sekai.lib.layer import LAYER_SLOT_EFFECT, LAYER_SLOT_GLOW_EFFECT, get_z
 from sekai.lib.layout import layout_slot_effect, layout_slot_glow_effect
+from sekai.lib.options import Options
 
-SLOT_GLOW_EFFECT_DURATION = 0.25
-SLOT_EFFECT_DURATION = 0.5
+
+def slot_glow_effect_duration():
+    return 0.25 * Options.effect_duration
+
+
+def slot_effect_duration():
+    return 0.5 * Options.effect_duration
 
 
 def draw_slot_glow_effect(

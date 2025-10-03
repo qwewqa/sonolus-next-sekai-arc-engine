@@ -100,10 +100,10 @@ from sekai.lib.skin import (
     trace_slide_note_body_sprites,
 )
 from sekai.lib.slot_effect import (
-    SLOT_EFFECT_DURATION,
-    SLOT_GLOW_EFFECT_DURATION,
     draw_slot_effect,
     draw_slot_glow_effect,
+    slot_effect_duration,
+    slot_glow_effect_duration,
 )
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
@@ -1503,14 +1503,14 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
         )
         if linear_particle.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            linear_particle.spawn(layout, duration=0.5)
+            linear_particle.spawn(layout, duration=0.5 * Options.effect_duration)
         circular_particle = first_available_particle(
             particles.circular,
             particles.circular_fallback,
         )
         if circular_particle.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            circular_particle.spawn(layout, duration=0.6)
+            circular_particle.spawn(layout, duration=0.6 * Options.effect_duration)
         if particles.directional.is_available:
             match direction:
                 case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
@@ -1522,21 +1522,21 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
                 case _:
                     assert_never(direction)
             layout = layout_rotated_linear_effect(lane, shear=shear)
-            particles.directional.spawn(layout, duration=0.32)
+            particles.directional.spawn(layout, duration=0.32 * Options.effect_duration)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
-            particles.tick.spawn(layout, duration=0.6)
+            particles.tick.spawn(layout, duration=0.6 * Options.effect_duration)
         if particles.slot_linear.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                particles.slot_linear.spawn(layout, duration=0.5)
+                particles.slot_linear.spawn(layout, duration=0.5 * Options.effect_duration)
     if Options.lane_effect_enabled:
         layout = layout_lane_effect(lane, size)
         for segment in layout:
             if particles.lane.is_available:
-                particles.lane.spawn(segment, duration=1)
+                particles.lane.spawn(segment, duration=1 * Options.effect_duration)
             elif particles.lane_basic.is_available:
-                particles.lane_basic.spawn(segment, duration=0.3)
+                particles.lane_basic.spawn(segment, duration=0.3 * Options.effect_duration)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time())
 
@@ -1579,20 +1579,20 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
 
 def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, start_time: float):
     slot_sprite = get_note_slot_sprite(kind)
-    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION:
+    if slot_sprite.is_available and time() < start_time + slot_effect_duration():
         for slot_lane in iter_slot_lanes(lane, size):
             draw_slot_effect(
                 sprite=slot_sprite,
                 start_time=start_time,
-                end_time=start_time + SLOT_EFFECT_DURATION,
+                end_time=start_time + slot_effect_duration(),
                 lane=slot_lane,
             )
     slot_glow_sprite = get_note_slot_glow_sprite(kind)
-    if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION:
+    if slot_glow_sprite.is_available and time() < start_time + slot_glow_effect_duration():
         draw_slot_glow_effect(
             sprite=slot_glow_sprite,
             start_time=start_time,
-            end_time=start_time + SLOT_GLOW_EFFECT_DURATION,
+            end_time=start_time + slot_glow_effect_duration(),
             lane=lane,
             size=size,
         )

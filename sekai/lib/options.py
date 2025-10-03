@@ -103,6 +103,15 @@ class Options:
         scope="Sekai",
         default=False,
     )
+    effect_duration: float = slider_option(
+        name="Effect Duration",
+        scope="Next Sekai Arc",
+        default=1,
+        min=0.1,
+        max=2,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     note_effect_enabled: bool = toggle_option(
         name=StandardText.NOTE_EFFECT,
         scope="Sekai",

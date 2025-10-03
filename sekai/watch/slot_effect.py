@@ -3,10 +3,10 @@ from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
 from sekai.lib.slot_effect import (
-    SLOT_EFFECT_DURATION,
-    SLOT_GLOW_EFFECT_DURATION,
     draw_slot_effect,
     draw_slot_glow_effect,
+    slot_effect_duration,
+    slot_glow_effect_duration,
 )
 
 
@@ -20,13 +20,13 @@ class WatchSlotGlowEffect(WatchArchetype):
     end_time: float = entity_memory()
 
     def initialize(self):
-        self.end_time = self.start_time + SLOT_GLOW_EFFECT_DURATION
+        self.end_time = self.start_time + slot_glow_effect_duration()
 
     def spawn_time(self) -> float:
         return self.start_time
 
     def despawn_time(self) -> float:
-        return self.start_time + SLOT_GLOW_EFFECT_DURATION
+        return self.start_time + slot_glow_effect_duration()
 
     def update_parallel(self):
         draw_slot_glow_effect(
@@ -47,13 +47,13 @@ class WatchSlotEffect(WatchArchetype):
     end_time: float = entity_memory()
 
     def initialize(self):
-        self.end_time = self.start_time + SLOT_EFFECT_DURATION
+        self.end_time = self.start_time + slot_effect_duration()
 
     def spawn_time(self) -> float:
         return self.start_time
 
     def despawn_time(self) -> float:
-        return self.start_time + SLOT_EFFECT_DURATION
+        return self.start_time + slot_effect_duration()
 
     def update_parallel(self):
         draw_slot_effect(
