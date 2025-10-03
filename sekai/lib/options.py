@@ -207,6 +207,32 @@ class Options:
         step=0.01,
         unit=StandardText.PERCENTAGE_UNIT,
     )
+    zoom: float = slider_option(
+        name="Zoom",
+        scope="Next Sekai Arc",
+        default=1,
+        min=0.5,
+        max=2,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    width_scale: float = slider_option(
+        name="Width Scale",
+        scope="Next Sekai Arc",
+        default=1,
+        min=0.5,
+        max=2,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    y_offset: float = slider_option(
+        name="Y Offset",
+        scope="Next Sekai Arc",
+        default=0,
+        min=-0.5,
+        max=0.5,
+        step=0.01,
+    )
     hidden: float = slider_option(
         name=StandardText.HIDDEN,
         scope="Sekai",

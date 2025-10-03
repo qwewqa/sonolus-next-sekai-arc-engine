@@ -19,7 +19,6 @@ LANE_B = 1176 / 850 + 0.4
 LANE_HITBOX_T = 0.2
 LANE_HITBOX_B = 30
 
-NOTE_H = 75 / 850 / 2
 NOTE_EDGE_W = 0.25
 NOTE_SLIM_EDGE_W = 0.125
 
@@ -54,6 +53,7 @@ class Layout:
     field_h: float
     w_scale: float
     h_scale: float
+    note_h: float
     scaled_note_h: float
     progress_start: float
     progress_cutoff: float
@@ -80,12 +80,13 @@ def init_layout():
 
     t = field_h * (0.5 + 1.15875 * (47 / 1176))
     b = field_h * (0.5 - 1.15875 * (803 / 1176))
-    w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
+    w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * Options.width_scale
 
     Layout.t = t
     Layout.w_scale = w
     Layout.h_scale = b - t
-    Layout.scaled_note_h = NOTE_H * Layout.h_scale
+    Layout.note_h = 75 / 850 / 2 * Options.width_scale  # Multiply by width to keep it proportional
+    Layout.scaled_note_h = Layout.note_h * Layout.h_scale
 
     if Options.stage_cover:
         Layout.progress_start = inverse_approach(lerp(approach(0), 1.0, Options.stage_cover))
@@ -224,7 +225,7 @@ def arc_adjust_vec(v: Vec2):
             result @= vp + direction * r
         case _:
             assert_never(Options.arc_mode)
-    return result
+    return result * Options.zoom + Vec2(0, Options.y_offset)
 
 
 def arc_adjust_quad(q: QuadLike) -> Quad:
@@ -330,7 +331,7 @@ def layout_lane_effect(lane: float, size: float, n: int | None = None) -> Iterat
             l=lane - size,
             r=lane + size,
             t=LANE_T + 0.05,
-            b=1 - NOTE_H if Options.lane_effects_from_judge_line else LANE_B,
+            b=1 - Layout.note_h if Options.lane_effects_from_judge_line else LANE_B,
         ),
         n=n,
     )
@@ -349,7 +350,7 @@ def layout_stage_cover() -> Iterator[Quad]:
 
 
 def layout_hidden_cover() -> Iterator[Quad]:
-    b = 1 - NOTE_H
+    b = 1 - Layout.note_h
     t = min(b, max(lerp(1.0, approach(0), Options.hidden), lerp(approach(0), 1.0, Options.stage_cover)))
     return arc(
         perspective_rect(
@@ -362,7 +363,7 @@ def layout_hidden_cover() -> Iterator[Quad]:
 
 
 def layout_judge_line() -> Iterator[Quad]:
-    return arc(perspective_rect(l=-6, r=6, t=1 - NOTE_H, b=1 + NOTE_H), n=12)
+    return arc(perspective_rect(l=-6, r=6, t=1 - Layout.note_h, b=1 + Layout.note_h), n=12)
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
@@ -399,7 +400,7 @@ def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Q
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=NOTE_H * Options.note_thickness,
+        h=Layout.note_h * Options.note_thickness,
         edge_w=NOTE_EDGE_W * Options.note_thickness,
         travel=travel,
     )
@@ -409,7 +410,7 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=NOTE_H * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
+        h=Layout.note_h * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
         edge_w=NOTE_SLIM_EDGE_W * Options.note_thickness,
         travel=travel,
     )
@@ -487,8 +488,8 @@ def layout_slot_effect(lane: float) -> Quad:
         perspective_rect(
             l=lane - 0.5,
             r=lane + 0.5,
-            b=1 + NOTE_H,
-            t=1 - NOTE_H,
+            b=1 + Layout.note_h,
+            t=1 - Layout.note_h,
         )
     )
 
@@ -535,11 +536,14 @@ def layout_rotated_linear_effect(lane: float, shear: float) -> Quad:
     ).rotate_about(atan(-shear / 2), pivot=(bl + br) / 2)
 
 
-def layout_circular_effect(lane: float, w: float, h: float, y_offset: float = 0.0) -> Quad:
+def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
     w *= Options.note_effect_size
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
-    t = 1 + h + y_offset
-    b = 1 - h + y_offset
+    scale = h * 10  # Helps keep it centered despite being too wide
+    w /= scale
+    h /= scale
+    t = 1 + h
+    b = 1 - h
     return arc_adjust_quad(
         transform_quad(
             Quad(
@@ -549,7 +553,7 @@ def layout_circular_effect(lane: float, w: float, h: float, y_offset: float = 0.
                 tr=Vec2(lane * t + w, t),
             )
         )
-    )
+    ).scale_centered(Vec2(scale, scale))
 
 
 def layout_tick_effect(lane: float) -> Quad:
@@ -608,10 +612,10 @@ def layout_sim_line(
     ort = (mr - ml).orthogonal().normalize()
     return arc(
         Quad(
-            bl=ml + ort * NOTE_H * Layout.h_scale * left_travel,
-            br=mr + ort * NOTE_H * Layout.h_scale * right_travel,
-            tl=ml - ort * NOTE_H * Layout.h_scale * left_travel,
-            tr=mr - ort * NOTE_H * Layout.h_scale * right_travel,
+            bl=ml + ort * Layout.note_h * Layout.h_scale * left_travel,
+            br=mr + ort * Layout.note_h * Layout.h_scale * right_travel,
+            tl=ml - ort * Layout.note_h * Layout.h_scale * left_travel,
+            tr=mr - ort * Layout.note_h * Layout.h_scale * right_travel,
         )
     )
 

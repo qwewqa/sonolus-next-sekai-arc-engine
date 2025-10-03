@@ -625,22 +625,7 @@ def update_circular_connector_particle(
 ):
     if not Options.note_effect_enabled:
         return
-    match Options.arc_mode:
-        case ArcMode.DISABLED:
-            y_offset = 0
-        case ArcMode.ARC:
-            y_offset = 0.1
-        case ArcMode.CONVEX:
-            y_offset = -0.1
-        case ArcMode.CONCAVE:
-            y_offset = 0.1
-        case ArcMode.WAVE:
-            y_offset = 0
-        case ArcMode.SWING:
-            y_offset = 0.1
-        case _:
-            assert_never(Options.arc_mode)
-    layout = layout_circular_effect(lane, w=3.5, h=2.1, y_offset=y_offset)
+    layout = layout_circular_effect(lane, w=3.5, h=2.1)
     if replace or handle.id == 0:
         particle = +Particle(-1)
         match kind:
