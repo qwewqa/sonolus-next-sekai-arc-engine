@@ -13,6 +13,7 @@ class Skin:
     cover: StandardSprite.STAGE_COVER
 
     lane: StandardSprite.LANE
+    stage_middle: StandardSprite.STAGE_MIDDLE
     judgment_line: StandardSprite.JUDGMENT_LINE
     stage_left_border: StandardSprite.STAGE_LEFT_BORDER
     stage_right_border: StandardSprite.STAGE_RIGHT_BORDER

@@ -232,6 +232,11 @@ class Options:
         scope="Sekai",
         default=True,
     )
+    no_lane_dividers: bool = toggle_option(
+        name="No Lane Dividers",
+        scope="Sekai",
+        default=False,
+    )
     slide_quality: float = slider_option(
         name="Slide Quality",
         scope="Next Sekai",

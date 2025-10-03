@@ -1,3 +1,5 @@
+from sonolus.script.sprite import Sprite
+
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layer import LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
 from sekai.lib.layout import (
@@ -26,9 +28,15 @@ def draw_stage():
     layout = layout_lane_by_edges(6, 6.5)
     Skin.stage_right_border.draw(layout, z=get_z(LAYER_STAGE))
 
+    lane_sprite = +Sprite
+    if Options.no_lane_dividers:
+        lane_sprite @= Skin.stage_middle
+    else:
+        lane_sprite @= Skin.lane
+
     for lane in (-5, -3, -1, 1, 3, 5):
         layout = layout_lane(lane, 1)
-        Skin.lane.draw(layout, z=get_z(LAYER_STAGE))
+        lane_sprite.draw(layout, z=get_z(LAYER_STAGE))
 
     for segment in layout_judge_line():
         Skin.judgment_line.draw(segment, z=get_z(LAYER_JUDGMENT_LINE))
