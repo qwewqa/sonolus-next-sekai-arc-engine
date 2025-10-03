@@ -61,7 +61,6 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
-    hide_tick: bool = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
 
@@ -114,7 +113,6 @@ class WatchBaseNote(WatchArchetype):
             case SlideMod.NONE:
                 pass
             case SlideMod.MONORAIL:
-                self.hide_tick = self.kind == NoteKind.HIDE_TICK
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -146,7 +144,7 @@ class WatchBaseNote(WatchArchetype):
             self.start_time = self.visual_start_time
 
         if is_replay():
-            if self.played_hit_effects and not self.hide_tick:
+            if self.played_hit_effects:
                 if Options.auto_sfx:
                     schedule_note_auto_sfx(self.kind, self.target_time)
                 else:
@@ -155,7 +153,7 @@ class WatchBaseNote(WatchArchetype):
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
-            if self.is_scored and not self.hide_tick:
+            if self.is_scored:
                 schedule_note_sfx(self.kind, Judgment.PERFECT, self.target_time)
                 schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
 
@@ -179,16 +177,14 @@ class WatchBaseNote(WatchArchetype):
             return
         if group_hide_notes(self.timescale_group):
             return
-        draw_note(
-            self.kind, self.lane, self.size, self.progress, self.direction, self.target_time, hide_tick=self.hide_tick
-        )
+        draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def terminate(self):
         if is_skip():
             return
         if time() < self.target_time:
             return
-        if (not is_replay() or self.played_hit_effects) and self.is_scored and not self.hide_tick:
+        if (not is_replay() or self.played_hit_effects) and self.is_scored:
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
 
     @property

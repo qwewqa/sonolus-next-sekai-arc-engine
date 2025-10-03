@@ -79,7 +79,6 @@ class PreviewBaseNote(PreviewArchetype):
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
-    hide_tick: bool = entity_data()
 
     def init_data(self):
         if self.data_init_done:
@@ -119,7 +118,6 @@ class PreviewBaseNote(PreviewArchetype):
             case SlideMod.NONE:
                 pass
             case SlideMod.MONORAIL:
-                self.hide_tick = self.kind == NoteKind.HIDE_TICK
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -159,16 +157,15 @@ class PreviewBaseNote(PreviewArchetype):
             return
         if not self.is_scored:
             return
-        draw_note(self.kind, self.lane, self.size, self.direction, self.target_time, hide_tick=self.hide_tick)
+        draw_note(self.kind, self.lane, self.size, self.direction, self.target_time)
 
 
-def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float, hide_tick: bool):
+def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):
     col = time_to_preview_col(target_time)
     y = time_to_preview_y(target_time, col)
     draw_note_body(kind, lane, size, target_time, col, y)
     draw_note_arrow(kind, lane, size, target_time, direction, col, y)
-    if not hide_tick:
-        draw_note_tick(kind, lane, target_time, col, y)
+    draw_note_tick(kind, lane, target_time, col, y)
 
 
 def draw_note_body(kind: NoteKind, lane: float, size: float, target_time: float, col: int, y: float):
@@ -213,8 +210,12 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, target_time: float,
             _draw_slim_body(trace_slide_note_body_sprites, lane, size, target_time, col, y)
         case NoteKind.DAMAGE:
             _draw_slim_body(damage_note_body_sprites, lane, size, target_time, col, y)
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.FREE:
             pass
+        case NoteKind.NORM_TRACE_TICK:
+            _draw_slim_body(normal_trace_note_body_sprites, lane, size, target_time, col, y, z_offset=-1)
+        case NoteKind.CRIT_TRACE_TICK:
+            _draw_slim_body(critical_trace_note_body_sprites, lane, size, target_time, col, y, z_offset=-1)
         case _:
             assert_never(kind)
 
@@ -265,6 +266,9 @@ def draw_note_arrow(
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             pass
         case _:
@@ -312,6 +316,9 @@ def draw_note_tick(kind: NoteKind, lane: float, target_time: float, col: int, y:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             pass
         case _:
@@ -342,8 +349,10 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, target_time
         sprites.fallback.draw(layout, z=z)
 
 
-def _draw_slim_body(sprites: BodySprites, lane: float, size: float, target_time: float, col: int, y: float):
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
+def _draw_slim_body(
+    sprites: BodySprites, lane: float, size: float, target_time: float, col: int, y: float, z_offset: int = 0
+):
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane, etc=z_offset)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_preview_slim_note_body(lane, size, col, y)
         sprites.left.draw(left_layout, z=z)

@@ -163,6 +163,11 @@ class NoteKind(IntEnum):
 
     ANCHOR = auto()
 
+    NORM_TRACE_TICK = auto()
+    CRIT_TRACE_TICK = auto()
+
+    FREE = auto()
+
 
 def init_score():
     level_score().update(
@@ -303,6 +308,12 @@ def map_more_flicks_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.DAMAGE
         case NoteKind.ANCHOR:
             return NoteKind.ANCHOR
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
+        case NoteKind.FREE:
+            return NoteKind.FREE
         case _:
             assert_never(kind)
 
@@ -379,6 +390,12 @@ def map_even_more_flicks_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.DAMAGE
         case NoteKind.ANCHOR:
             return NoteKind.ANCHOR
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
+        case NoteKind.FREE:
+            return NoteKind.FREE
         case _:
             assert_never(kind)
 
@@ -455,6 +472,12 @@ def map_no_flicks_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.DAMAGE
         case NoteKind.ANCHOR:
             return NoteKind.ANCHOR
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
+        case NoteKind.FREE:
+            return NoteKind.FREE
         case _:
             assert_never(kind)
 
@@ -549,6 +572,12 @@ def map_more_traces_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.DAMAGE
         case NoteKind.ANCHOR:
             return NoteKind.ANCHOR
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
+        case NoteKind.FREE:
+            return NoteKind.FREE
         case _:
             assert_never(kind)
 
@@ -625,6 +654,12 @@ def map_even_more_traces_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.DAMAGE
         case NoteKind.ANCHOR:
             return NoteKind.ANCHOR
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
+        case NoteKind.FREE:
+            return NoteKind.FREE
         case _:
             assert_never(kind)
 
@@ -758,7 +793,7 @@ def map_monorail_slide_note_kind(kind: NoteKind, is_critical: bool) -> NoteKind:
         case NoteKind.CRIT_TICK:
             return NoteKind.CRIT_TRACE
         case NoteKind.HIDE_TICK:
-            return NoteKind.CRIT_TRACE if is_critical else NoteKind.NORM_TRACE
+            return NoteKind.CRIT_TRACE_TICK if is_critical else NoteKind.NORM_TRACE_TICK
         case _:
             return kind
 
@@ -911,9 +946,16 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
             | NoteKind.CRIT_TAIL_RELEASE
         ):
             result.miss_increment = -80
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.DAMAGE:
+        case (
+            NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+        ):
             result.miss_increment = -40
-        case NoteKind.ANCHOR:
+        case NoteKind.ANCHOR | NoteKind.FREE:
             pass
         case _:
             assert_never(kind)
@@ -958,15 +1000,13 @@ def draw_note(
     progress: float,
     direction: FlickDirection,
     target_time: float,
-    hide_tick: bool,
 ):
     if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
     draw_note_body(kind, lane, size, travel, target_time)
     draw_note_arrow(kind, lane, size, travel, target_time, direction)
-    if not hide_tick:
-        draw_note_tick(kind, lane, travel, target_time)
+    draw_note_tick(kind, lane, travel, target_time)
 
 
 def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):
@@ -1018,8 +1058,12 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
             _draw_slim_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
         case NoteKind.DAMAGE:
             _draw_slim_body(damage_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.FREE:
             pass
+        case NoteKind.NORM_TRACE_TICK:
+            _draw_slim_body(normal_trace_note_body_sprites, lane, size, travel, target_time, z_offset=-1)
+        case NoteKind.CRIT_TRACE_TICK:
+            _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time, z_offset=-1)
         case _:
             assert_never(kind)
 
@@ -1070,6 +1114,9 @@ def draw_note_arrow(
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             pass
         case _:
@@ -1117,6 +1164,9 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             pass
         case _:
@@ -1143,9 +1193,11 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: flo
     sprites.right.draw(right_layout, z=z, a=a)
 
 
-def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
+def _draw_slim_body(
+    sprites: BodySprites, lane: float, size: float, travel: float, target_time: float, z_offset: float = 0.0
+):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane, etc=z_offset)
     left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
     sprites.left.draw(left_layout, z=z, a=a)
     for middle_segment in middle_layout:
@@ -1219,7 +1271,7 @@ def get_note_particles(kind: NoteKind) -> NoteParticleSet:
             result @= normal_tick_particles
         case NoteKind.CRIT_TICK:
             result @= critical_tick_particles
-        case NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+        case NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.NORM_TRACE_TICK | NoteKind.CRIT_TRACE_TICK | NoteKind.FREE:
             result @= empty_note_particles
         case NoteKind.DAMAGE:
             result @= damage_note_particles
@@ -1311,7 +1363,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
                 result @= first_available_effect(Effects.critical_tick, Effects.normal_perfect)
             else:
                 result @= EMPTY_EFFECT
-        case NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+        case NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.NORM_TRACE_TICK | NoteKind.CRIT_TRACE_TICK | NoteKind.FREE:
             result @= EMPTY_EFFECT
         case NoteKind.DAMAGE:
             if judgment == Judgment.MISS:
@@ -1368,6 +1420,9 @@ def get_note_slot_sprite(kind: NoteKind) -> Sprite:
             | NoteKind.HIDE_TICK
             | NoteKind.DAMAGE
             | NoteKind.ANCHOR
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             result @= Sprite(-1)
         case _:
@@ -1420,6 +1475,9 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
             | NoteKind.HIDE_TICK
             | NoteKind.DAMAGE
             | NoteKind.ANCHOR
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             result @= Sprite(-1)
         case _:
@@ -1551,7 +1609,7 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= SLIDE_END_FLICK_NORMAL_WINDOW
         case NoteKind.CRIT_TAIL_FLICK:
             result @= SLIDE_END_FLICK_CRITICAL_WINDOW
-        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE:
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TRACE_TICK | NoteKind.CRIT_TRACE_TICK:
             result @= TRACE_NORMAL_WINDOW
         case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE:
             result @= TRACE_CRITICAL_WINDOW
@@ -1571,7 +1629,14 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= TRACE_FLICK_NORMAL_WINDOW
         case NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
+        case (
+            NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.ANCHOR
+            | NoteKind.DAMAGE
+            | NoteKind.FREE
+        ):
             result @= EMPTY_JUDGMENT_WINDOW
         case _:
             assert_never(kind)
@@ -1590,9 +1655,9 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
             result @= Buckets.normal_flick
         case NoteKind.CRIT_FLICK:
             result @= Buckets.critical_flick
-        case NoteKind.NORM_TRACE:
+        case NoteKind.NORM_TRACE | NoteKind.NORM_TRACE_TICK:
             result @= Buckets.normal_trace
-        case NoteKind.CRIT_TRACE:
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_TRACE_TICK:
             result @= Buckets.critical_trace
         case NoteKind.NORM_TRACE_FLICK:
             result @= Buckets.normal_trace_flick
@@ -1642,6 +1707,7 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.FREE
         ):
             result @= Bucket(-1)
         case _:
@@ -1686,9 +1752,11 @@ def get_leniency(kind: NoteKind) -> float:
             | NoteKind.NORM_TICK
             | NoteKind.CRIT_TICK
             | NoteKind.HIDE_TICK
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
         ):
             result = 1.0
-        case NoteKind.ANCHOR | NoteKind.DAMAGE:
+        case NoteKind.ANCHOR | NoteKind.DAMAGE | NoteKind.FREE:
             result = 0
         case _:
             assert_never(kind)
@@ -1738,6 +1806,9 @@ def has_tap_input(kind: NoteKind) -> bool:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             return False
         case _:
@@ -1785,6 +1856,9 @@ def has_release_input(kind: NoteKind) -> bool:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             return False
         case _:
@@ -1832,6 +1906,9 @@ def is_head(kind: NoteKind) -> bool:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
             | NoteKind.DAMAGE
+            | NoteKind.NORM_TRACE_TICK
+            | NoteKind.CRIT_TRACE_TICK
+            | NoteKind.FREE
         ):
             return False
         case _:

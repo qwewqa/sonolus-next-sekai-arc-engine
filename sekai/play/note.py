@@ -79,7 +79,6 @@ class BaseNote(PlayArchetype):
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()
-    hide_tick: bool = entity_data()
 
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
@@ -139,7 +138,6 @@ class BaseNote(PlayArchetype):
             case SlideMod.NONE:
                 pass
             case SlideMod.MONORAIL:
-                self.hide_tick = self.kind == NoteKind.HIDE_TICK
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -239,6 +237,8 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_HEAD_TRACE
                 | NoteKind.NORM_TAIL_TRACE
                 | NoteKind.CRIT_TAIL_TRACE
+                | NoteKind.NORM_TRACE_TICK
+                | NoteKind.CRIT_TRACE_TICK
             ):
                 self.handle_trace_input()
             case (
@@ -263,7 +263,7 @@ class BaseNote(PlayArchetype):
                 self.handle_tick_input()
             case NoteKind.DAMAGE:
                 self.handle_damage_input()
-            case NoteKind.ANCHOR:
+            case NoteKind.ANCHOR | NoteKind.FREE:
                 pass
             case _:
                 assert_never(kind)
@@ -289,12 +289,10 @@ class BaseNote(PlayArchetype):
             return
         if group_hide_notes(self.timescale_group):
             return
-        draw_note(
-            self.kind, self.lane, self.size, self.progress, self.direction, self.target_time, hide_tick=self.hide_tick
-        )
+        draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def terminate(self):
-        self.should_play_hit_effects = self.should_play_hit_effects and not self.hide_tick
+        self.should_play_hit_effects = self.should_play_hit_effects
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
@@ -464,7 +462,7 @@ class BaseNote(PlayArchetype):
         if has_touch:
             self.fail_damage()
         else:
-            self.complete_damage()
+            self.complete_free()
 
     def handle_late_miss(self):
         kind = self.kind
@@ -472,7 +470,7 @@ class BaseNote(PlayArchetype):
             case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
                 self.fail_late(0.125)
             case NoteKind.DAMAGE:
-                self.complete_damage()
+                self.complete_free()
             case (
                 NoteKind.NORM_TAP
                 | NoteKind.CRIT_TAP
@@ -504,10 +502,14 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
                 | NoteKind.NORM_TAIL_RELEASE
                 | NoteKind.CRIT_TAIL_RELEASE
+                | NoteKind.NORM_TRACE_TICK
+                | NoteKind.CRIT_TRACE_TICK
             ):
                 self.fail_late()
             case NoteKind.ANCHOR:
                 pass
+            case NoteKind.FREE:
+                self.complete_free()
             case _:
                 assert_never(kind)
 
@@ -597,7 +599,7 @@ class BaseNote(PlayArchetype):
         self.despawn = True
         self.should_play_hit_effects = True
 
-    def complete_damage(self):
+    def complete_free(self):
         self.result.judgment = Judgment.PERFECT
         self.result.accuracy = 0
         if self.result.bucket.id != -1:
