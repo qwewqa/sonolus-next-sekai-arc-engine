@@ -137,7 +137,7 @@ class BaseNote(PlayArchetype):
         match Options.slide_mod:
             case SlideMod.NONE:
                 pass
-            case SlideMod.MONORAIL:
+            case SlideMod.MONORAIL | SlideMod.TRACE_TICKS:
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -145,6 +145,8 @@ class BaseNote(PlayArchetype):
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
                     case _:
                         pass
+            case _:
+                assert_never(Options.slide_mod)
 
         self.judgment_window = get_note_window(self.kind)
         self.input_interval = self.judgment_window.good + self.target_time + input_offset()

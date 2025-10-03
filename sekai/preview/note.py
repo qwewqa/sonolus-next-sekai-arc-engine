@@ -117,7 +117,7 @@ class PreviewBaseNote(PreviewArchetype):
         match Options.slide_mod:
             case SlideMod.NONE:
                 pass
-            case SlideMod.MONORAIL:
+            case SlideMod.MONORAIL | SlideMod.TRACE_TICKS:
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -125,6 +125,8 @@ class PreviewBaseNote(PreviewArchetype):
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
                     case _:
                         pass
+            case _:
+                assert_never(Options.slide_mod)
 
         if self.is_attached:
             attach_head = self.attach_head_ref.get()
@@ -215,7 +217,7 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, target_time: float,
         case NoteKind.NORM_TRACE_TICK:
             _draw_slim_body(normal_trace_note_body_sprites, lane, size, target_time, col, y, z_offset=-1)
         case NoteKind.CRIT_TRACE_TICK:
-            _draw_slim_body(critical_trace_note_body_sprites, lane, size, target_time, col, y, z_offset=-1)
+            _draw_slim_body(critical_trace_note_body_sprites, lane, size, target_time, col, y, z_offset=-2)
         case _:
             assert_never(kind)
 

@@ -2,6 +2,7 @@ from sonolus.script.archetype import EntityRef, PreviewArchetype, imported
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import LAYER_SIM_LINE, get_z
+from sekai.lib.note import NoteKind
 from sekai.lib.options import Options
 from sekai.lib.skin import Skin
 from sekai.preview.layout import layout_preview_sim_line, time_to_preview_col, time_to_preview_y
@@ -15,6 +16,8 @@ class PreviewSimLine(PreviewArchetype):
     right_ref: EntityRef[PreviewBaseNote] = imported(name="right")
 
     def render(self):
+        if self.left.kind == NoteKind.FREE or self.right.kind == NoteKind.FREE:
+            return
         target_time = self.left.target_time
         col = time_to_preview_col(target_time)
         y = time_to_preview_y(target_time, col)

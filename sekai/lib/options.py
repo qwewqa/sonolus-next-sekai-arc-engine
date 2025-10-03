@@ -66,6 +66,7 @@ class FadeMod(IntEnum):
 class SlideMod(IntEnum):
     NONE = 0
     MONORAIL = 1
+    TRACE_TICKS = 2
 
 
 @options
@@ -396,6 +397,7 @@ class Options:
         values=[
             "None",
             "Monorail",
+            "Trace Ticks",
         ],
         standard=True,
     )

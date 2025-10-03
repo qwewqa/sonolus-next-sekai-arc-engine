@@ -300,7 +300,7 @@ def draw_connector(
         return
 
     match Options.slide_mod:
-        case SlideMod.NONE:
+        case SlideMod.NONE | SlideMod.TRACE_TICKS:
             pass
         case SlideMod.MONORAIL:
             match kind:

@@ -744,6 +744,8 @@ def map_all_critical_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.CRIT_TAIL_RELEASE
         case NoteKind.NORM_TICK:
             return NoteKind.CRIT_TICK
+        case NoteKind.NORM_TRACE_TICK:
+            return NoteKind.CRIT_TRACE_TICK
         case _:
             return kind
 
@@ -782,6 +784,8 @@ def map_all_normal_note_kind(kind: NoteKind) -> NoteKind:
             return NoteKind.NORM_TAIL_RELEASE
         case NoteKind.CRIT_TICK:
             return NoteKind.NORM_TICK
+        case NoteKind.CRIT_TRACE_TICK:
+            return NoteKind.NORM_TRACE_TICK
         case _:
             return kind
 
@@ -1063,7 +1067,7 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
         case NoteKind.NORM_TRACE_TICK:
             _draw_slim_body(normal_trace_note_body_sprites, lane, size, travel, target_time, z_offset=-1)
         case NoteKind.CRIT_TRACE_TICK:
-            _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time, z_offset=-1)
+            _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time, z_offset=-2)
         case _:
             assert_never(kind)
 

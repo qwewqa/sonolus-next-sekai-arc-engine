@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import assert_never, cast
 
 from sonolus.script.archetype import (
     EntityRef,
@@ -112,7 +112,7 @@ class WatchBaseNote(WatchArchetype):
         match Options.slide_mod:
             case SlideMod.NONE:
                 pass
-            case SlideMod.MONORAIL:
+            case SlideMod.MONORAIL | SlideMod.TRACE_TICKS:
                 match segment_kind:
                     case ConnectorKind.ACTIVE_NORMAL:
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=False)
@@ -120,6 +120,8 @@ class WatchBaseNote(WatchArchetype):
                         self.kind = map_monorail_slide_note_kind(self.kind, is_critical=True)
                     case _:
                         pass
+            case _:
+                assert_never(Options.slide_mod)
 
         self.result.bucket = get_note_bucket(self.kind)
 
