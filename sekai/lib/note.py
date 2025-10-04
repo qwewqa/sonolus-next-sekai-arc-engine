@@ -58,7 +58,16 @@ from sekai.lib.layout import (
     preempt_time,
     progress_to,
 )
-from sekai.lib.options import CriticalMod, FlickDirectionMod, FlickMod, Options, SlideTailMod, TraceMod
+from sekai.lib.options import (
+    CriticalMod,
+    FlickDirectionMod,
+    FlickMod,
+    LifeMode,
+    Options,
+    ScoreMode,
+    SlideTailMod,
+    TraceMod,
+)
 from sekai.lib.particle import (
     NoteParticleSet,
     critical_flick_note_particles,
@@ -170,14 +179,28 @@ class NoteKind(IntEnum):
 
 
 def init_score():
-    level_score().update(
-        perfect_multiplier=1.0,
-        great_multiplier=0.7,
-        good_multiplier=0.5,
-        consecutive_great_multiplier=0.01,
-        consecutive_great_step=100,
-        consecutive_great_cap=1000,
-    )
+    match Options.score_mode:
+        case ScoreMode.NORMAL:
+            level_score().update(
+                perfect_multiplier=1.0,
+                great_multiplier=0.7,
+                good_multiplier=0.5,
+                consecutive_great_multiplier=0.01,
+                consecutive_great_step=100,
+                consecutive_great_cap=1000,
+            )
+        case ScoreMode.TOURNAMENT:
+            level_score().update(
+                perfect_multiplier=3.0,
+                great_multiplier=2.0,
+                good_multiplier=1.0,
+            )
+        case ScoreMode.PERFECTS:
+            level_score().update(
+                perfect_multiplier=1.0,
+            )
+        case _:
+            assert_never(Options.score_mode)
 
 
 def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
@@ -949,7 +972,14 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
             | NoteKind.NORM_TAIL_RELEASE
             | NoteKind.CRIT_TAIL_RELEASE
         ):
-            result.miss_increment = -80
+            match Options.life_mode:
+                case LifeMode.NORMAL:
+                    result.miss_increment = -80
+                case LifeMode.REGEN:
+                    result.perfect_increment = 1
+                    result.miss_increment = -120
+                case _:
+                    assert_never(Options.life_mode)
         case (
             NoteKind.NORM_TICK
             | NoteKind.CRIT_TICK
@@ -958,7 +988,14 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
             | NoteKind.NORM_TRACE_TICK
             | NoteKind.CRIT_TRACE_TICK
         ):
-            result.miss_increment = -40
+            match Options.life_mode:
+                case LifeMode.NORMAL:
+                    result.miss_increment = -40
+                case LifeMode.REGEN:
+                    result.perfect_increment = 1
+                    result.miss_increment = -60
+                case _:
+                    assert_never(Options.life_mode)
         case NoteKind.ANCHOR | NoteKind.FREE:
             pass
         case _:

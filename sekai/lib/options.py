@@ -5,9 +5,20 @@ from sonolus.script.text import StandardText
 
 
 class SlotEffectStyle(IntEnum):
-    DISSIPATE = 0
-    VERTICAL = 1
-    LANE = 2
+    VERTICAL = 0
+    LANE = 1
+    DISSIPATE = 2
+
+
+class ScoreMode(IntEnum):
+    NORMAL = 0
+    TOURNAMENT = 1
+    PERFECTS = 2
+
+
+class LifeMode(IntEnum):
+    NORMAL = 0
+    REGEN = 1
 
 
 class GuideAlphaCurve(IntEnum):
@@ -208,9 +219,9 @@ class Options:
         scope="Next Sekai Arc",
         default=SlotEffectStyle.DISSIPATE,
         values=[
-            "Dissipate",
             "Vertical",
             "Lane",
+            "Dissipate",
         ],
     )
     slot_effect_spread: float = slider_option(
@@ -370,6 +381,27 @@ class Options:
             "Concave",
             "Wave",
             "Swing",
+        ],
+        standard=True,
+    )
+    score_mode: ScoreMode = select_option(
+        name="Score Mode",
+        scope="Next Sekai Arc",
+        default=ScoreMode.TOURNAMENT,
+        values=[
+            "Normal",
+            "Tournament",
+            "Perfects",
+        ],
+        standard=True,
+    )
+    life_mode: LifeMode = select_option(
+        name="Life Mode",
+        scope="Next Sekai Arc",
+        default=LifeMode.REGEN,
+        values=[
+            "Normal",
+            "Regen",
         ],
         standard=True,
     )
