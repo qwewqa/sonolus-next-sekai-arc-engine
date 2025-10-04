@@ -497,7 +497,7 @@ def layout_slot_effect(lane: float) -> Quad:
 def layout_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
     result = +Quad
     match Options.slot_effect_style:
-        case SlotEffectStyle.VERTICAL:
+        case SlotEffectStyle.VERTICAL | SlotEffectStyle.DISSIPATE:
             for segment in layout_vertical_slot_glow_effect(lane, size, height):
                 result @= segment
                 yield result

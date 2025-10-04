@@ -5,8 +5,9 @@ from sonolus.script.text import StandardText
 
 
 class SlotEffectStyle(IntEnum):
-    VERTICAL = 0
-    LANE = 1
+    DISSIPATE = 0
+    VERTICAL = 1
+    LANE = 2
 
 
 class GuideAlphaCurve(IntEnum):
@@ -205,8 +206,9 @@ class Options:
     slot_effect_style: SlotEffectStyle = select_option(
         name="Slot Effect Style",
         scope="Next Sekai Arc",
-        default=SlotEffectStyle.VERTICAL,
+        default=SlotEffectStyle.DISSIPATE,
         values=[
+            "Dissipate",
             "Vertical",
             "Lane",
         ],
@@ -214,7 +216,7 @@ class Options:
     slot_effect_spread: float = slider_option(
         name="Slot Effect Spread",
         scope="Next Sekai Arc",
-        default=1,
+        default=0.2,
         min=0,
         max=2,
         step=0.05,
