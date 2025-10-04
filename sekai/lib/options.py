@@ -232,6 +232,16 @@ class Options:
         step=0.01,
         unit=StandardText.PERCENTAGE_UNIT,
     )
+    stage_cover_alpha: float = slider_option(
+        name=StandardText.STAGE_COVER_ALPHA,
+        advanced=True,
+        scope="Next Sekai Arc",
+        default=1,
+        min=0,
+        max=1,
+        step=0.01,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     zoom: float = slider_option(
         name="Zoom",
         scope="Next Sekai Arc",

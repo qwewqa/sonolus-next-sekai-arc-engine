@@ -45,10 +45,10 @@ def draw_stage():
 def draw_stage_cover():
     if Options.stage_cover > 0:
         for segment in layout_stage_cover():
-            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=0.8)
+            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=Options.stage_cover_alpha)
     if Options.hidden > 0:
         for segment in layout_hidden_cover():
-            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=0.8)
+            Skin.cover.draw(segment, z=get_z(LAYER_COVER), a=Options.stage_cover_alpha)
 
 
 def play_lane_hit_effects(lane: float):
