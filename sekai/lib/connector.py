@@ -431,7 +431,7 @@ def draw_connector(
         pos_offset = max(pos_offset, pos_offset_this_side)
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
-    curve_change_scale = pos_offset**0.4 * 1.6
+    curve_change_scale = pos_offset**0.4 * 1.2
     alpha_change = abs(start_alpha - end_alpha)
     match Options.fade_mod:
         case FadeMod.NONE:
@@ -443,8 +443,8 @@ def draw_connector(
         case FadeMod.FADE_IN_OUT:
             alpha_change = max(start_alpha, end_alpha)
     alpha_change_scale = max(
-        (alpha_change * get_connector_alpha_option(kind)) ** 0.8 * 3,
-        (alpha_change * get_connector_alpha_option(kind)) ** 0.5 * min(abs(start_pos_y - end_pos_y), 1) * 3,
+        (alpha_change * get_connector_alpha_option(kind)) ** 0.8 * 2.5,
+        (alpha_change * get_connector_alpha_option(kind)) ** 0.5 * min(abs(start_pos_y - end_pos_y), 1) * 2.5,
     )
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
@@ -498,11 +498,11 @@ def draw_connector(
             start_arc_factor = 0.8
             end_arc_factor = 0.8
             if v_segment_i == 1 and (head_is_segment_head or abs(start_progress - Layout.progress_start) < 1e-3):
-                start_arc_factor = 1.5
+                start_arc_factor = 1.6
             if v_segment_i == segment_count and (
-                tail_is_segment_tail or abs(end_progress - Layout.progress_cutoff) < 1e-3
+                tail_is_segment_tail or abs(end_progress - Layout.progress_start) < 1e-3
             ):
-                end_arc_factor = 1.5
+                end_arc_factor = 1.6
             start_arc_factor *= Options.arc_quality
             end_arc_factor *= Options.arc_quality
             start_arc_n = max(1, ceil(quality * Options.arc_quality * last_size * start_arc_factor))
