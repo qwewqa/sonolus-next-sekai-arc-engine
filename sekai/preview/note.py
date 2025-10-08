@@ -84,7 +84,7 @@ class PreviewBaseNote(PreviewArchetype):
         if self.data_init_done:
             return
 
-        self.kind = map_note_kind(cast(NoteKind, self.key))
+        self.kind = map_note_kind(cast(NoteKind, self.key), self.index)
 
         self.data_init_done = True
 

@@ -73,6 +73,12 @@ class CriticalMod(IntEnum):
     ALL_NORMAL = 2
 
 
+class DamageMod(IntEnum):
+    NONE = 0
+    NO_DAMAGE = 1
+    RANDOMIZE = 2
+
+
 class FadeMod(IntEnum):
     NONE = 0
     FADE_IN = 1
@@ -482,6 +488,17 @@ class Options:
             "None",
             "All Critical",
             "No Critical",
+        ],
+        standard=True,
+    )
+    damage_mod: DamageMod = select_option(
+        name="Damage Mod",
+        scope="Next Sekai Arc",
+        default=DamageMod.NONE,
+        values=[
+            "None",
+            "No Damage",
+            "Randomize",
         ],
         standard=True,
     )

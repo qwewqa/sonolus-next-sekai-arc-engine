@@ -12,3 +12,4 @@ class Streams:
     connector_visual_states: StreamGroup[ConnectorVisualState, Dim[1_000_000]]
     connector_effect_kinds: StreamGroup[ConnectorKind, Dim[1_000_000]]
     flick_direction_overrides: Stream[FlickDirection]
+    note_kind_overrides: Stream[int]

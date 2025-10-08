@@ -60,6 +60,7 @@ from sekai.lib.layout import (
 )
 from sekai.lib.options import (
     CriticalMod,
+    DamageMod,
     FlickDirectionMod,
     FlickMod,
     LifeMode,
@@ -213,7 +214,9 @@ def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
     )
 
 
-def map_note_kind(kind: NoteKind) -> NoteKind:
+def map_note_kind(kind: NoteKind, index: int) -> NoteKind:
+    if is_replay() and index in Streams.note_kind_overrides:
+        return cast(NoteKind, Streams.note_kind_overrides[index])
     match Options.flick_mod:
         case FlickMod.NONE:
             pass
@@ -256,6 +259,13 @@ def map_note_kind(kind: NoteKind) -> NoteKind:
             kind = map_all_normal_note_kind(kind)
         case _:
             assert_never(Options.critical_mod)
+    match Options.damage_mod:
+        case DamageMod.NONE:
+            pass
+        case DamageMod.NO_DAMAGE:
+            kind = map_no_damage_note_kind(kind)
+        case DamageMod.RANDOMIZE:
+            kind = map_randomize_damage_note_kind(kind, index)
     return kind
 
 
@@ -813,6 +823,25 @@ def map_all_normal_note_kind(kind: NoteKind) -> NoteKind:
             return kind
 
 
+def map_no_damage_note_kind(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.DAMAGE:
+            return NoteKind.FREE
+        case _:
+            return kind
+
+
+def map_randomize_damage_note_kind(kind: NoteKind, index: int) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TAP | NoteKind.CRIT_TAP | NoteKind.NORM_FLICK | NoteKind.CRIT_FLICK:
+            if random.random() < 0.1:
+                return NoteKind.DAMAGE
+            else:
+                return kind
+        case _:
+            return kind
+
+
 def map_monorail_slide_note_kind(kind: NoteKind, is_critical: bool) -> NoteKind:
     match kind:
         case NoteKind.NORM_TICK:
@@ -826,6 +855,8 @@ def map_monorail_slide_note_kind(kind: NoteKind, is_critical: bool) -> NoteKind:
 
 
 def map_flick_direction(direction: FlickDirection, index: int) -> FlickDirection:
+    if is_watch() and is_replay() and index in Streams.flick_direction_overrides:
+        return Streams.flick_direction_overrides[index]
     match Options.flick_direction_mod:
         case FlickDirectionMod.NONE:
             pass
@@ -840,7 +871,7 @@ def map_flick_direction(direction: FlickDirection, index: int) -> FlickDirection
         case FlickDirectionMod.ALL_UP_OMNI:
             direction = map_all_up_omni_flick_direction(direction)
         case FlickDirectionMod.RANDOM:
-            direction = map_random_flick_direction(index)
+            direction = map_random_flick_direction()
         case _:
             assert_never(Options.flick_direction_mod)
     return direction
@@ -908,9 +939,7 @@ def map_all_up_omni_flick_direction(direction: FlickDirection) -> FlickDirection
     return FlickDirection.UP_OMNI
 
 
-def map_random_flick_direction(index: int) -> FlickDirection:
-    if is_watch() and is_replay() and index in Streams.flick_direction_overrides:
-        return Streams.flick_direction_overrides[index]
+def map_random_flick_direction() -> FlickDirection:
     result = FlickDirection.UP_OMNI
     match random.randrange(0, 7):
         case 0:
