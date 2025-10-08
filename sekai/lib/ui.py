@@ -111,25 +111,25 @@ def init_ui():
         background=False,
     )
     ui.combo_value.update(
-        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.14),
+        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.14) * Options.zoom + Vec2(0, Options.y_offset),
         pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, Layout.field_h * 0.12) * ui.combo_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.12) * ui.combo_config.scale * Options.zoom,
         alpha=ui.combo_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.combo_text.update(
-        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.14),
+        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.14) * Options.zoom + Vec2(0, Options.y_offset),
         pivot=Vec2(0.5, -2.25),
-        dimensions=Vec2(0, Layout.field_h * 0.12 * 0.25) * ui.combo_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.12 * 0.25) * ui.combo_config.scale * Options.zoom,
         alpha=ui.combo_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.judgment.update(
-        anchor=Vec2(0, Layout.field_h * -0.115),
+        anchor=Vec2(0, Layout.field_h * -0.115) * Options.zoom + Vec2(0, Options.y_offset),
         pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, Layout.field_h * 0.0475) * ui.judgment_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.0475) * ui.judgment_config.scale * Options.zoom,
         alpha=ui.judgment_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
