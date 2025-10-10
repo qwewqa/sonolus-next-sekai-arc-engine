@@ -181,6 +181,24 @@ class PreviewBaseNote(PreviewArchetype):
         else:
             return 1.0
 
+    @property
+    def effective_attach_head(self) -> PreviewBaseNote:
+        ref = +EntityRef[PreviewBaseNote]
+        if self.is_attached:
+            ref @= self.attach_head_ref
+        else:
+            ref @= self.ref()
+        return ref.get()
+
+    @property
+    def effective_attach_tail(self) -> PreviewBaseNote:
+        ref = +EntityRef[PreviewBaseNote]
+        if self.is_attached:
+            ref @= self.attach_tail_ref
+        else:
+            ref @= self.ref()
+        return ref.get()
+
 
 def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):
     col = time_to_preview_col(target_time)

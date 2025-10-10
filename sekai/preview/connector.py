@@ -51,7 +51,7 @@ class PreviewConnector(PreviewArchetype):
             covered_note: note.PreviewBaseNote = covered_note_ref.get()
             covered_note.segment_kind = self.kind
             covered_note_ref @= covered_note.next_ref
-        self.ease_type = head.connector_ease
+        self.ease_type = head.effective_attach_head.connector_ease
 
     def render(self):
         head = self.head
