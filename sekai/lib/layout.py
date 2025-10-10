@@ -4,7 +4,7 @@ from math import atan, ceil, cos, floor, log, pi, sin
 from typing import assert_never
 
 from sonolus.script.easing import ease_in_quad
-from sonolus.script.globals import level_data
+from sonolus.script.globals import level_data, level_memory
 from sonolus.script.interval import clamp, interp, lerp, remap, unlerp
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, is_preview, is_tutorial, screen, time
@@ -48,19 +48,23 @@ class FlickDirection(IntEnum):
 
 @level_data
 class Layout:
-    t: float
     field_w: float
     field_h: float
-    w_scale: float
-    h_scale: float
-    note_h: float
-    scaled_note_h: float
     progress_start: float
     progress_cutoff: float
     flick_speed_threshold: float
     vp: Vec2
     min_visible_lane: float
     max_visible_lane: float
+
+
+@level_memory
+class DynamicLayout:
+    t: float
+    w_scale: float
+    h_scale: float
+    note_h: float
+    scaled_note_h: float
 
 
 def init_layout():
@@ -78,15 +82,7 @@ def init_layout():
     Layout.field_w = field_w
     Layout.field_h = field_h
 
-    t = field_h * (0.5 + 1.15875 * (47 / 1176))
-    b = field_h * (0.5 - 1.15875 * (803 / 1176))
-    w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * Options.width_scale
-
-    Layout.t = t
-    Layout.w_scale = w
-    Layout.h_scale = b - t
-    Layout.note_h = 75 / 850 / 2 * Options.width_scale  # Multiply by width to keep it proportional
-    Layout.scaled_note_h = Layout.note_h * Layout.h_scale
+    refresh_layout()
 
     if Options.stage_cover:
         Layout.progress_start = inverse_approach(lerp(approach(0), 1.0, Options.stage_cover))
@@ -98,7 +94,7 @@ def init_layout():
     else:
         Layout.progress_cutoff = DEFAULT_PROGRESS_CUTOFF
 
-    Layout.flick_speed_threshold = 2 * Layout.w_scale
+    Layout.flick_speed_threshold = 2 * DynamicLayout.w_scale
 
     Layout.vp = transform_vec(Vec2(0, 0))
 
@@ -107,7 +103,7 @@ def init_layout():
             Layout.min_visible_lane = -30
             Layout.max_visible_lane = 30
         case ArcMode.ARC:
-            angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
+            angle_per_lane = ARC_FACTOR * DynamicLayout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
             Layout.min_visible_lane = -pi / 2 / angle_per_lane
             Layout.max_visible_lane = pi / 2 / angle_per_lane
         case ArcMode.CONVEX:
@@ -120,11 +116,23 @@ def init_layout():
             Layout.min_visible_lane = -18
             Layout.max_visible_lane = 18
         case ArcMode.SWING:
-            angle_per_lane = ARC_FACTOR * Layout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
+            angle_per_lane = ARC_FACTOR * DynamicLayout.w_scale / (Layout.vp.y - perspective_vec(0, 1).y)
             Layout.min_visible_lane = -pi * 5 / 8 / angle_per_lane
             Layout.max_visible_lane = pi * 5 / 8 / angle_per_lane
         case _:
             assert_never(Options.arc_mode)
+
+
+def refresh_layout():
+    t = Layout.field_h * (0.5 + 1.15875 * (47 / 1176))
+    b = Layout.field_h * (0.5 - 1.15875 * (803 / 1176))
+    w = Layout.field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * Options.width_scale
+
+    DynamicLayout.t = t
+    DynamicLayout.w_scale = w
+    DynamicLayout.h_scale = b - t
+    DynamicLayout.note_h = 75 / 850 / 2 * Options.width_scale  # Multiply by width to keep it proportional
+    DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
 
 def approach(progress: float) -> float:
@@ -201,20 +209,20 @@ def arc_adjust_vec(v: Vec2):
         case ArcMode.CONVEX:
             vp = Layout.vp
             h = vp.y - v.y
-            rel_x = (v.x - vp.x) / Layout.w_scale / h
+            rel_x = (v.x - vp.x) / DynamicLayout.w_scale / h
             y_offset = (0.16 - 0.5 * ((rel_x / 5) ** 2)) * h
             result @= v + Vec2(0, y_offset)
         case ArcMode.CONCAVE:
             vp = Layout.vp
             h = vp.y - v.y
-            rel_x = (v.x - vp.x) / Layout.w_scale / h
+            rel_x = (v.x - vp.x) / DynamicLayout.w_scale / h
             y_offset = 0.5 * ((rel_x / 5) ** 2) * h
             result @= v + Vec2(0, y_offset)
         case ArcMode.WAVE:
             vp = Layout.vp
             h = vp.y - v.y
-            rel_x = (v.x - vp.x) / Layout.w_scale / h
-            y_offset = -Layout.h_scale * 0.05 * (cos(rel_x * 1.5 + time() / 2) + 0.5) * h
+            rel_x = (v.x - vp.x) / DynamicLayout.w_scale / h
+            y_offset = -DynamicLayout.h_scale * 0.05 * (cos(rel_x * 1.5 + time() / 2) + 0.5) * h
             result @= v + Vec2(0, y_offset)
         case ArcMode.SWING:
             vp = Layout.vp
@@ -276,8 +284,8 @@ def get_center_and_angle_at_judge_line(lane: float) -> tuple[Vec2, float]:
 
 def transform_vec(v: Vec2) -> Vec2:
     return Vec2(
-        v.x * Layout.w_scale,
-        v.y * Layout.h_scale + Layout.t,
+        v.x * DynamicLayout.w_scale,
+        v.y * DynamicLayout.h_scale + DynamicLayout.t,
     )
 
 
@@ -331,7 +339,7 @@ def layout_lane_effect(lane: float, size: float, n: int | None = None) -> Iterat
             l=lane - size,
             r=lane + size,
             t=LANE_T + 0.05,
-            b=1 - Layout.note_h if Options.lane_effects_from_judge_line else LANE_B,
+            b=1 - DynamicLayout.note_h if Options.lane_effects_from_judge_line else LANE_B,
         ),
         n=n,
     )
@@ -350,7 +358,7 @@ def layout_stage_cover() -> Iterator[Quad]:
 
 
 def layout_hidden_cover() -> Iterator[Quad]:
-    b = 1 - Layout.note_h
+    b = 1 - DynamicLayout.note_h
     t = min(b, max(lerp(1.0, approach(0), Options.hidden), lerp(approach(0), 1.0, Options.stage_cover)))
     return arc(
         perspective_rect(
@@ -363,7 +371,7 @@ def layout_hidden_cover() -> Iterator[Quad]:
 
 
 def layout_judge_line() -> Iterator[Quad]:
-    return arc(perspective_rect(l=-6, r=6, t=1 - Layout.note_h, b=1 + Layout.note_h), n=12)
+    return arc(perspective_rect(l=-6, r=6, t=1 - DynamicLayout.note_h, b=1 + DynamicLayout.note_h), n=12)
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
@@ -400,7 +408,7 @@ def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Q
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=Layout.note_h * Options.note_thickness,
+        h=DynamicLayout.note_h * Options.note_thickness,
         edge_w=NOTE_EDGE_W * Options.note_thickness,
         travel=travel,
     )
@@ -410,7 +418,8 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
-        h=Layout.note_h * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
+        h=DynamicLayout.note_h
+        * Options.note_thickness,  # Height is handled by the sprite rather than being changed here
         edge_w=NOTE_SLIM_EDGE_W * Options.note_thickness,
         travel=travel,
     )
@@ -418,8 +427,8 @@ def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad
 
 def layout_tick(lane: float, travel: float) -> Quad:
     center = transform_vec(Vec2(lane, 1) * travel)
-    l = arc_adjust_vec(center - Vec2(Layout.scaled_note_h, 0) * travel)
-    r = arc_adjust_vec(center + Vec2(Layout.scaled_note_h, 0) * travel)
+    l = arc_adjust_vec(center - Vec2(DynamicLayout.scaled_note_h, 0) * travel)
+    r = arc_adjust_vec(center + Vec2(DynamicLayout.scaled_note_h, 0) * travel)
     ort = -(r - l).orthogonal() / 2
     return Quad(
         bl=l - ort,
@@ -467,7 +476,7 @@ def layout_flick_arrow(
     base_tr = base_br + up
     offset_scale = animation_progress if not is_down else 1 - animation_progress
     offset = (
-        Vec2(animation_top_x_offset * Layout.w_scale, 2 * Layout.w_scale).rotate(up.angle - pi / 2)
+        Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale).rotate(up.angle - pi / 2)
         * offset_scale
         * travel
     )
@@ -488,8 +497,8 @@ def layout_slot_effect(lane: float) -> Quad:
         perspective_rect(
             l=lane - 0.5,
             r=lane + 0.5,
-            b=1 + Layout.note_h,
-            t=1 - Layout.note_h,
+            b=1 + DynamicLayout.note_h,
+            t=1 - DynamicLayout.note_h,
         )
     )
 
@@ -511,7 +520,7 @@ def layout_slot_glow_effect(lane: float, size: float, height: float) -> Iterator
 
 def layout_vertical_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
     s = 1 + 0.25 * Options.slot_effect_size * Options.slot_effect_spread
-    h = 4.25 * Layout.w_scale * Options.slot_effect_size
+    h = 4.25 * DynamicLayout.w_scale * Options.slot_effect_size
     l_min = perspective_vec(lane - size, 1)
     r_min = perspective_vec(lane + size, 1)
     for segment in arc(
@@ -533,7 +542,7 @@ def layout_vertical_slot_glow_effect(lane: float, size: float, height: float) ->
 
 
 def layout_lane_slot_glow_effect(lane: float, size: float, height: float) -> Iterator[Quad]:
-    h = 2 * Layout.w_scale * Options.slot_effect_size
+    h = 2 * DynamicLayout.w_scale * Options.slot_effect_size
     l_min = perspective_vec(lane - size, 1)
     r_min = perspective_vec(lane + size, 1)
     l_max = perspective_vec(lane - size, 1 - h)
@@ -576,7 +585,7 @@ def layout_rotated_linear_effect(lane: float, shear: float) -> Quad:
 
 def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
     w *= Options.note_effect_size
-    h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale
+    h *= Options.note_effect_size * DynamicLayout.w_scale / DynamicLayout.h_scale
     scale = h * 10  # Helps keep it centered despite being too wide
     w /= scale
     h /= scale
@@ -595,7 +604,7 @@ def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
 
 
 def layout_tick_effect(lane: float) -> Quad:
-    w = 4 * Layout.w_scale * Options.note_effect_size
+    w = 4 * DynamicLayout.w_scale * Options.note_effect_size
     h = w
     center, angle = get_center_and_angle_at_judge_line(lane)
     return (
@@ -650,10 +659,10 @@ def layout_sim_line(
     ort = (mr - ml).orthogonal().normalize()
     return arc(
         Quad(
-            bl=ml + ort * Layout.note_h * Layout.h_scale * left_travel,
-            br=mr + ort * Layout.note_h * Layout.h_scale * right_travel,
-            tl=ml - ort * Layout.note_h * Layout.h_scale * left_travel,
-            tr=mr - ort * Layout.note_h * Layout.h_scale * right_travel,
+            bl=ml + ort * DynamicLayout.note_h * DynamicLayout.h_scale * left_travel,
+            br=mr + ort * DynamicLayout.note_h * DynamicLayout.h_scale * right_travel,
+            tl=ml - ort * DynamicLayout.note_h * DynamicLayout.h_scale * left_travel,
+            tr=mr - ort * DynamicLayout.note_h * DynamicLayout.h_scale * right_travel,
         )
     )
 

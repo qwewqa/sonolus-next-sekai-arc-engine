@@ -5,7 +5,7 @@ from sonolus.script.quad import Quad
 from sonolus.script.runtime import offset_adjusted_time, touches
 
 from sekai.lib import archetype_names
-from sekai.lib.layout import layout_hitbox
+from sekai.lib.layout import layout_hitbox, refresh_layout
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
 from sekai.play.input_manager import is_allowed_empty
@@ -19,6 +19,10 @@ class Stage(PlayArchetype):
 
     def should_spawn(self) -> bool:
         return True
+
+    @callback(order=-2)
+    def update_sequential(self):
+        refresh_layout()
 
     @callback(order=2)
     def touch(self):
