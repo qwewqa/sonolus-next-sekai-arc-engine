@@ -280,11 +280,13 @@ def draw_connector(
     head_size: float,
     head_progress: float,
     head_target_time: float,
+    head_ease_frac: float,
     head_is_segment_head: bool,
     tail_lane: float,
     tail_size: float,
     tail_progress: float,
     tail_target_time: float,
+    tail_ease_frac: float,
     tail_is_segment_tail: bool,
     segment_head_target_time: float,
     segment_head_lane: float,
@@ -398,15 +400,18 @@ def draw_connector(
     end_progress = clamp(tail_progress, Layout.progress_start, min(Layout.progress_cutoff, CONNECTOR_APPROACH_CUTOFF))
     start_frac = unlerp_clamped(head_progress, tail_progress, start_progress)
     end_frac = unlerp_clamped(head_progress, tail_progress, end_progress)
-
-    eased_start_frac = ease(ease_type, start_frac)
-    eased_end_frac = ease(ease_type, end_frac)
+    start_ease_frac = lerp(head_ease_frac, tail_ease_frac, start_frac)
+    end_ease_frac = lerp(head_ease_frac, tail_ease_frac, end_frac)
+    eased_head_ease_frac = ease(ease_type, head_ease_frac)
+    eased_tail_ease_frac = ease(ease_type, tail_ease_frac)
+    start_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, start_ease_frac))
+    end_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, end_ease_frac))
     start_travel = approach(start_progress)
     end_travel = approach(end_progress)
-    start_lane = lerp(head_lane, tail_lane, eased_start_frac)
-    end_lane = lerp(head_lane, tail_lane, eased_end_frac)
-    start_size = max(1e-3, lerp(head_size, tail_size, eased_start_frac))  # Lightweight rendering needs >0 size.
-    end_size = max(1e-3, lerp(head_size, tail_size, eased_end_frac))  # Lightweight rendering needs >0 size.
+    start_lane = lerp(head_lane, tail_lane, start_interp_frac)
+    end_lane = lerp(head_lane, tail_lane, end_interp_frac)
+    start_size = max(1e-3, lerp(head_size, tail_size, start_interp_frac))  # Lightweight rendering needs >0 size.
+    end_size = max(1e-3, lerp(head_size, tail_size, end_interp_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
     start_target_time = lerp(head_target_time, tail_target_time, start_frac)
@@ -421,10 +426,11 @@ def draw_connector(
         end_ref = transformed_vec_at(el, end_travel)
         pos_offset_this_side = 0
         for r in (0.25, 0.5, 0.75):
-            frac = lerp(start_frac, end_frac, r)
+            ease_frac = lerp(start_ease_frac, end_ease_frac, r)
+            interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
             progress = lerp(start_progress, end_progress, r)
             travel = approach(progress)
-            lane = lerp(hl, tl, ease(ease_type, frac))
+            lane = lerp(hl, tl, interp_frac)
             pos = transformed_vec_at(lane, travel)
             ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
             pos_offset_this_side += abs(pos.x - ref_pos.x)
@@ -462,11 +468,14 @@ def draw_connector(
     last_target_time = start_target_time
 
     for v_segment_i in range(1, segment_count + 1):
-        next_frac = lerp(start_frac, end_frac, v_segment_i / segment_count)
-        next_progress = lerp(start_progress, end_progress, v_segment_i / segment_count)
+        segment_frac = v_segment_i / segment_count
+        next_frac = lerp(start_frac, end_frac, segment_frac)
+        next_ease_frac = lerp(start_ease_frac, end_ease_frac, segment_frac)
+        next_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, next_ease_frac))
+        next_progress = lerp(start_progress, end_progress, segment_frac)
         next_travel = approach(next_progress)
-        next_lane = lerp(head_lane, tail_lane, ease(ease_type, next_frac))
-        next_size = max(1e-3, lerp(head_size, tail_size, ease(ease_type, next_frac)))
+        next_lane = lerp(head_lane, tail_lane, next_interp_frac)
+        next_size = max(1e-3, lerp(head_size, tail_size, next_interp_frac))
         next_l = clamp(next_lane - next_size, Layout.min_visible_lane, Layout.max_visible_lane)
         next_r = clamp(next_lane + next_size, Layout.min_visible_lane, Layout.max_visible_lane)
         next_lane = (next_l + next_r) / 2
