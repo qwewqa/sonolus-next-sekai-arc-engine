@@ -301,6 +301,10 @@ def draw_connector(
     ):
         return
 
+    if ease_type == EaseType.NONE:
+        tail_lane = head_lane
+        tail_size = head_size
+
     match Options.slide_mod:
         case SlideMod.NONE | SlideMod.TRACE_TICKS:
             pass

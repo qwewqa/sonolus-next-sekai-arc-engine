@@ -111,6 +111,10 @@ def draw_connector(
     if head_target_time == tail_target_time:
         return
 
+    if ease_type == EaseType.NONE:
+        tail_lane = head_lane
+        tail_size = head_size
+
     match Options.slide_mod:
         case SlideMod.NONE | SlideMod.TRACE_TICKS:
             pass
