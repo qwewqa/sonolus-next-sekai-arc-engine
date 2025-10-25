@@ -334,6 +334,7 @@ class SlideManager(PlayArchetype):
             ):
                 draw_slide_note_head(
                     self.active_head.kind,
+                    info.connector_kind,
                     info.visual_lane,
                     info.visual_size,
                     self.active_head.target_time,

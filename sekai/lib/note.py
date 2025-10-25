@@ -30,6 +30,7 @@ from sekai.lib.buckets import (
     TRACE_NORMAL_WINDOW,
     Buckets,
 )
+from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import (
@@ -1079,9 +1080,18 @@ def draw_note(
     draw_note_tick(kind, lane, travel, target_time)
 
 
-def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):
+def draw_slide_note_head(
+    kind: NoteKind, connector_kind: ActiveConnectorKind, lane: float, size: float, target_time: float
+):
     if Options.hidden > 0:
         return
+    match connector_kind:
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
+            kind = map_all_normal_note_kind(kind)
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
+            kind = map_all_critical_note_kind(kind)
+        case _:
+            assert_never(connector_kind)
     draw_note_body(kind, lane, size, 1.0, target_time)
     draw_note_tick(kind, lane, 1.0, target_time)
 
