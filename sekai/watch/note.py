@@ -19,10 +19,12 @@ from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, progress_to
 from sekai.lib.note import (
+    NoteEffectKind,
     NoteKind,
     draw_note,
     get_attach_params,
     get_note_bucket,
+    get_note_effect_kind,
     get_visual_spawn_time,
     is_head,
     map_flick_direction,
@@ -54,6 +56,7 @@ class WatchBaseNote(WatchArchetype):
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
     next_ref: EntityRef[WatchBaseNote] = imported(name="next")
     is_separator: bool = imported(name="isSeparator")
+    effect_kind: NoteEffectKind = imported(name="effectKind")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
@@ -75,6 +78,7 @@ class WatchBaseNote(WatchArchetype):
             return
 
         self.kind = map_note_kind(cast(NoteKind, self.key), self.index)
+        self.effect_kind = get_note_effect_kind(self.kind, self.effect_kind)
 
         self.data_init_done = True
 
@@ -149,15 +153,15 @@ class WatchBaseNote(WatchArchetype):
         if is_replay():
             if self.played_hit_effects:
                 if Options.auto_sfx:
-                    schedule_note_auto_sfx(self.kind, self.target_time)
+                    schedule_note_auto_sfx(self.effect_kind, self.target_time)
                 else:
-                    schedule_note_sfx(self.kind, self.judgment, self.end_time)
+                    schedule_note_sfx(self.effect_kind, self.judgment, self.end_time)
                 schedule_note_slot_effects(self.kind, self.lane, self.size, self.end_time)
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
             if self.is_scored:
-                schedule_note_sfx(self.kind, Judgment.PERFECT, self.target_time)
+                schedule_note_sfx(self.effect_kind, Judgment.PERFECT, self.target_time)
                 schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
 
         self.result.target_time = self.target_time
@@ -188,7 +192,7 @@ class WatchBaseNote(WatchArchetype):
         if time() < self.despawn_time():
             return
         if (not is_replay() or self.played_hit_effects) and self.is_scored:
-            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
+            play_note_hit_effects(self.kind, self.effect_kind, self.lane, self.size, self.direction, self.judgment)
 
     @property
     def progress(self) -> float:
